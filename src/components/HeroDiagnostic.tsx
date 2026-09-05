@@ -1,0 +1,761 @@
+/**
+ * HeroDiagnostic — SHARED homepage hero diagnostic card.
+ *
+ * This is the SINGLE source of truth for the hero URL-diagnostic used on BOTH
+ * the homepage (/) and /services/diagnostic, so the two are identical by
+ * construction. It contains: the eyebrow pill + H1 + subhead, the URL input
+ * card (label / input / error / CTA / micro-copy), the 4 feature pills, the
+ * HeroMockup graphic, and the crawl/score result swap (CrawlScanner +
+ * HeroResults). Extracted verbatim from the homepage route (build #NN).
+ */
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import { scoreAssessment, scoreColor, PILLAR_OF } from "~/lib/audit/engine";
+import type { AssessmentInput, AuditResult } from "~/lib/audit/types";
+import { toAIResult } from "~/lib/audit/ai";
+import type { AIResult } from "~/lib/audit/ai";
+import { ASSESSMENT_STORAGE_KEY } from "~/lib/storage";
+
+
+/* ------------------------------------------------------------------ */
+/* Build #NN: Compact Hero diagnostic mockup (right column). Static     */
+/* illustrative/demo card: the scores are sample values, not a real     */
+/* measured scan. ORIGINAL purple/magenta "graphic-card" look, kept at  */
+/* the compact (~25% smaller) footprint for the 50/50 hero split.      */
+/* ------------------------------------------------------------------ */
+export function HeroMockup() {
+  const rows = [
+    { label: "Category Positioning", score: "29/100", cls: "text-[#F97316]" },
+    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-[#F97316]" },
+    { label: "Differentiation Anchor", score: "21/100", cls: "text-[#EF4444]" },
+  ];
+  return (
+    <div className="relative mx-auto w-full max-w-[400px]">
+      {/* Ambient purple/magenta glow behind + wrapped around the card */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -inset-6 rounded-[20px] bg-[#A855F7]/20 blur-2xl"
+      />
+      <div
+        className="relative overflow-hidden rounded-2xl bg-[#0B0F19] shadow-[0_0_50px_rgba(168,85,247,0.45),0_0_20px_rgba(20,184,166,0.2)]"
+        style={{ border: "2px solid #A855F7", borderRadius: "16px" }}
+      >
+        {/* Top header bar: window dots + URL pill + purple LIVE AI CRAWL badge */}
+        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-2.5">
+          <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#EF4444]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#F59E0B]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#10B981]" />
+          </span>
+          <span className="min-w-0 flex-1 truncate rounded-md bg-white/[0.04] px-2 py-0.5 text-center text-[12px] text-zinc-400">
+            https://yourproduct.com
+          </span>
+          <span
+            aria-hidden="true"
+            className="flex shrink-0 items-center gap-1 rounded-full border border-[#A855F7]/60 bg-[#A855F7]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#E9D5FF]"
+          >
+            <span className="text-[9px]">●</span>LIVE AI CRAWL
+          </span>
+        </div>
+        {/* 3 metric row cards (distinct inner containers, purple borders) */}
+        <div className="flex flex-col gap-2 p-4">
+          {rows.map((r) => (
+            <div
+              key={r.label}
+              className="flex items-center justify-between gap-3 rounded-lg border border-[#A855F7]/30 bg-white/[0.03] px-3.5 py-2.5"
+            >
+              <span className="min-w-0 text-[13px] font-medium text-zinc-300">{r.label}</span>
+              <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${r.cls}`}>
+                {r.score}
+              </span>
+            </div>
+          ))}
+          {/* Critical leakage callout: solid dark card, full red border */}
+          <div className="mt-1 rounded-lg bg-[#0B0F19] px-3.5 py-2.5" style={{ border: "1px solid #EF4444" }}>
+            <p className="text-[11px] font-bold uppercase tracking-wide leading-snug text-[#F87171]">
+              CRITICAL LEAKAGE DETECTED: CATEGORY NAMING IS TOO BROAD FOR HIGH-INTENT BUYERS.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function isValidUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+    if (!u.hostname.includes(".") || u.hostname.length < 4) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Teaser pillar groups (restored prior build). */
+const TEASER_PILLARS: { title: string; ids: string[] }[] = [
+  { title: "Core Positioning", ids: ["positioning", "icp", "differentiation"] },
+  { title: "Messaging & Value Prop", ids: ["messaging", "value-prop"] },
+  { title: "GTM & Launch Velocity", ids: ["conversion"] },
+];
+
+function pillarySort(id: string): number {
+  for (let i = 0; i < TEASER_PILLARS.length; i++) {
+    const idx = TEASER_PILLARS[i].ids.indexOf(id);
+    if (idx !== -1) return i * 10 + idx;
+  }
+  return 99;
+}
+
+function g2Status(score: number): string {
+  return score >= 75 ? "Strong" : score >= 40 ? "Needs Refinement" : "Critical Gap";
+}
+
+function m2Date(t?: string): string {
+  try {
+    return new Date(t ?? 0).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return t ?? "";
+  }
+}
+
+function hexA(hex: string, alpha: number): string {
+  const h = (hex || "#A1A1AA").replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(full || "A1A1AA", 16);
+  if (Number.isNaN(n)) return `rgba(161,161,170,${alpha})`;
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+interface TeaserDim {
+  id: string;
+  name: string;
+  pillar: string;
+  score?: number;
+  status?: string;
+  friction?: string;
+  frictionLabel?: string;
+  anchorLabel?: string;
+  keyObservation?: string;
+  commercialRisk?: string;
+  evidenceSnippet?: string;
+  insufficientData?: boolean;
+  locked?: boolean;
+  color?: string;
+  isAI: boolean;
+}
+
+function normalizeTeaserDims(aiResult: AIResult | null, result: AuditResult): TeaserDim[] {
+  const out: TeaserDim[] = [];
+  if (aiResult) {
+    for (const r of aiResult.dimensions) {
+      if (r.locked) continue;
+      out.push({
+        id: r.id,
+        name: r.name,
+        pillar: r.pillar || PILLAR_OF[r.id] || "GTM & Launch Velocity",
+        score: r.score,
+        status: r.status,
+        friction: r.friction,
+        frictionLabel: r.frictionLabel,
+        anchorLabel: r.anchorLabel,
+        keyObservation: r.keyObservation,
+        commercialRisk: r.commercialRisk,
+        evidenceSnippet: r.evidence_snippet,
+        insufficientData: r.insufficientData,
+        locked: false,
+        color: typeof r.score === "number" ? scoreColor(r.score) : undefined,
+        isAI: true,
+      });
+    }
+  } else {
+    for (const r of result.parameters) {
+      if (r.locked) continue;
+      out.push({
+        id: r.id,
+        name: r.name,
+        pillar: PILLAR_OF[r.id] || "GTM & Launch Velocity",
+        score: r.score,
+        status: r.status,
+        friction: r.diagnostic,
+        frictionLabel: r.frictionLabel,
+        anchorLabel: r.anchorLabel,
+        keyObservation: r.keyObservation,
+        commercialRisk: r.commercialRisk,
+        locked: false,
+        color: r.color,
+        isAI: false,
+      });
+    }
+  }
+  return out.sort((a, b) => pillarySort(a.id) - pillarySort(b.id));
+}
+
+function useAssessment() {
+  const [url, setUrl] = useState("");
+  const [error, setError] = useState("");
+  const [phase, setPhase] = useState<"idle" | "done">("idle");
+  const [submitted, setSubmitted] = useState<AssessmentInput | null>(null);
+  const [result, setResult] = useState<AuditResult | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [aiStatus, setAiStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [aiResult, setAiResult] = useState<AIResult | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const runCrawl = (cleanUrl: string) => {
+    const controller = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = controller;
+    const timer = window.setTimeout(() => controller.abort(), 32000);
+    setAiStatus("loading");
+    setAiResult(null);
+    fetch("/api/diagnose", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: cleanUrl, heroCopy: "", icp: "" }),
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        if (res.ok) {
+          const normalized = toAIResult(data);
+          if (normalized) {
+            setAiResult(normalized);
+            setAiStatus("success");
+            return;
+          }
+        }
+        setAiStatus("error");
+      })
+      .catch(() => setAiStatus("error"))
+      .finally(() => window.clearTimeout(timer));
+  };
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(ASSESSMENT_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.url === "string" && parsed.url) {
+          const restored: AssessmentInput = {
+            url: parsed.url,
+            businessModel: "",
+            launchStage: "",
+            icp: typeof parsed.icp === "string" ? parsed.icp : "",
+            submittedAt: parsed.submittedAt ?? new Date().toISOString(),
+          };
+          setSubmitted(restored);
+          setResult(scoreAssessment(restored));
+          setPhase("done");
+        }
+      }
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const cleanUrl = url.trim();
+    if (!isValidUrl(cleanUrl)) {
+      setError("Enter a valid website URL, e.g. https://yourproduct.com");
+      return;
+    }
+    setError("");
+    const assessment: AssessmentInput = {
+      url: cleanUrl,
+      businessModel: "",
+      launchStage: "",
+      icp: "",
+      submittedAt: new Date().toISOString(),
+    };
+    try {
+      window.localStorage.setItem(ASSESSMENT_STORAGE_KEY, JSON.stringify(assessment));
+    } catch {}
+    setSubmitted(assessment);
+    setResult(scoreAssessment(assessment));
+    setPhase("done");
+    runCrawl(cleanUrl);
+  };
+
+  const reset = () => {
+    try {
+      window.localStorage.removeItem(ASSESSMENT_STORAGE_KEY);
+    } catch {}
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setPhase("idle");
+    setSubmitted(null);
+    setResult(null);
+    setAiStatus("idle");
+    setAiResult(null);
+    setUrl("");
+    setError("");
+  };
+
+  return {
+    url,
+    setUrl,
+    error,
+    phase,
+    submitted,
+    result,
+    aiStatus,
+    aiResult,
+    hydrated,
+    handleSubmit,
+    reset,
+  };
+}
+
+/** Live AI crawl scanner card (loading + demo modes). */
+function CrawlScanner({ mode = "demo", url }: { mode?: "demo" | "loading"; url?: string }) {
+  const rows = [
+    { label: "ICP Alignment Index", score: "42/100", border: "border-[#EF4444]/50", scoreClass: "text-[#F87171]" },
+    { label: "Messaging Clarity Score", score: "88/100", border: "border-[#2DD4BF]/50", scoreClass: "text-[#5EEAD4]" },
+    { label: "Value Proposition & Contrast", score: "31/100", border: "border-[#A855F7]/60", scoreClass: "text-[#E9D5FF]" },
+  ];
+  const shownUrl = url || "https://yourproduct.com";
+  return (
+    <div className="relative mx-auto w-full max-w-[520px]">
+      <div aria-hidden="true" className="pointer-events-none absolute -inset-8 rounded-[28px] bg-[#2D1B69]/70 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-[#8B5CF6]/40 bg-gradient-to-b from-[#1E1338] via-[#221443] to-[#170E2E] shadow-[0_0_50px_rgba(139,92,246,0.4)]">
+        <div className="flex items-center gap-3 border-b border-[#8B5CF6]/25 bg-[#1A1032]/90 px-4 py-3">
+          <span aria-hidden="true" className="flex shrink-0 gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#EF4444]/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#F59E0B]/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#10B981]/80" />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-xs text-zinc-400">{shownUrl}</span>
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#A855F7]/50 bg-[#A855F7]/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#E9D5FF]">
+            <span aria-hidden="true" className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#A78BFA] opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#C4B5FD]" />
+            </span>
+            LIVE AI CRAWL
+          </span>
+        </div>
+        {mode === "loading" ? (
+          <div className="flex flex-col items-center gap-4 p-8" role="status" aria-live="polite">
+            <div className="relative flex h-16 w-16 items-center justify-center">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#A855F7]/40" />
+              <span className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#A855F7] bg-[#241748]">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#5EEAD4] border-t-transparent" />
+              </span>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-sm font-bold tracking-wide text-[#E9D5FF]">Running Deep AI Crawl...</p>
+              <p className="mt-2 animate-pulse text-xs tracking-wider text-[#A78BFA]">Scanning positioning signals via live AI</p>
+            </div>
+            <div className="flex gap-1.5" aria-hidden="true">
+              {[0, 1, 2].map((s) => (
+                <span key={s} className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#A78BFA]" style={{ animationDelay: `${s * 120}ms` }} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2.5 p-5">
+            {rows.map((s) => (
+              <div key={s.label} className={`flex items-center justify-between gap-3 rounded-lg border bg-[#241748]/60 px-4 py-3 ${s.border}`}>
+                <span className="min-w-0 text-xs font-medium text-zinc-300 sm:text-sm">{s.label}</span>
+                <span className={`shrink-0 font-mono text-sm font-bold tabular-nums ${s.scoreClass}`}>{s.score}</span>
+              </div>
+            ))}
+            <div className="mt-1 rounded-lg border border-[#A855F7]/50 bg-[#A855F7]/10 px-4 py-3 shadow-[0_0_24px_rgba(168,85,247,0.28)]">
+              <p className="text-xs font-bold uppercase tracking-wider leading-relaxed text-[#F0ABFC] sm:text-[13px]">
+                CRITICAL LEAKAGE DETECTED: Value proposition relies on generic features rather than buyer outcomes.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DimCard({ card }: { card: TeaserDim }) {
+  const color = card.color ?? "#A1A1AA";
+  const n = card.score ?? 0;
+  const strong = n >= 70;
+  const label = strong ? card.anchorLabel : card.frictionLabel;
+  const section = strong ? "Competitive Advantage" : "Commercial Risk";
+  return (
+    <div className="glass-card flex flex-col gap-3 p-5" style={{ borderColor: hexA(color, 0.3), backgroundColor: hexA(color, 0.05) }}>
+      <div className="flex items-start justify-between gap-2">
+        <h4 className="text-sm font-semibold leading-snug text-ink">{card.name}</h4>
+        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${card.isAI ? "border-electric/40 bg-electric/10 text-electric" : "border-hairline bg-white/[0.04] text-zinc-400"}`}>
+          {card.isAI ? "AI crawl" : "Local"}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color, borderColor: hexA(color, 0.35), backgroundColor: hexA(color, 0.1) }}>
+          {card.status ?? "Pending"}
+        </span>
+        {label && (
+          <span className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color, borderColor: hexA(color, 0.35), backgroundColor: hexA(color, 0.1) }}>
+            {label}
+          </span>
+        )}
+        <span className="ml-auto font-mono text-lg font-bold tabular-nums" style={{ color }}>{card.score != null ? `${card.score}/100` : "—"}</span>
+      </div>
+      <p className="text-sm leading-relaxed text-mist">{card.keyObservation ?? card.friction}</p>
+      <div className="rounded-lg border border-hairline bg-white/[0.03] px-3 py-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{section}: </span>
+        <span className="text-xs text-zinc-400">{card.commercialRisk}</span>
+      </div>
+    </div>
+  );
+}
+
+/** Restored teaser results component (was A2 in the prior build). */
+function HeroResults({
+  result,
+  onReset,
+  onBookBriefing,
+  aiResult,
+  aiPending,
+}: {
+  result: AuditResult;
+  onReset: () => void;
+  onBookBriefing: () => void;
+  aiResult: AIResult | null;
+  aiPending: boolean;
+}) {
+  const pending = !!aiPending && !aiResult;
+  const score = aiResult ? aiResult.score : result.overall;
+  const band = aiResult?.overallBand ?? result.riskLabel;
+  const dims = normalizeTeaserDims(aiResult, result);
+  const visible = dims.filter((d) => !d.insufficientData && d.score != null);
+  const withEvidence = visible.filter((d) => typeof d.evidenceSnippet === "string" && d.evidenceSnippet.trim().length > 0);
+  const redFlag = [...(withEvidence.length ? withEvidence : visible.length ? visible : dims)].sort((a, b) => {
+    const ra = a.score ?? 0;
+    const rb = b.score ?? 0;
+    return ra !== rb ? ra - rb : pillarySort(a.id) - pillarySort(b.id);
+  })[0];
+  const pillarAvgs = TEASER_PILLARS.map((p) => {
+    const hit = dims.filter((d) => p.ids.includes(d.id) && !d.insufficientData && d.score != null);
+    const avg = hit.length ? Math.round(hit.reduce((sum, d) => sum + (d.score ?? 0), 0) / hit.length) : null;
+    return { title: p.title, avg };
+  });
+
+  return (
+    <section id="results" className="scroll-mt-24" aria-live="polite">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <span className={`chip ${pending ? "border-[#A855F7]/50 bg-[#A855F7]/10 text-[#E9D5FF]" : "border-electric/40 text-electric"}`}>
+            {pending ? "Preliminary Diagnostic" : "Assessment complete"}
+          </span>
+          <h3 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Your Market Readiness Score</h3>
+          <p className="mt-1 max-w-2xl text-sm text-mist">{result.url}</p>
+          {pending && (
+            <p className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-[#E9D5FF]">
+              <span aria-hidden="true" className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#A78BFA] opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#C4B5FD]" />
+              </span>
+              Running Deep AI Crawl... Your final AI score is on its way.
+            </p>
+          )}
+        </div>
+        <p className="text-xs text-zinc-500">Scored {m2Date(result.generatedAt)}</p>
+      </div>
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-2">
+        <div className="glass-card flex flex-col justify-center gap-3 px-6 py-8">
+          <h4 className="text-sm font-semibold uppercase tracking-wider text-mist">Overall Score</h4>
+          <div className="flex items-end gap-3">
+            <span className="text-6xl font-extrabold leading-none tabular-nums text-ink">{score}</span>
+            <span className="pb-1 text-sm font-medium text-zinc-500">/100</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-mist">Status:</span>
+            <span className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: scoreColor(score), borderColor: hexA(scoreColor(score), 0.35), backgroundColor: hexA(scoreColor(score), 0.1) }}>
+              {g2Status(score)}
+            </span>
+          </div>
+          <p className="text-xs text-zinc-500">{band}</p>
+        </div>
+        <div className="flex flex-col justify-center gap-3">
+          <h4 className="text-sm font-semibold uppercase tracking-wider text-mist">Pillars</h4>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {pillarAvgs.map((p) => (
+              <div key={p.title} className="glass-card flex flex-col items-center justify-center gap-2 px-4 py-5 text-center">
+                <span className="text-sm font-semibold text-ink">{p.title}</span>
+                <span className="font-mono text-xl font-bold tabular-nums" style={{ color: p.avg != null ? scoreColor(p.avg) : "#A1A1AA" }}>
+                  {p.avg != null ? `${p.avg}/100` : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {redFlag && (
+        <div className="mt-8">
+          <div className="flex items-center gap-3">
+            <h4 className="text-lg font-bold tracking-tight text-ink">Surface Red Flag</h4>
+            <span aria-hidden="true" className="h-px flex-1 bg-hairline" />
+          </div>
+          <p className="mt-1 max-w-3xl text-sm text-mist">The single lowest-scoring parameter from your public site.</p>
+          <div className="mt-4 max-w-md">
+            <DimCard card={redFlag} />
+          </div>
+        </div>
+      )}
+
+      <div className="mt-8">
+        <div className="flex items-center gap-3">
+          <h4 className="text-lg font-bold tracking-tight text-ink">Full 6-Parameter Breakdown</h4>
+          {aiResult && <span className="chip border-electric/40 text-electric">Final AI Assessment</span>}
+        </div>
+        <p className="mt-1 max-w-3xl text-sm text-mist">Every scored parameter with its key observation and commercial risk, grouped by pillar.</p>
+        {TEASER_PILLARS.map((p) => {
+          const cards = dims.filter((d) => p.ids.includes(d.id));
+          return (
+            <div key={p.title} className="mt-7">
+              <div className="flex items-center gap-3">
+                <h5 className="text-base font-bold tracking-tight text-ink">{p.title}</h5>
+                <span aria-hidden="true" className="h-px flex-1 bg-hairline" />
+              </div>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {cards.map((d) => (
+                  <DimCard key={d.id} card={d} />
+                ))}
+              </div>
+              {p.title === "Messaging & Value Prop" && (
+                <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+                  Pricing & Packaging Logic requires internal unit economics and deal context - reviewed directly in the MarketReady Audit.
+                </p>
+              )}
+              {p.title === "GTM & Launch Velocity" && (
+                <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+                  Note: Public web scans evaluate Conversion Readiness. Internal sales enablement and launch mechanics are reviewed directly in the MarketReady Audit.
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-electric/30 bg-electric/[0.06] px-6 py-8 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h4 className="text-lg font-bold tracking-tight text-ink">Get the full 14-Day Positioning Sprint plan</h4>
+          <p className="mt-1 max-w-xl text-sm text-mist">
+            A strategist will map every gap to a high-velocity fix and activate it. Book a free 15-minute diagnostic briefing.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onBookBriefing}
+          className="h-[46px] shrink-0 rounded-lg bg-[#14B8A6] px-6 text-[14px] font-bold transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
+          style={{ color: "#0F172A" }}
+        >
+          Book a 15-Minute Diagnostic Briefing →
+        </button>
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-zinc-600">
+          {aiResult
+            ? "Deep AI assessment across the site's core pages plus an external market-intelligence scan."
+            : "Automated snapshot assessment: representative diagnostics, not a full site crawl."}
+        </p>
+        <button type="button" onClick={onReset} className="nav-link">
+          Re-run assessment
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export function HeroDiagnostic({
+  onBookBriefing,
+  variant = "home",
+}: {
+  onBookBriefing: () => void;
+  variant?: "home" | "centered";
+}) {
+  const {
+    url,
+    setUrl,
+    error,
+    phase,
+    submitted,
+    result,
+    aiStatus,
+    aiResult,
+    handleSubmit,
+    reset,
+  } = useAssessment();
+  const showResult = phase === "done";
+  const aiLoading = aiStatus === "loading";
+  const aiResolved = aiStatus === "success" ? aiResult : null;
+  const centered = variant === "centered";
+
+  return (
+    <section id="top" className="relative overflow-hidden bg-[#0F172A] pt-[120px] pb-12">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-electric/[0.07] blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-24 top-24 h-80 w-80 rounded-full bg-indigo/10 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-24 top-40 h-80 w-80 rounded-full bg-electric/10 blur-3xl"
+      />
+      <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
+        {showResult ? (
+          <div
+            id="calculator"
+            className={centered ? "mt-6 scroll-mt-24 mx-auto max-w-[760px]" : "mt-6 scroll-mt-24"}
+          >
+            <div className="flex flex-col gap-5">
+              {submitted && result && (
+                <>
+                  {aiLoading && <CrawlScanner mode="loading" url={submitted.url} />}
+                  <HeroResults
+                    result={result}
+                    onReset={reset}
+                    onBookBriefing={onBookBriefing}
+                    aiResult={aiResolved}
+                    aiPending={aiLoading}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        ) : centered ? (
+          <div className="mx-auto max-w-[760px] text-center">
+            <span className="inline-flex items-center rounded-full border border-electric/30 bg-[rgba(20,184,166,0.1)] px-3 py-1 text-[12px] font-semibold text-[#14B8A6]">
+              <span aria-hidden="true" className="mr-1.5 text-[10px]">●</span>
+              Free AI Audit &amp; Scorecard
+            </span>
+            <h1 className="mt-5 text-[36px] font-bold leading-[1.15] tracking-tight text-[#F9FAFB] sm:text-[42px]">
+              Identify GTM Friction &amp; Revenue Leakage in Seconds.
+            </h1>
+            <p className="mx-auto mt-4 max-w-[620px] text-[15px] leading-[1.65] text-[#9CA3AF]">
+              Paste your product URL and get an instant readiness score plus a qualitative leakage
+              read. No email, no account, and no cost.
+            </p>
+
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="mx-auto mt-8 max-w-[600px] rounded-2xl bg-[#111827] p-6 text-left"
+              style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              <label
+                htmlFor="calc-url"
+                className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-ink"
+              >
+                Website or Product URL <span className="text-electric">*</span>
+              </label>
+              <input
+                id="calc-url"
+                type="url"
+                name="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://yourproduct.com"
+                autoComplete="url"
+                className="h-[44px] w-full rounded-lg border border-hairline bg-white/[0.04] px-3.5 text-[14px] text-ink outline-none transition placeholder:text-zinc-600 focus:border-electric focus:ring-2 focus:ring-electric/30"
+                aria-describedby={error ? "calc-error" : undefined}
+              />
+              {error && (
+                <p id="calc-error" role="alert" className="mt-3 rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-left text-sm text-electric">
+                  {error}
+                </p>
+              )}
+              <button
+                type="submit"
+                className="mt-4 h-[44px] w-full rounded-lg bg-[#14B8A6] px-5 text-[15px] font-bold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_24px_rgba(20,184,166,0.45)] active:scale-[0.98]"
+              >
+                Get Your MarketReady Score →
+              </button>
+            </form>
+            <p className="mt-3 text-center text-[12px] text-[#6B7280]">
+              Instant score · Leakage-level check · No email required
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">6 Scored Parameters</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">0 to 100 readiness score</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">Surface Red Flag Detection</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">14-day positioning sprint</span>
+            </div>
+          </div>
+        ) : (
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-8">
+            <div className="text-center lg:text-left">
+              <span className="inline-flex items-center rounded-full border border-electric/30 bg-electric/[0.08] px-2.5 py-1 text-[11px] font-medium text-electric">
+                <span aria-hidden="true" className="mr-1.5 text-[10px]">●</span>
+                Market Readiness Assessment
+              </span>
+              <h1 className="mt-5 text-[38px] font-bold leading-[1.15] tracking-tight text-ink sm:text-[42px]">
+                Clear Positioning.{" "}
+                <span style={{ color: "#14B8A6" }}>Higher Conversion.</span> Zero Wasted Burn.
+              </h1>
+              <p className="mt-4 max-w-[520px] text-[14px] leading-[1.5] text-[#9CA3AF] sm:text-[15px] lg:mx-0 mx-auto">
+                Identify where your positioning is leaking pipeline, pinpoint your exact messaging
+                friction, and fix it fast with a high-converting 14-day sprint.
+              </p>
+              <form onSubmit={handleSubmit} noValidate className="mx-auto mt-6 flex max-w-md flex-col gap-3 lg:mx-0">
+                <div className="text-left">
+                  <label htmlFor="calc-url" className="mb-1.5 block text-[12px] font-medium uppercase tracking-wide text-ink">
+                    Website or Product URL <span className="text-electric">*</span>
+                  </label>
+                  <input
+                    id="calc-url"
+                    type="url"
+                    name="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="Enter your website URL..."
+                    autoComplete="url"
+                    className="h-[44px] w-full rounded-lg border border-hairline bg-white/[0.04] px-3.5 text-[14px] text-ink outline-none transition placeholder:text-zinc-600 focus:border-electric focus:ring-2 focus:ring-electric/30"
+                    aria-describedby={error ? "calc-error" : undefined}
+                  />
+                  <p className="mt-2 text-[12px] leading-relaxed text-zinc-500">
+                    Built for digitally native B2B SaaS and consumer tech products.
+                  </p>
+                </div>
+                {error && (
+                  <p id="calc-error" role="alert" className="rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-left text-sm text-electric">
+                    {error}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  className="h-[44px] w-full rounded-lg bg-[#14B8A6] px-5 py-2.5 text-[14px] font-bold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_24px_rgba(20,184,166,0.45)] active:scale-[0.98]"
+                >
+                  Get Your MarketReady Score →
+                </button>
+                <p className="text-left text-[11px] font-bold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                  AI-POWERED POSITIONING DIAGNOSTIC • 60-SECOND CRAWL
+                </p>
+              </form>
+            </div>
+            <HeroMockup />
+          </div>
+        )}
+        {!showResult && !centered && (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">6 Scored Parameters</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">0 to 100 readiness score</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">Surface Red Flag Detection</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">14-day positioning sprint</span>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

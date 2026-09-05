@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="811.29785"
+   height="447.43417"
+   viewBox="0 0 214.65589 118.38363"
+   version="1.1"
+   id="svg843"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   sodipodi:docname="All Elite Wrestling Logo.svg">
+  <title
+     id="title1399">All Elite Wrestling Logo</title>
+  <defs
+     id="defs837">
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Drop Shadow"
+       id="filter22">
+      <feFlood
+         flood-opacity="0.498039"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood12" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite14" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="0.5"
+         result="blur"
+         id="feGaussianBlur16" />
+      <feOffset
+         dx="0"
+         dy="0"
+         result="offset"
+         id="feOffset18" />
+      <feComposite
+         in="SourceGraphic"
+         in2="offset"
+         operator="over"
+         result="composite2"
+         id="feComposite20" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.476"
+     inkscape:cx="368.88421"
+     inkscape:cy="205.85998"
+     inkscape:document-units="px"
+     inkscape:current-layer="g1631"
+     showgrid="false"
+     units="px"
+     inkscape:showpageshadow="false"
+     inkscape:snap-global="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="1920"
+     inkscape:window-height="1051"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata840">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>All Elite Wrestling Logo</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-24.963724,-105.51651)">
+    <g
+       id="g1631"
+       transform="translate(9.9999995e-7,-3.5065767e-6)">
+      <path
+         id="path1401"
+         d="m 84.871228,115.38182 -6.182946,12.01654 h 4.445127 l 1.01472,-2.30201 h 5.775868 l 1.12125,2.30201 h 4.430844 l -6.228177,-12.01654 z m 11.272019,0 v 12.01654 h 11.494603 v -3.54051 h -7.41728 v -8.47603 z m 12.819983,0 v 12.01654 h 11.4946 v -3.54051 h -7.41727 v -8.47603 z m -21.919133,3.67263 1.549159,3.23103 h -3.117362 z m 134.687523,14.30308 -17.75432,0.0268 -11.31011,28.68532 -7.75591,-28.65735 -17.71147,0.0268 -7.60474,28.46036 -11.2012,-28.43239 -18.00547,0.0268 24.52824,61.86933 h 13.49488 l 7.76186,-28.61748 7.72318,28.61748 h 13.66747 z m -139.264772,0.2083 -15.257694,0.022 -24.35744,61.7753 h 18.088792 l 2.820387,-7.4375 h 19.290386 l -5.669932,-14.44415 h -7.894579 l 5.248571,-13.83768 14.104306,35.71932 h 17.947745 z m 108.239942,67.7559 c -3.29444,0.0144 -5.48391,1.15561 -6.65906,2.61566 -2.52383,3.49231 -0.50399,6.90941 0.0446,7.52023 4.98195,5.16827 13.01574,1.11068 13.49547,0.0667 v -5.14383 h -7.37383 v 2.85074 h 3.3459 v 0.71119 c -0.9469,1.2507 -4.94575,1.17959 -5.96751,-0.43862 -1.02442,-1.86197 -0.32005,-3.09671 0.0631,-3.67679 2.29436,-2.47333 6.23012,-0.50718 6.48409,0.0315 l 3.0144,-2.42104 c -2.24101,-1.57106 -4.47053,-2.12434 -6.44719,-2.11574 z m -65.13191,0.0786 c -0.75548,0.0116 -1.50155,0.0752 -2.21989,0.172 -2.42166,0.48884 -3.93426,1.70455 -4.27967,2.85669 -1.05344,4.05885 4.72841,4.68259 4.72841,4.68259 5.14945,0.25715 4.71841,0.81307 4.72187,1.01829 -0.5319,1.12353 -3.46344,0.72553 -4.36776,0.57431 -1.83021,-0.34318 -3.56431,-1.53486 -3.56431,-1.53488 l -2.23477,2.47997 c 6.27996,3.9904 11.41502,1.87528 12.2427,1.40632 2.47558,-1.41217 2.38915,-3.99771 1.58249,-5.13132 -0.62512,-0.77141 -2.53493,-1.71444 -4.42132,-1.91934 -1.69121,-0.39396 -4.99465,-0.0933 -4.61415,-1.16529 0.48876,-0.99482 5.6407,-0.3228 6.98758,0.7838 l 1.98361,-2.43414 c -1.92873,-1.39268 -4.27837,-1.82378 -6.54479,-1.789 z m -58.579382,0.38863 4.17017,11.54995 h 4.170766 l 2.30142,-7.05781 2.203221,7.05781 h 4.183264 l 4.150531,-11.54995 h -4.108276 l -2.140731,7.16374 -2.447825,-7.16374 h -3.677392 l -2.4264,7.22564 -2.191914,-7.22564 z m 22.267294,0 v 11.54995 h 4.149341 v -3.23996 h 2.571615 l 2.674575,3.23996 h 4.884937 l -3.17569,-3.69882 c 4.96363,-1.94076 2.76349,-7.66468 -1.931831,-7.85113 h -0.49754 z m 15.627868,0 v 3.15367 5.68361 2.71267 h 12.71108 v -2.71267 h -8.63375 v -0.37434 -1.23195 h 7.11554 v -2.77634 h -7.11554 v -1.30098 h 8.63375 v -3.15367 z m 28.33717,0 v 3.41553 h 4.6076 v 8.13442 h 4.07733 v -3.32983 -4.80459 h 4.607 v -3.41553 z m 14.53102,0 v 11.54995 h 11.4946 v -3.15129 h -7.41727 v -8.39866 z m 12.917,0 v 11.54995 h 4.07733 v -3.15545 -8.3945 z m 6.33292,0.005 v 11.54519 h 4.07733 v -6.64834 l 6.38113,6.64834 h 3.85593 v -11.54519 h -4.07733 v 6.299 l -5.91632,-6.29899 z m -73.618657,3.06857 h 4.390969 c 1.571168,-0.0252 1.559802,2.36819 0,2.41688 h -4.390969 z"
+         style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.30471346px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter22)"
+         inkscape:connector-curvature="0" />
+      <path
+         id="path1581"
+         d="m 125.81413,115.38182 v 3.16676 5.68362 3.16616 h 3.74523 0.3321 8.63374 v -3.16616 h -8.63374 v -0.37435 -1.23194 h 7.11553 v -2.77635 h -7.11553 v -1.30098 h 8.63374 v -3.16676 h -8.63374 z m 14.59351,0 v 12.01654 h 11.4946 v -3.54051 h -7.41727 v -8.47603 z m 12.82713,0 v 12.01654 h 4.07733 v -3.54051 -8.47603 z m 5.35748,0 v 3.53098 h 4.6076 v 8.48556 h 4.07733 v -3.54051 -4.94505 h 4.607 v -3.53098 h -3.91604 -0.69096 -4.07733 z m 14.59173,0 v 3.16676 5.68362 3.16616 h 3.74524 0.33209 8.63374 v -3.16616 h -8.63374 v -0.37435 -1.23194 h 7.11553 v -2.77635 h -7.11553 v -1.30098 h 8.63374 v -3.16676 h -8.63374 z m -45.4404,18.11557 -31.293835,0.047 0.12379,28.65854 12.974125,33.1602 h 42.53848 l -5.84847,-14.63814 H 114.43022 V 148.1748 h 19.18505 z m -10.64593,23.66529 v 14.63517 h 25.68759 l -5.88537,-14.63517 z"
+         style="opacity:1;fill:#c5ab57;fill-opacity:1;stroke:none;stroke-width:0.30471346px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         inkscape:connector-curvature="0" />
+      <path
+         id="path1589"
+         d="m 33.072913,122.75207 v 83.3939 h 30.380886 v -4.22493 H 37.459121 V 126.977 h 37.422028 v -4.22493 z m 156.629277,0 v 4.22493 h 37.42203 v 74.94404 h -25.99468 v 4.22493 h 30.38088 v -83.3939 z"
+         style="opacity:1;fill:#7f7f7f;fill-opacity:1;stroke:none;stroke-width:0.30471346px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         inkscape:connector-curvature="0" />
+    </g>
+  </g>
+</svg>

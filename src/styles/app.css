@@ -1,0 +1,418 @@
+@import "tailwindcss";
+
+@theme {
+  /* MarketReady design tokens */
+  --color-obsidian: #080a0f; /* page background (fallback) */
+  --color-night: #030712; /* deepest gradient stop */
+  --color-panel: #0b1018; /* deep panel fill */
+  --color-hairline: #1e293b; /* zinc borders */
+  --color-electric: #14b8a6; /* Electric Teal primary accent */
+  --color-indigo: #6366f1; /* Soft Indigo secondary accent */
+  --color-ink: #fafafa; /* headlines */
+  --color-mist: #a1a1aa; /* body/subtext */
+
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Build #31: clamp horizontal overflow at the root so no element can push
+     the page wider than the viewport on mobile (320/375/390). `overflow-x:
+     clip` is preferred over `hidden` here: unlike `hidden` it does not create
+     an independent scroll container, so position:fixed header + the booking
+     modal (which render fixed/portaled) are unaffected. */
+  html,
+  body {
+    overflow-x: clip;
+  }
+
+  body {
+    @apply text-mist antialiased;
+    /* Build #13: dark obsidian page gradient restored (build #12's purple/teal
+       bloom stops removed): deep slate at the top, charcoal mid-page,
+       settling to the #030712 base at the bottom. Mirrors the app-shell
+       gradient in src/routes/index.tsx. background-color stays #030712 as
+       the base underneath. */
+    background-color: #030712;
+    background-image: linear-gradient(
+      to bottom,
+      #0f172a 0%,
+      #111827 50%,
+      #030712 100%
+    );
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  ::selection {
+    background: rgb(20 184 166 / 0.35);
+    color: #fafafa;
+  }
+
+  /* Dark-native dropdown options */
+  select option {
+    background-color: #0b1018;
+    color: #fafafa;
+  }
+}
+
+@layer components {
+  /* Translucent dark-slate glass panel: ~50% #1E293B fill, hairline zinc
+     border, subtle teal glow. The shared card surface for the whole app. */
+  .glass-card {
+    @apply rounded-xl border border-hairline bg-[#1E293B]/50 backdrop-blur-md shadow-[0_0_24px_rgba(20,184,166,0.12)];
+  }
+
+  .btn-electric {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-electric px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_24px_rgba(20,184,166,0.45)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-ghost {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-hairline bg-white/[0.02] px-5 py-2.5 text-sm font-medium text-ink transition-colors duration-200 hover:border-zinc-600 hover:bg-white/[0.06] active:scale-[0.98];
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+
+  .field-input {
+    @apply w-full rounded-lg border border-hairline bg-white/[0.04] px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-zinc-600 focus:border-electric focus:ring-2 focus:ring-electric/30;
+  }
+
+  .nav-link {
+    @apply text-sm font-medium text-mist transition-colors hover:text-ink;
+  }
+
+  .chip {
+    @apply rounded-full border border-hairline bg-white/[0.03] px-3 py-1 text-xs font-medium text-mist;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Build #7: Diagnostic Engine scan-preview animations                 */
+/* ------------------------------------------------------------------ */
+
+@keyframes mr-scan-line {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    top: 92%;
+    opacity: 0;
+  }
+}
+
+@keyframes mr-radar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Build #11: the sweep is retimed to ~1.2s: the UI swaps to the completed
+   readiness overlay right as one full sweep finishes. */
+.animate-scan-line {
+  animation: mr-scan-line 1.2s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+.animate-radar {
+  animation: mr-radar-spin 2.8s linear infinite;
+}
+
+/* Build #11: completed-state overlay entry (settles in, stays) */
+@keyframes mr-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.scan-preview-enter {
+  animation: mr-fade-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Build #11: gentle idle glow behind the readiness gauge */
+@keyframes mr-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.mr-glow-pulse {
+  animation: mr-glow-pulse 4s ease-in-out infinite;
+}
+
+/* Build #26: pulsing teal glow on the Venn's central "MarketReady Diagnostic
+   Engine" node (shared 4s glow pulse, matching the readiness-gauge halo). */
+@keyframes mr-venn-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.06);
+  }
+}
+
+.venn-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mr-venn-pulse 3s ease-in-out infinite;
+}
+
+/* Build #33: fade/scale-in for the results dashboard's friction cards the
+   instant the authoritative AI assessment resolves, so the swap from the
+   preliminary local values lands as a smooth transition, not an abrupt jump. */
+@keyframes mr-ai-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ai-enter {
+  animation: mr-ai-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Methodology strip: staggered pop-in reveal for each dot (build #36). */
+@keyframes mr-step-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.mr-step-reveal {
+  animation: mr-step-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Methodology strip: connector line draws left-to-right (build #36). */
+@keyframes mr-line-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.mr-line-draw {
+  transform-origin: left center;
+  animation: mr-line-draw 0.9s 0.15s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+/* Build #NN: Diagnostic Engine 3-col re-layout animations. The gauge
+   sweep is a stroke-dashoffset transition (see .mr-gauge-sweep); the
+   connector data-pulse + soft right-slide reveal are keyframe driven. */
+.mr-gauge-sweep {
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Build #NN: fractional hero launch-trajectory dashed path. Hidden by
+   default (dashes pushed off-path), then the dash pattern marches
+   left-to-right once on scroll into view, reading as the path being traced
+   toward launch. Reduced-motion renders it statically. */
+.fr-traj-hidden {
+  stroke-dasharray: 8 11;
+  stroke-dashoffset: 480;
+}
+.fr-traj-static {
+  stroke-dasharray: 8 11;
+}
+@keyframes mr-path-draw {
+  from {
+    stroke-dashoffset: 480;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.mr-path-draw {
+  stroke-dasharray: 8 11;
+  animation: mr-path-draw 1.8s 0.25s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+@keyframes mr-shift-slide {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.mr-shift-slide {
+  animation: mr-shift-slide 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Data pulse traveling along a connector line toward the active pillar. */
+@keyframes mr-data-pulse {
+  0% {
+    left: 0%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+.mr-data-pulse {
+  animation: mr-data-pulse 1.3s ease-in-out infinite;
+}
+
+/* ---- Build #NN: Diagnostic Engine gauge radar scan + accordion reveal ----
+   The gauge is illustrative demo UI (38/100, warning red/coral). On scroll
+   into view a conic wedge + radiant line rotate 360° once (the scan), then
+   the gauge arc sweeps to 38%. Accordion expansion content fades/slides in. */
+@keyframes mr-radar-scan {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0;
+  }
+}
+.mr-radar-wedge {
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(239, 68, 68, 0) 0deg,
+    rgba(239, 68, 68, 0) 278deg,
+    rgba(239, 68, 68, 0.28) 335deg,
+    rgba(239, 68, 68, 0.7) 358deg,
+    rgba(239, 68, 68, 0) 360deg
+  );
+}
+.mr-radar-line {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    to right,
+    rgba(239, 68, 68, 0.35),
+    rgba(239, 68, 68, 0.95)
+  );
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+}
+.mr-radar-scan.active-scan {
+  animation: mr-radar-scan 1.2s cubic-bezier(0.45, 0, 0.25, 1) both;
+}
+
+@keyframes mr-acc-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.mr-acc-reveal {
+  animation: mr-acc-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scan-line,
+  .animate-radar,
+  .scan-preview-enter,
+  .mr-glow-pulse,
+  .venn-core,
+  .ai-enter,
+  .mr-step-reveal,
+  .mr-line-draw,
+  .mr-shift-slide,
+  .mr-data-pulse,
+  .mr-radar-scan,
+  .mr-acc-reveal {
+    animation: none;
+  }
+  .mr-gauge-sweep,
+  .mr-path-draw {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Founder logo marquee: infinite ticker with authentic brand logos    */
+/* (rendered as clean white silhouettes via brightness-0 invert) plus  */
+/* styled text-wordmark fallbacks for any brand without a clean asset. */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .mr-marquee-track {
+    animation: none;
+    transform: translateX(0);
+  }
+}
+.mr-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.mr-marquee-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  animation: mr-marquee 25s linear infinite;
+  will-change: transform;
+}
+.mr-logo-group {
+  display: flex;
+  align-items: center;
+  /* Spacing comes from mx-8 on each logo item wrapper (2rem each side =
+     4rem between adjacent logos). Keep the group itself gapless so the
+     -50% loop stays seamless. */
+}
+@keyframes mr-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+/* Render any source-colored authentic SVG logo as a clean white mark */
+.logo-mono {
+  filter: brightness(0) invert(1);
+}
