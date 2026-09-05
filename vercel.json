@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "other",
+  "framework": "tanstack-start",
   "buildCommand": "bash ./build-vercel.sh"
 }
