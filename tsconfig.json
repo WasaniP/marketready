@@ -1,5 +1,13 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "node_modules",
+    ".tanstack",
+    "dist"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
