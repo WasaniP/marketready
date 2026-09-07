@@ -108,7 +108,6 @@ export function BookingModal({
   const isAdvisory = initialService === SERVICE_OPTIONS[2].value;
   const isAudit = initialService === SERVICE_OPTIONS[3].value;
   const isBriefing = initialService === SERVICE_OPTIONS[4].value;
-  const isSprint = !isAdvisory && !isAudit && !isBriefing;
 
   // Only mounted while `open` : run prefill / focus / scroll-lock on mount and
   // undo them all on unmount (close restores scroll + focus).
@@ -322,11 +321,6 @@ export function BookingModal({
                     ? "We'll reach out to schedule your diagnostic briefing."
                     : "We'll reach out to schedule your Sprint kickoff."}
             </p>
-            {isSprint && (
-              <a href="/onboarding/success" className="btn-electric mt-2 w-full">
-                Start your onboarding intake →
-              </a>
-            )}
             <button type="button" onClick={onClose} className="btn-ghost mt-2 w-full">
               Done
             </button>
