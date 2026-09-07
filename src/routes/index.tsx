@@ -158,27 +158,15 @@ function Manifesto() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Friction observations: first-person, stat-free. The old metric      */
-/* cards (47% / 61% / 28%) are gone per owner requirement: no          */
-/* fabricated sources or figures.                                      */
+/* Friction observations: first-person, stat-free. Per owner spec §12:  */
+/* no framework-style titles, no headline stats, no invented citations; */
+/* each observation stands alone as the card's lead line.               */
 /* ------------------------------------------------------------------ */
 function FrictionObservations() {
   const cards = [
-    {
-      title: "Demos that turn into category lessons",
-      body: "I see founders spend the first thirty minutes of every demo explaining what category they're in, instead of closing on value. When your site doesn't stake the category, your sales team pays for it on every call.",
-      signoff: "That's the friction I hear about most.",
-    },
-    {
-      title: "Marketing spend that leaks on arrival",
-      body: "I watch teams pour budget into ads and outbound that land on feature-heavy, outcome-light pages. Visitors bounce in seconds, not because the product is weak, but because the payoff was never named.",
-      signoff: "Traffic can't fix a message that doesn't land.",
-    },
-    {
-      title: "Discounting to win comparisons you shouldn't be in",
-      body: "When your difference isn't named, buyers file you next to the cheapest alternative and ask for a discount. I see good products lose pricing power they never had to give up.",
-      signoff: "Positioning is what protects your price.",
-    },
+    "I've sat on demo calls where the first 30 minutes go to explaining the category, not selling the product. That's not a sales problem. That's a positioning problem.",
+    "I've watched founders pour six figures into paid traffic before fixing copy that bounces visitors in under 8 seconds. The ads were never the problem.",
+    "When buyers can't tell you apart from a cheaper option, your reps discount to close. I've seen this kill margins on otherwise strong products.",
   ];
   return (
     <section id="friction" className="scroll-mt-24 bg-sand py-16 sm:py-24">
@@ -195,16 +183,12 @@ function FrictionObservations() {
           </p>
         </div>
         <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
-          {cards.map((c) => (
-            <article key={c.title} className="glass-card-sand flex flex-col p-8">
+          {cards.map((observation) => (
+            <article key={observation.slice(0, 32)} className="glass-card-sand flex flex-col p-8">
               <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-lg bg-ambertint text-lg font-bold text-ember">
                 ✦
               </span>
-              <h3 className="mt-4 font-display text-xl leading-snug text-ink">{c.title}</h3>
-              <p className="mt-3 flex-1 text-[15px] leading-relaxed text-mist">{c.body}</p>
-              <p className="mt-4 border-t border-hairline pt-4 text-sm font-semibold italic text-ember">
-                {c.signoff}
-              </p>
+              <p className="mt-4 flex-1 text-[15px] leading-relaxed text-mist">{observation}</p>
             </article>
           ))}
         </div>
@@ -252,6 +236,9 @@ function HowItWorks() {
           <p className="mt-3 text-base leading-relaxed text-mist">
             One readiness score, three moves. I diagnose where your positioning
             breaks, prescribe the highest-impact fixes, and activate them with you.
+          </p>
+          <p className="mt-3 text-base leading-relaxed text-mist">
+            I built this in this exact order because most founders try to activate before they've diagnosed the actual problem. That's how budget gets wasted on the wrong fix.
           </p>
         </div>
 
@@ -478,6 +465,9 @@ function DiagnosticEngine() {
               This is how I read your site: nine dimensions, scored in seconds,
               grouped into three pillars.
             </p>
+            <p className="mt-3 text-base leading-relaxed text-sand/90">
+              After 8+ years running product marketing at Amazon, Warner Bros. Discovery, and Bleacher Report, I built this scorecard around the same 9 things I check on every positioning teardown.
+            </p>
             <p className="mt-4 text-sm leading-relaxed text-sand/85">
               I map every signal to one of nine scored dimensions, grouped into
               three pillars: how you position, how you message, and how fast you
@@ -642,11 +632,9 @@ const FOUNDER_CRED_BRANDS: { label: string; src: string }[] = [
   { label: "NCAA", src: "/logos/ncaa.svg" },
 ];
 
-const FOUNDER_VALUE_BADGES = [
-  "Senior PMM, not an agency",
-  "Positioning that protects price",
-  "Direct 1-on-1 partnership",
-];
+/* Founder bio (owner spec §12): first-person founder copy replaces the   */
+/* old keyword-fragment badges. Logo bar directly beneath; no photo here   */
+/* (headshot stays on /about only).                                        */
 
 function FounderStory() {
   return (
@@ -661,27 +649,8 @@ function FounderStory() {
             I've sat in the rooms where launches are won and lost.
           </h2>
           <p className="mt-3 text-lg leading-relaxed text-mist">
-            I'm Wasani. For fifteen years I've led product marketing inside
-            brands like Warner Bros. Discovery, Bleacher Report, TNT Sports,
-            TBS, AEW, and the NCAA, with work covered by Variety and Rolling
-            Stone. I've watched great products stall because their story didn't
-            land, and good-enough products win because theirs did.
+            Hi, I'm Wasani. I've spent 8+ years leading product marketing at Amazon, Warner Bros. Discovery (Bleacher Report), and other high-growth companies. I started MarketReady because I kept seeing the same thing: founders and growth teams scaling spend before their positioning could support it. This isn't an agency. It's me, working directly with you.
           </p>
-          <p className="text-lg leading-relaxed text-mist">
-            MarketReady is my way of giving founders the same senior-level read
-            I'd give my own team: direct, honest, no agency overhead, no junior
-            hand-offs. You work with me on every deliverable.
-          </p>
-          <div className="mb-10 mt-6 flex flex-wrap justify-center gap-3">
-            {FOUNDER_VALUE_BADGES.map((label) => (
-              <span
-                key={label}
-                className="rounded-full border border-linen bg-sand px-4 py-1.5 text-xs font-medium text-mist shadow-sm"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
         </div>
 
         <div className="mb-4 mt-10">
@@ -762,8 +731,7 @@ function ServicesStack() {
           Got your score? Here's how I help you fix the gaps.
         </h2>
         <p className="mb-8 mt-3 text-center text-[13px] leading-snug text-white/70 sm:text-sm">
-          Start free with the diagnostic. When you're ready to move, pick the
-          engagement that fits your timeline.
+          Pick the option that fits where you are right now. You work directly with me on every deliverable. No account managers, no junior hand-offs.
         </p>
 
         <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-3">
@@ -810,7 +778,7 @@ function ServicesStack() {
 const FAQ_ITEMS = [
   {
     q: "Do you work with a team, or is it just you?",
-    a: "It's just me, and that's the point. You work 1-on-1 with a senior product marketing strategist on every deliverable. No account managers, no junior hand-offs, no agency bloat.",
+    a: "It's just me. I'm Wasani, and I lead every engagement personally. No account managers, no junior strategists, no hand-offs. You work directly with the person who's done this at Amazon, Warner Bros. Discovery, and Bleacher Report, on every single deliverable.",
   },
   {
     q: "What does an engagement cost?",
