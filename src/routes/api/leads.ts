@@ -37,16 +37,25 @@
  * remapping a column later means editing that constant and nothing else.
  * Client-side scoring stays the single source of truth for the score value:
  * this route never recomputes a score, it only carries what the client sent.
+ *
+ * The generic Airtable plumbing (env-var checks, metadata schema whitelist,
+ * transient-retry write) lives in src/lib/airtable.ts, shared verbatim with
+ * the booking route (src/routes/api/booking.ts). This file keeps only the
+ * diagnostic-specific logic: normalization, the field map, and the Knock
+ * instant-results email trigger (which the booking route must never fire).
  */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { mkdir, appendFile } from "node:fs/promises";
 import * as path from "node:path";
+import {
+  EMAIL_RE,
+  fetchTableSchema,
+  missingEnvVars,
+  whitelistFields,
+  writeAirtable,
+} from "~/lib/airtable";
 import { triggerResultsEmail } from "~/lib/knockEmail";
-
-const AIRTABLE_API = "https://api.airtable.com/v0";
-const AIRTABLE_META_API = "https://api.airtable.com/v0/meta";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /* ------------------------------------------------------------------ */
 /* AIRTABLE COLUMN MAP: the ONLY place Airtable column names live.     */
@@ -396,142 +405,12 @@ function toAirtableFields(lead: NormalizedLead): Record<string, unknown> {
   );
 }
 
-/** Cached set of column names that actually exist in the owner's table
- * (from the metadata API). Null = not fetched yet / fetch failed. */
-let knownColumns: Set<string> | null = null;
-let schemaFetchInFlight: Promise<Set<string> | null> | null = null;
-
-/** Fetch the table schema ONCE (lazily, cached at module level) via the
- * metadata API. Resolves the set of column names, or null on any failure
- * (caller then falls back to ORIGINAL_FIELD_NAMES). Never logs or returns
- * the token. */
-function fetchTableSchema(): Promise<Set<string> | null> {
-  if (knownColumns) return Promise.resolve(knownColumns);
-  if (schemaFetchInFlight) return schemaFetchInFlight;
-  schemaFetchInFlight = (async (): Promise<Set<string> | null> => {
-    try {
-      const token = process.env.AIRTABLE_API_TOKEN;
-      const base = process.env.AIRTABLE_BASE_ID;
-      if (!token || !base) return null;
-      const res = await fetch(
-        `${AIRTABLE_META_API}/bases/${encodeURIComponent(base)}/tables`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      if (!res.ok) return null;
-      const data = (await res.json().catch(() => null)) as {
-        tables?: { name?: string; fields?: { name?: string }[] }[];
-      } | null;
-      const tableName = process.env.AIRTABLE_TABLE_NAME;
-      const table = data?.tables?.find((t) => t.name === tableName);
-      if (!table || !Array.isArray(table.fields)) return null;
-      const names = new Set<string>();
-      for (const f of table.fields) {
-        if (f && typeof f.name === "string" && f.name) names.add(f.name);
-      }
-      knownColumns = names;
-      return names;
-    } catch {
-      return null;
-    } finally {
-      schemaFetchInFlight = null;
-    }
-  })();
-  return schemaFetchInFlight;
-}
-
-/** Drop any field whose column does not exist in the table, so adding new
- * mappings (First Name / Company) can never break writes before the owner
- * adds the columns. When the schema is unknown (metadata fetch failed),
- * falls back to ORIGINAL_FIELD_NAMES (First Name / Company skipped). */
-function whitelistFields(
-  fields: Record<string, unknown>,
-  schema: Set<string> | null,
-): Record<string, unknown> {
-  const allowed = schema ?? ORIGINAL_FIELD_NAMES;
-  return Object.fromEntries(Object.entries(fields).filter(([k]) => allowed.has(k)));
-}
-
 /** Best-effort JSONL append (never throws). Consistent with intake.ts. */
 async function appendJsonl(record: unknown): Promise<void> {
   const dir = path.join(process.cwd(), ".data");
   const file = path.join(dir, "leads.jsonl");
   await mkdir(dir, { recursive: true });
   await appendFile(file, `${JSON.stringify(record)}\n`, "utf8");
-}
-
-/** Names of the required Airtable env vars that are currently missing. */
-function missingEnvVars(): string[] {
-  const missing: string[] = [];
-  if (!process.env.AIRTABLE_API_TOKEN) missing.push("AIRTABLE_API_TOKEN");
-  if (!process.env.AIRTABLE_BASE_ID) missing.push("AIRTABLE_BASE_ID");
-  if (!process.env.AIRTABLE_TABLE_NAME) missing.push("AIRTABLE_TABLE_NAME");
-  return missing;
-}
-
-/** Tiny inline sleep for retry backoff (no new dependencies). */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/** True for transient network/socket/DNS failures worth retrying: Bun's
- * "The socket connection was closed unexpectedly" / "fetch failed", undici's
- * "sending request failed", Node errno codes (ECONNRESET, ETIMEDOUT,
- * ENOTFOUND, ECONNREFUSED, EAI_AGAIN, EPIPE), and closed/aborted streams.
- * Anything else (e.g. a programming error) is not retried. */
-function isTransientNetworkError(msg: string): boolean {
-  return /socket connection was closed|fetch failed|sending request failed|econnreset|econnrefused|etimedout|enotfound|eai_again|epipe|network error|aborted|terminated|other side closed/i.test(
-    msg,
-  );
-}
-
-/** POST one record to Airtable. Resolves { ok:true } on 2xx, else
- * { ok:false, error } with the Airtable status + message (never the token).
- * Transient network failures (socket drops, DNS blips) are retried up to
- * 3 total attempts with a short backoff (~400ms then ~900ms). HTTP
- * responses are never retried: res.ok returns immediately, and a 4xx/5xx
- * rejection is permanent (retrying cannot help). */
-async function writeAirtable(
-  fields: Record<string, unknown>,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  const token = process.env.AIRTABLE_API_TOKEN;
-  const base = process.env.AIRTABLE_BASE_ID;
-  const table = process.env.AIRTABLE_TABLE_NAME;
-  if (!token || !base || !table) {
-    return {
-      ok: false,
-      error: `Airtable is not configured (missing ${missingEnvVars().join(", ")}).`,
-    };
-  }
-  const url = `${AIRTABLE_API}/${encodeURIComponent(base)}/${encodeURIComponent(table)}`;
-  const MAX_ATTEMPTS = 3;
-  const RETRY_DELAYS_MS = [400, 900] as const;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ records: [{ fields }] }),
-      });
-      if (res.ok) return { ok: true };
-      const detail = (await res.text().catch(() => "")).slice(0, 300);
-      return {
-        ok: false,
-        error: `Airtable rejected the lead (HTTP ${res.status})${detail ? `: ${detail}` : "."}`,
-      };
-    } catch (err) {
-      // Network / DNS / socket failure: message only, never credentials.
-      const msg = err instanceof Error ? err.message : "network error";
-      if (attempt < MAX_ATTEMPTS && isTransientNetworkError(msg)) {
-        await sleep(RETRY_DELAYS_MS[attempt - 1]);
-        continue;
-      }
-      return { ok: false, error: `Airtable request failed: ${msg}` };
-    }
-  }
-  return { ok: false, error: "Airtable request failed: network error" };
 }
 
 export const Route = createFileRoute("/api/leads")({
@@ -564,7 +443,11 @@ export const Route = createFileRoute("/api/leads")({
           );
         }
 
-        const fields = whitelistFields(toAirtableFields(lead), await fetchTableSchema());
+        const fields = whitelistFields(
+          toAirtableFields(lead),
+          await fetchTableSchema(process.env.AIRTABLE_TABLE_NAME ?? ""),
+          ORIGINAL_FIELD_NAMES,
+        );
 
         // Layer 1: Airtable when configured. The token is never logged.
         //
