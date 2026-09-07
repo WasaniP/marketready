@@ -36,6 +36,7 @@ import { PILLAR_OF, scoreColor } from "~/lib/audit/engine";
 import type { AIResult } from "~/lib/audit/ai";
 import { withAlpha } from "~/components/charts";
 import { downloadAuditReport } from "~/lib/report/generate";
+import { apiUrl } from "~/lib/apiOrigin";
 
 /** One scored card in the pillar-grouped grid. Locked (reserved) cards are
  * never built here: the public view shows ONLY the 6 scored parameters. */
@@ -341,10 +342,11 @@ function PdfCaptureBar({
     };
 
     // POST the lead (Airtable, JSONL fallback always ok), then generate +
-    // download the PDF client-side. Never block the user on the network and
+    // download the PDF client-side. Canonical origin (never crosses the
+    // apex→www 308). Never block the user on the network and
     // never claim an email was sent: the report is an instant download.
     // The score below stays visible no matter the POST outcome.
-    fetch("/api/leads", {
+    fetch(apiUrl("/api/leads"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, source: "Homepage Calculator" }),

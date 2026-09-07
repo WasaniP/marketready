@@ -15,6 +15,7 @@ import type { AssessmentInput, AuditResult } from "~/lib/audit/types";
 import { toAIResult } from "~/lib/audit/ai";
 import type { AIResult } from "~/lib/audit/ai";
 import { ASSESSMENT_STORAGE_KEY } from "~/lib/storage";
+import { apiUrl } from "~/lib/apiOrigin";
 
 
 /* ------------------------------------------------------------------ */
@@ -216,7 +217,7 @@ function useAssessment() {
     const timer = window.setTimeout(() => controller.abort(), 32000);
     setAiStatus("loading");
     setAiResult(null);
-    fetch("/api/diagnose", {
+    fetch(apiUrl("/api/diagnose"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: cleanUrl, heroCopy: "", icp: "" }),
@@ -512,9 +513,10 @@ function HomepageUnlock({
     };
 
     // Non-blocking: the teaser score above stays visible no matter what.
+    // Canonical origin (never crosses the apex→www 308).
     // On failure the unlock form stays and the error is shown inline; the
     // success "unlocked" message only appears on data.ok === true.
-    fetch("/api/leads", {
+    fetch(apiUrl("/api/leads"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

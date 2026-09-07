@@ -23,6 +23,7 @@ import {
   CLIENT_ID_STORAGE_KEY,
   INTAKE_STORAGE_KEY,
 } from "~/lib/storage";
+import { apiUrl } from "~/lib/apiOrigin";
 
 export const Route = createFileRoute("/onboarding/success")({
   head: () => ({
@@ -167,7 +168,7 @@ function OnboardingSuccess() {
 
     let ok = false;
     try {
-      const res = await fetch("/api/intake", {
+      const res = await fetch(apiUrl("/api/intake"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
