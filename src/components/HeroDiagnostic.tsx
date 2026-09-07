@@ -413,15 +413,216 @@ function DimCard({ card }: { card: TeaserDim }) {
   );
 }
 
+/** Homepage calculator lead capture ("Unlock My Full Diagnostic Report").
+ *
+ * Renders below the teaser score on the homepage / /services/diagnostic
+ * results: First Name + Work Email, non-blocking. On submit it POSTs the
+ * teaser score + full diagnostic payload to /api/leads with Source
+ * "Homepage Calculator" (Airtable-backed, JSONL fallback), then shows a
+ * confirmation. The score above is already visible and never depends on the
+ * POST outcome: on failure the results stay on screen and a one-line
+ * console.warn (no token) is logged.
+ */
+const UNLOCK_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/** Company inferred from the submitted URL's domain, not a user field. */
+function inferUnlockCompany(url: string): string {
+  try {
+    let host = new URL(url).hostname.toLowerCase();
+    host = host.replace(/^www\./, "");
+    return host.split(".")[0] ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function HomepageUnlock({
+  result,
+  submitted,
+  aiResult,
+  headlineScore,
+  overallBand,
+  redFlag,
+  dims,
+}: {
+  result: AuditResult;
+  submitted: AssessmentInput | null;
+  aiResult: AIResult | null;
+  headlineScore: number;
+  overallBand: string;
+  redFlag: TeaserDim | undefined;
+  dims: TeaserDim[];
+}) {
+  const [firstName, setFirstName] = useState("");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const fn = firstName.trim();
+    const em = email.trim();
+    if (!fn) {
+      setError("Enter your first name.");
+      return;
+    }
+    if (!UNLOCK_EMAIL_RE.test(em)) {
+      setError("Enter a valid work email.");
+      return;
+    }
+    setError("");
+    setStatus("sending");
+
+    const websiteUrl = submitted?.url || result.url;
+    const dimPayload = dims.map((d) => ({
+      id: d.id,
+      name: d.name,
+      pillar: d.pillar,
+      score: d.score,
+      status: d.status,
+      friction_label: d.frictionLabel,
+      anchor_label: d.anchorLabel,
+      keyObservation: d.keyObservation,
+      commercialRisk: d.commercialRisk,
+      evidence_snippet: d.evidenceSnippet,
+      locked: d.locked,
+      insufficientData: d.insufficientData,
+    }));
+    const payload = {
+      firstName: fn,
+      workEmail: em,
+      company: inferUnlockCompany(websiteUrl),
+      websiteUrl,
+      icp: submitted?.icp ?? result.icp ?? "",
+      overallScore: headlineScore,
+      lowestParameter: redFlag?.name ?? null,
+      keyObservation: redFlag?.keyObservation ?? "",
+      commercialRisk: redFlag?.commercialRisk ?? "",
+      frictionLabel: redFlag?.frictionLabel ?? "",
+      anchorLabel: redFlag?.anchorLabel ?? "",
+      domEvidence: redFlag?.evidenceSnippet ?? "",
+      diagnosticPayload: {
+        score: headlineScore,
+        overallBand,
+        generatedAt: result.generatedAt,
+        url: websiteUrl,
+        dimensions: dimPayload,
+      },
+      source: "Homepage Calculator",
+    };
+
+    // Non-blocking: the teaser score above stays visible no matter what.
+    fetch("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then((res) => res.json().catch(() => null))
+      .then((data) => {
+        if (data && data.ok === false) {
+          console.warn("[homepage] Lead sync did not reach Airtable:", data.error);
+        }
+      })
+      .catch(() => null)
+      .finally(() => {
+        setStatus("done");
+      });
+  };
+
+  return (
+    <div className="mt-6 overflow-hidden rounded-xl border border-electric/40 bg-[#1E293B]/50 shadow-[0_0_30px_rgba(20,184,166,0.12)] backdrop-blur-md">
+      <div className="flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
+        <div className="max-w-xl">
+          <span className="chip border-electric/40 text-electric">Full Report</span>
+          <h4 className="mt-3 text-lg font-bold tracking-tight text-ink sm:text-xl">
+            {status === "done" ? "Your diagnostic report is unlocked" : "Unlock My Full Diagnostic Report"}
+          </h4>
+          <p className="mt-2 text-sm leading-relaxed text-mist">
+            {status === "done"
+              ? "Your score breakdown is saved. A strategist can walk you through the highest-impact fixes in a free 15-minute briefing."
+              : "Get every scored parameter, the Surface Red Flag, and the observation and risk analysis from this scan, saved for your team."}
+          </p>
+        </div>
+
+        <div className="w-full max-w-sm shrink-0">
+          {status === "done" ? (
+            <div className="flex flex-col gap-3">
+              <p className="rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-center text-sm font-semibold text-electric">
+                Report unlocked. Check your inbox for next steps.
+              </p>
+              <p className="text-center text-xs text-zinc-500">
+                Instant unlock. Zero spam.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={submit} noValidate className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="home-unlock-first" className="field-label">
+                    First Name <span className="text-electric">*</span>
+                  </label>
+                  <input
+                    id="home-unlock-first"
+                    type="text"
+                    name="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Ada"
+                    autoComplete="given-name"
+                    className="field-input"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="home-unlock-email" className="field-label">
+                    Work Email <span className="text-electric">*</span>
+                  </label>
+                  <input
+                    id="home-unlock-email"
+                    type="email"
+                    name="workEmail"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@yourcompany.com"
+                    autoComplete="email"
+                    className="field-input"
+                    aria-describedby={error ? "home-unlock-error" : undefined}
+                  />
+                </div>
+              </div>
+              {error && (
+                <p
+                  id="home-unlock-error"
+                  role="alert"
+                  className="rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-sm text-electric"
+                >
+                  {error}
+                </p>
+              )}
+              <button type="submit" disabled={status === "sending"} className="btn-electric w-full">
+                {status === "sending" ? "Unlocking…" : "Unlock My Full Diagnostic Report →"}
+              </button>
+              <p className="text-center text-xs text-zinc-500">
+                Instant unlock. Zero spam.
+              </p>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Restored teaser results component (was A2 in the prior build). */
 function HeroResults({
   result,
+  submitted,
   onReset,
   onBookBriefing,
   aiResult,
   aiPending,
 }: {
   result: AuditResult;
+  submitted: AssessmentInput | null;
   onReset: () => void;
   onBookBriefing: () => void;
   aiResult: AIResult | null;
@@ -560,6 +761,16 @@ function HeroResults({
         </button>
       </div>
 
+      <HomepageUnlock
+        result={result}
+        submitted={submitted}
+        aiResult={aiResult}
+        headlineScore={score}
+        overallBand={typeof band === "string" ? band : String(band)}
+        redFlag={redFlag}
+        dims={dims}
+      />
+
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-zinc-600">
           {aiResult
@@ -624,6 +835,7 @@ export function HeroDiagnostic({
                   {aiLoading && <CrawlScanner mode="loading" url={submitted.url} />}
                   <HeroResults
                     result={result}
+                    submitted={submitted}
                     onReset={reset}
                     onBookBriefing={onBookBriefing}
                     aiResult={aiResolved}

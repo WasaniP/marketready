@@ -30,6 +30,8 @@ import {
   writeDiagnosticState,
   scoreDiagnostic,
   readinessBand,
+  primaryFriction,
+  prescriptionFor,
   answersSummary,
 } from "~/lib/diagnostic";
 import type { DiagnosticAnswers, DimensionId } from "~/lib/diagnostic";
@@ -170,6 +172,14 @@ function Assessment() {
 
     // Lead capture: local fallback + best-effort server save (never throws).
     const home = readHomeAssessment();
+    const summary = answersSummary(full);
+    const frictionId = primaryFriction(full);
+    const frictionName = DIMENSIONS.find((d) => d.id === frictionId)?.name ?? frictionId;
+    const rx = prescriptionFor(frictionId);
+    const prescriptionLabel =
+      rx === "sprint"
+        ? "14-Day Positioning Sprint ($5,000)"
+        : "Fractional GTM Advisory ($5,000/month)";
     const payload: LeadPayload = {
       email: cleanEmail,
       url: home?.url || "not provided",
@@ -187,9 +197,43 @@ function Assessment() {
     // record keeps it; the server insert ignores unknown fields.
     const leadPayload: LeadPayload & { answersSummary: string } = {
       ...payload,
-      answersSummary: answersSummary(full),
+      answersSummary: summary,
     };
     void captureLead(leadPayload);
+
+    // Diagnostic lead → Airtable-backed /api/leads (Source "Full
+    // Assessment"). Non-blocking: never throws, never delays the redirect,
+    // and the results screen renders the client-computed score regardless of
+    // the outcome (score logic untouched: scoreDiagnostic stays the single
+    // source of truth).
+    try {
+      void fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: cleanName,
+          workEmail: cleanEmail,
+          company: "",
+          websiteUrl: home?.url || "",
+          icp: home?.icp ?? "",
+          diagnosticScore: score,
+          readiness: band,
+          primaryFriction: frictionName,
+          recommendedPrescription: prescriptionLabel,
+          scoreBreakdown: summary,
+          source: "Full Assessment",
+        }),
+      })
+        .then((res) => res.json().catch(() => null))
+        .then((data) => {
+          if (data && data.ok === false) {
+            console.warn("[assessment] Lead sync did not reach Airtable:", data.error);
+          }
+        })
+        .catch(() => {});
+    } catch {
+      // fetch itself threw synchronously (offline): results still render.
+    }
 
     window.location.assign("/assessment/results");
   };

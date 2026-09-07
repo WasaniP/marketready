@@ -343,12 +343,18 @@ function PdfCaptureBar({
     // POST the lead (Airtable, JSONL fallback always ok), then generate +
     // download the PDF client-side. Never block the user on the network and
     // never claim an email was sent: the report is an instant download.
+    // The score below stays visible no matter the POST outcome.
     fetch("/api/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, source: "Homepage Calculator" }),
     })
       .then((res) => res.json().catch(() => null))
+      .then((data) => {
+        if (data && data.ok === false) {
+          console.warn("[homepage] Lead sync did not reach Airtable:", data.error);
+        }
+      })
       .catch(() => null)
       .finally(() => {
         setStatus("done");
