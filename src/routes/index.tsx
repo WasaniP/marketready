@@ -142,9 +142,9 @@ const HOW_IT_WORKS_STEPS = [
 /* ------------------------------------------------------------------ */
 function Manifesto() {
   return (
-    <section id="manifesto" className="scroll-mt-24 border-t border-hairline bg-cream py-14 sm:py-16">
+    <section id="manifesto" className="scroll-mt-24 border-t border-hairline bg-sand py-16 sm:py-24">
       <div className="mx-auto max-w-3xl px-5 text-center sm:px-8">
-        <p className="eyebrow">Why I built this</p>
+        <p className="eyebrow text-navy">Why I built this</p>
         <blockquote className="mt-4 font-display text-2xl leading-snug text-ink sm:text-[2rem]">
           "Most startups don't have a product problem. They have a language
           problem. I started MarketReady so founders could hear, plainly, how
@@ -181,10 +181,10 @@ function FrictionObservations() {
     },
   ];
   return (
-    <section id="friction" className="scroll-mt-24 border-t border-hairline bg-sand py-14 sm:py-16">
+    <section id="friction" className="scroll-mt-24 bg-sand py-16 sm:py-24">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="eyebrow">What I keep seeing</p>
+          <p className="eyebrow text-navy">What I keep seeing</p>
           <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
             The patterns I see holding back growth
           </h2>
@@ -196,7 +196,7 @@ function FrictionObservations() {
         </div>
         <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
           {cards.map((c) => (
-            <article key={c.title} className="glass-card flex flex-col p-7">
+            <article key={c.title} className="glass-card-sand flex flex-col p-8">
               <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-lg bg-ambertint text-lg font-bold text-ember">
                 ✦
               </span>
@@ -240,14 +240,14 @@ function HowItWorks() {
     <section
       ref={sectionRef}
       id="how-it-works"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-14 sm:py-16"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-16 sm:py-24"
     >
       <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="eyebrow">How I work</p>
+          <p className="eyebrow text-navy">How I work</p>
           <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
-            Diagnose <span className="text-ember">→</span> Prescribe{" "}
-            <span className="text-ember">→</span> Activate
+            Diagnose <span className="text-navy">→</span> Prescribe{" "}
+            <span className="text-navy">→</span> Activate
           </h2>
           <p className="mt-3 text-base leading-relaxed text-mist">
             One readiness score, three moves. I diagnose where your positioning
@@ -258,7 +258,7 @@ function HowItWorks() {
         <div className="relative mt-10">
           <div
             aria-hidden="true"
-            className={`absolute left-[16%] right-[16%] top-[13px] hidden h-px bg-gradient-to-r from-ember/0 via-ember/60 to-navy/60 md:block ${line}`}
+            className={`absolute left-[16%] right-[16%] top-[13px] hidden h-px bg-navy/60 md:block ${line}`}
           />
           <ol className="grid gap-8 md:grid-cols-3 md:gap-6">
             {HOW_IT_WORKS_STEPS.map((step, i) => (
@@ -267,7 +267,7 @@ function HowItWorks() {
                 className={`relative flex flex-col items-center text-center ${reveal}`}
                 style={{ animationDelay: `${220 + i * 180}ms` }}
               >
-                <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-ember/40 bg-cream text-[10px] font-bold text-ember shadow-[0_0_12px_rgba(180,83,9,0.25)]">
+                <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-navy/40 bg-cream text-[10px] font-bold text-navy">
                   <span className="relative">{step.n}</span>
                 </span>
                 <h3 className="mt-4 font-display text-xl text-ink">{step.name}</h3>
@@ -384,13 +384,13 @@ function EngineMintGauge({ active }: { active: boolean }) {
         role="img"
         aria-label="Illustrative overall readiness score: 38 out of 100"
       >
-        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(28,25,23,0.08)" strokeWidth="10" />
+        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(228,237,234,0.18)" strokeWidth="10" />
         <circle
           cx="80"
           cy="80"
           r={r}
           fill="none"
-          stroke="#B45309"
+          stroke="#B85C38"
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={`${c * 0.38} ${c}`}
@@ -403,13 +403,13 @@ function EngineMintGauge({ active }: { active: boolean }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold leading-none tabular-nums text-emberdeep drop-shadow-[0_2px_12px_rgba(180,83,9,0.25)] sm:text-[2.5rem]">
+        <span className="text-3xl font-extrabold leading-none tabular-nums text-sand drop-shadow-[0_2px_12px_rgba(180,83,9,0.25)] sm:text-[2.5rem]">
           38
         </span>
-        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-fog">
+        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-pinetint">
           / 100
         </span>
-        <span className="mt-1.5 text-xs font-bold uppercase tracking-wider text-ember">
+        <span className="mt-1.5 text-xs font-bold uppercase tracking-wider text-ambertint">
           High Risk
         </span>
       </div>
@@ -465,33 +465,33 @@ function DiagnosticEngine() {
     <section
       ref={sectionRef}
       id="methodology"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-sand py-14 sm:py-16"
+      className="relative scroll-mt-24 overflow-hidden bg-navy py-16 sm:py-24"
     >
       <div className="relative mx-auto w-full max-w-6xl overflow-hidden px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
           <div className={`flex flex-col lg:col-span-4 ${revealLeft}`}>
-            <p className="eyebrow">My scoring system</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
+            <p className="eyebrow text-pinetint">My scoring system</p>
+            <h2 className="mt-3 font-display text-3xl tracking-tight text-sand sm:text-4xl">
               The MarketReady Diagnostic Engine
             </h2>
-            <p className="mt-3 text-lg leading-relaxed text-mist">
+            <p className="mt-3 text-lg leading-relaxed text-sand">
               This is how I read your site: nine dimensions, scored in seconds,
               grouped into three pillars.
             </p>
-            <p className="mt-4 text-sm leading-relaxed text-mist">
+            <p className="mt-4 text-sm leading-relaxed text-sand/85">
               I map every signal to one of nine scored dimensions, grouped into
               three pillars: how you position, how you message, and how fast you
               launch. You see where each breaks, what it costs you, and what to
               fix first.
             </p>
-            <p className="mt-6 text-sm text-fog">
+            <p className="mt-6 text-sm text-sand/70">
               Every dimension maps to a scored signal in your audit, with rewrites
               for the gaps that cost you conversion.
             </p>
           </div>
 
           <div className={`flex flex-col items-center lg:col-span-3 ${revealGauge}`} style={{ animationDelay: "120ms" }}>
-            <div className="glass-card flex flex-col items-center px-5 py-5">
+            <div className="pine-card flex flex-col items-center px-7 py-7">
               <EngineMintGauge active={visible} />
             </div>
           </div>
