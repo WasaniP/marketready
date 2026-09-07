@@ -7,7 +7,7 @@
  * glowing teal HERO RECOMMENDED Audit row, the 9-Parameter 3-pillar pipeline
  * with STRICT continuous 1-9 numbering (3 tags per pillar, no overlap), an
  * emerald BUILT FOR / rose NOT FOR qual strip, and a bottom CTA banner.
- * Pricing honored: Free Diagnostic, $3,000 Audit (recommended), $7,500 Sprint,
+ * Pricing honored: Free Diagnostic, $3,000 Audit (recommended), $5,000 Sprint,
  * Custom Advisory. Reuses /services/diagnostic, /services/audit, /services/sprint,
  * /services/fractional. 0 em/en dashes (commas / colons / periods only; arrows
  * and glyphs are fine).
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/services/")({
       {
         name: "description",
         content:
-          "MarketReady services overview: from instant diagnostic to a dedicated Fractional GTM Lead. The free assessment scores your positioning across 9 PMM parameters, then the $3,000 MarketReady Audit, the $7,500 14-Day Positioning Sprint, or Fractional GTM Lead closes the gap.",
+          "MarketReady services overview: from instant diagnostic to a dedicated Fractional GTM Lead. The free assessment scores your positioning across 9 PMM parameters, then the $3,000 MarketReady Audit, the $5,000 14-Day Positioning Sprint, or Fractional GTM Lead closes the gap.",
       },
     ],
   }),
@@ -79,7 +79,7 @@ const TIERS: Tier[] = [
   {
     id: "sprint",
     name: "14-Day Positioning Sprint",
-    price: "$7,500",
+    price: "$5,000",
     scope: "Complete Messaging System, Competitive Battlecards & Homepage Copy Rewrite",
     speed: "14 DAYS",
     pillClass: "text-slate-400 border-slate-700/60",

@@ -125,7 +125,7 @@ const CELL_LINES: Record<string, string> = {
 
 /** Build #22/#35: Diagnose → Prescribe → Activate staged funnel (reframes the
  * old three-step "how it works" copy; the section id #how-it-works stays).
- * Prices are surfaced on the homepage: Stage 02 shows the $7,500 Sprint and
+ * Prices are surfaced on the homepage: Stage 02 shows the $5,000 Sprint and
  * Stage 03 the ongoing advisory retainer. The $3,000 MarketReady Audit is a
  * services-page offering and intentionally does NOT appear here. */
 const HOW_IT_WORKS_STEPS = [
@@ -895,7 +895,7 @@ function FounderCredibility() {
 /* Build (content restructure): compact 3-column pricing grid in the    */
 /* services / engagement-models area. Consolidates the paid offers into */
 /* a tight side-by-side grid: $3,000 Diagnostic Audit (featured) ->     */
-/* $7,500 14-Day Sprint -> Custom Fractional GTM Lead retainer. The     */
+/* $5,000 14-Day Sprint -> Custom Fractional GTM Lead retainer. The     */
 /* free tier was removed because the interactive AI diagnostic already  */
 /* lives at the top of the page. Featured Card 1 carries a teal glow    */
 /* border (#14B8A6) with a teal MOST POPULAR badge floated above it.    */
@@ -910,7 +910,7 @@ const DIAGNOSTIC_ITEMS = [
   "Funnel Leakage Map",
   "45-Min Live Strategy Review",
 ] as const;
-/* Stage 02: 14-Day Sprint ($7,500) */
+/* Stage 02: 14-Day Sprint ($5,000) */
 const SPRINT_ITEMS = [
   "Positioning Architecture",
   "Full Messaging House",
@@ -994,7 +994,7 @@ function ServicesStack() {
             </div>
           </div>
 
-          {/* Stage 02: 14-Day Sprint ($7,500) */}
+          {/* Stage 02: 14-Day Sprint ($5,000) */}
           <div className="rounded-xl p-5 bg-[#111827] border border-white/10 h-full">
             <div className="flex items-center justify-center">
               <span className="bg-slate-800/80 text-teal-400 text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase">
@@ -1003,7 +1003,7 @@ function ServicesStack() {
             </div>
             <h3 className="mt-2.5 text-lg font-bold text-white text-center">14-Day Sprint</h3>
             <div className="mt-0.5 text-[28px] font-bold text-white text-center leading-tight">
-              $7,500
+              $5,000
             </div>
             <p className="mt-1 text-[11px] uppercase tracking-wider text-slate-400 font-semibold text-center">
               2-Week Execution Sprint
@@ -1074,7 +1074,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How much does the MarketReady Sprint cost?",
-    a: "Sprints are a flat $7,500 for a full 14-day engagement. No hourly billing, no hidden fees, and no scope creep. You receive fully finished positioning architecture, website copy rewrites, sales talk tracks, and launch assets.",
+    a: "Sprints are a flat $5,000 for a full 14-day engagement. No hourly billing, no hidden fees, and no scope creep. You receive fully finished positioning architecture, website copy rewrites, sales talk tracks, and launch assets.",
   },
   {
     q: "Do I need to book a call before purchasing?",
