@@ -26,57 +26,60 @@ import { apiUrl } from "~/lib/apiOrigin";
 /* ------------------------------------------------------------------ */
 export function HeroMockup() {
   const rows = [
-    { label: "Category Positioning", score: "29/100", cls: "text-[#F97316]" },
-    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-[#F97316]" },
-    { label: "Differentiation Anchor", score: "21/100", cls: "text-[#EF4444]" },
+    { label: "Category Positioning", score: "29/100", cls: "text-[#B45309]" },
+    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-[#B45309]" },
+    { label: "Differentiation Anchor", score: "21/100", cls: "text-[#92400E]" },
   ];
   return (
     <div className="relative mx-auto w-full max-w-[400px]">
-      {/* Ambient purple/magenta glow behind + wrapped around the card */}
+      {/* Warm ambient glow behind the card */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -inset-6 rounded-[20px] bg-[#A855F7]/20 blur-2xl"
+        className="pointer-events-none absolute -inset-6 rounded-[20px] bg-ember/15 blur-2xl"
       />
       <div
-        className="relative overflow-hidden rounded-2xl bg-[#0B0F19] shadow-[0_0_50px_rgba(168,85,247,0.45),0_0_20px_rgba(20,184,166,0.2)]"
-        style={{ border: "2px solid #A855F7", borderRadius: "16px" }}
+        className="relative overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(28,25,23,0.06),0_16px_40px_rgba(28,25,23,0.12)]"
+        style={{ border: "1px solid #E3DCD2", borderRadius: "16px" }}
       >
-        {/* Top header bar: window dots + URL pill + purple LIVE AI CRAWL badge */}
-        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-2.5">
+        {/* Top header bar: window dots + URL pill + sample badge */}
+        <div className="flex items-center gap-3 border-b border-hairline bg-sand px-4 py-2.5">
           <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#EF4444]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#F59E0B]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#10B981]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
           </span>
-          <span className="min-w-0 flex-1 truncate rounded-md bg-white/[0.04] px-2 py-0.5 text-center text-[12px] text-zinc-400">
+          <span className="min-w-0 flex-1 truncate rounded-md bg-white px-2 py-0.5 text-center text-[12px] text-fog">
             https://yourproduct.com
           </span>
           <span
             aria-hidden="true"
-            className="flex shrink-0 items-center gap-1 rounded-full border border-[#A855F7]/60 bg-[#A855F7]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#E9D5FF]"
+            className="flex shrink-0 items-center gap-1 rounded-full border border-ember/40 bg-ambertint px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emberdeep"
           >
-            <span className="text-[9px]">●</span>LIVE AI CRAWL
+            <span className="text-[9px]">●</span>Sample report
           </span>
         </div>
-        {/* 3 metric row cards (distinct inner containers, purple borders) */}
-        <div className="flex flex-col gap-2 p-4">
+        {/* 3 metric row cards */}
+        <div className="flex flex-col gap-2 bg-white p-4">
           {rows.map((r) => (
             <div
               key={r.label}
-              className="flex items-center justify-between gap-3 rounded-lg border border-[#A855F7]/30 bg-white/[0.03] px-3.5 py-2.5"
+              className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-cream px-3.5 py-2.5"
             >
-              <span className="min-w-0 text-[13px] font-medium text-zinc-300">{r.label}</span>
+              <span className="min-w-0 text-[13px] font-medium text-mist">{r.label}</span>
               <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${r.cls}`}>
                 {r.score}
               </span>
             </div>
           ))}
-          {/* Critical leakage callout: solid dark card, full red border */}
-          <div className="mt-1 rounded-lg bg-[#0B0F19] px-3.5 py-2.5" style={{ border: "1px solid #EF4444" }}>
-            <p className="text-[11px] font-bold uppercase tracking-wide leading-snug text-[#F87171]">
-              CRITICAL LEAKAGE DETECTED: CATEGORY NAMING IS TOO BROAD FOR HIGH-INTENT BUYERS.
+          {/* Illustrative callout */}
+          <div className="mt-1 rounded-lg bg-ambertint px-3.5 py-2.5" style={{ border: "1px solid rgba(180,83,9,0.4)" }}>
+            <p className="text-[11px] font-bold uppercase leading-snug tracking-wide text-emberdeep">
+              Sample finding: category naming is too broad for high-intent buyers.
             </p>
           </div>
+          <p className="mt-1 text-center text-[11px] leading-relaxed text-fog">
+            Sample score for illustration — run your URL to get your real score.
+          </p>
         </div>
       </div>
     </div>
@@ -318,61 +321,64 @@ function useAssessment() {
 /** Live AI crawl scanner card (loading + demo modes). */
 function CrawlScanner({ mode = "demo", url }: { mode?: "demo" | "loading"; url?: string }) {
   const rows = [
-    { label: "ICP Alignment Index", score: "42/100", border: "border-[#EF4444]/50", scoreClass: "text-[#F87171]" },
-    { label: "Messaging Clarity Score", score: "88/100", border: "border-[#2DD4BF]/50", scoreClass: "text-[#5EEAD4]" },
-    { label: "Value Proposition & Contrast", score: "31/100", border: "border-[#A855F7]/60", scoreClass: "text-[#E9D5FF]" },
+    { label: "ICP Alignment Index", score: "42/100", border: "border-ember/30", scoreClass: "text-emberdeep" },
+    { label: "Messaging Clarity Score", score: "88/100", border: "border-scorepass/40", scoreClass: "text-scorepass" },
+    { label: "Value Proposition & Contrast", score: "31/100", border: "border-ember/30", scoreClass: "text-emberdeep" },
   ];
   const shownUrl = url || "https://yourproduct.com";
   return (
     <div className="relative mx-auto w-full max-w-[520px]">
-      <div aria-hidden="true" className="pointer-events-none absolute -inset-8 rounded-[28px] bg-[#2D1B69]/70 blur-3xl" />
-      <div className="relative overflow-hidden rounded-2xl border border-[#8B5CF6]/40 bg-gradient-to-b from-[#1E1338] via-[#221443] to-[#170E2E] shadow-[0_0_50px_rgba(139,92,246,0.4)]">
-        <div className="flex items-center gap-3 border-b border-[#8B5CF6]/25 bg-[#1A1032]/90 px-4 py-3">
+      <div aria-hidden="true" className="pointer-events-none absolute -inset-8 rounded-[28px] bg-ember/10 blur-3xl" />
+      <div className="glass-card relative overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-hairline bg-sand px-4 py-3">
           <span aria-hidden="true" className="flex shrink-0 gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#EF4444]/80" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#F59E0B]/80" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#10B981]/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
           </span>
-          <span className="min-w-0 flex-1 truncate text-xs text-zinc-400">{shownUrl}</span>
-          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#A855F7]/50 bg-[#A855F7]/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#E9D5FF]">
+          <span className="min-w-0 flex-1 truncate text-xs text-fog">{shownUrl}</span>
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-ember/40 bg-ambertint px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emberdeep">
             <span aria-hidden="true" className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#A78BFA] opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#C4B5FD]" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ember opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ember" />
             </span>
-            LIVE AI CRAWL
+            Sample scan
           </span>
         </div>
         {mode === "loading" ? (
-          <div className="flex flex-col items-center gap-4 p-8" role="status" aria-live="polite">
+          <div className="flex flex-col items-center gap-4 bg-white p-8" role="status" aria-live="polite">
             <div className="relative flex h-16 w-16 items-center justify-center">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#A855F7]/40" />
-              <span className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#A855F7] bg-[#241748]">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#5EEAD4] border-t-transparent" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ember/25" />
+              <span className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-ember bg-ambertint">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-ember border-t-transparent" />
               </span>
             </div>
             <div className="text-center">
-              <p className="font-mono text-sm font-bold tracking-wide text-[#E9D5FF]">Running Deep AI Crawl...</p>
-              <p className="mt-2 animate-pulse text-xs tracking-wider text-[#A78BFA]">Scanning positioning signals via live AI</p>
+              <p className="text-sm font-bold tracking-wide text-ink">Reading your site like a buyer would...</p>
+              <p className="mt-2 animate-pulse text-xs tracking-wider text-mist">Scanning positioning signals, this takes under a minute</p>
             </div>
             <div className="flex gap-1.5" aria-hidden="true">
               {[0, 1, 2].map((s) => (
-                <span key={s} className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#A78BFA]" style={{ animationDelay: `${s * 120}ms` }} />
+                <span key={s} className="h-1.5 w-1.5 animate-bounce rounded-full bg-ember" style={{ animationDelay: `${s * 120}ms` }} />
               ))}
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-2.5 p-5">
+          <div className="flex flex-col gap-2.5 bg-white p-5">
             {rows.map((s) => (
-              <div key={s.label} className={`flex items-center justify-between gap-3 rounded-lg border bg-[#241748]/60 px-4 py-3 ${s.border}`}>
-                <span className="min-w-0 text-xs font-medium text-zinc-300 sm:text-sm">{s.label}</span>
+              <div key={s.label} className={`flex items-center justify-between gap-3 rounded-lg border bg-cream px-4 py-3 ${s.border}`}>
+                <span className="min-w-0 text-xs font-medium text-mist sm:text-sm">{s.label}</span>
                 <span className={`shrink-0 font-mono text-sm font-bold tabular-nums ${s.scoreClass}`}>{s.score}</span>
               </div>
             ))}
-            <div className="mt-1 rounded-lg border border-[#A855F7]/50 bg-[#A855F7]/10 px-4 py-3 shadow-[0_0_24px_rgba(168,85,247,0.28)]">
-              <p className="text-xs font-bold uppercase tracking-wider leading-relaxed text-[#F0ABFC] sm:text-[13px]">
-                CRITICAL LEAKAGE DETECTED: Value proposition relies on generic features rather than buyer outcomes.
+            <div className="mt-1 rounded-lg border border-ember/40 bg-ambertint px-4 py-3">
+              <p className="text-xs font-bold uppercase leading-relaxed tracking-wider text-emberdeep sm:text-[13px]">
+                Sample finding: value proposition relies on generic features rather than buyer outcomes.
               </p>
             </div>
+            <p className="mt-1 text-center text-[11px] leading-relaxed text-fog">
+              Sample score for illustration — run your URL to get your real score.
+            </p>
           </div>
         )}
       </div>
@@ -390,7 +396,7 @@ function DimCard({ card }: { card: TeaserDim }) {
     <div className="glass-card flex flex-col gap-3 p-5" style={{ borderColor: hexA(color, 0.3), backgroundColor: hexA(color, 0.05) }}>
       <div className="flex items-start justify-between gap-2">
         <h4 className="text-sm font-semibold leading-snug text-ink">{card.name}</h4>
-        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${card.isAI ? "border-electric/40 bg-electric/10 text-electric" : "border-hairline bg-white/[0.04] text-zinc-400"}`}>
+        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${card.isAI ? "border-ember/40 bg-ambertint text-emberdeep" : "border-hairline bg-ink/[0.03] text-fog"}`}>
           {card.isAI ? "AI crawl" : "Local"}
         </span>
       </div>
@@ -406,9 +412,9 @@ function DimCard({ card }: { card: TeaserDim }) {
         <span className="ml-auto font-mono text-lg font-bold tabular-nums" style={{ color }}>{card.score != null ? `${card.score}/100` : "—"}</span>
       </div>
       <p className="text-sm leading-relaxed text-mist">{card.keyObservation ?? card.friction}</p>
-      <div className="rounded-lg border border-hairline bg-white/[0.03] px-3 py-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{section}: </span>
-        <span className="text-xs text-zinc-400">{card.commercialRisk}</span>
+      <div className="rounded-lg border border-hairline bg-cream px-3 py-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-fog">{section}: </span>
+        <span className="text-xs text-mist">{card.commercialRisk}</span>
       </div>
     </div>
   );
@@ -440,7 +446,6 @@ function inferUnlockCompany(url: string): string {
 function HomepageUnlock({
   result,
   submitted,
-  aiResult,
   headlineScore,
   overallBand,
   redFlag,
@@ -448,7 +453,6 @@ function HomepageUnlock({
 }: {
   result: AuditResult;
   submitted: AssessmentInput | null;
-  aiResult: AIResult | null;
   headlineScore: number;
   overallBand: string;
   redFlag: TeaserDim | undefined;
@@ -538,28 +542,28 @@ function HomepageUnlock({
   };
 
   return (
-    <div className="mt-6 overflow-hidden rounded-xl border border-electric/40 bg-[#1E293B]/50 shadow-[0_0_30px_rgba(20,184,166,0.12)] backdrop-blur-md">
+    <div className="glass-card mt-6 overflow-hidden">
       <div className="flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-xl">
-          <span className="chip border-electric/40 text-electric">Full Report</span>
-          <h4 className="mt-3 text-lg font-bold tracking-tight text-ink sm:text-xl">
-            {status === "done" ? "Your diagnostic report is unlocked" : "Unlock My Full Diagnostic Report"}
+          <span className="chip">Full Report</span>
+          <h4 className="mt-3 font-display text-lg tracking-tight text-ink sm:text-xl">
+            {status === "done" ? "Your diagnostic report is unlocked" : "Want the full breakdown in your inbox?"}
           </h4>
           <p className="mt-2 text-sm leading-relaxed text-mist">
             {status === "done"
-              ? "Your score breakdown is saved. A strategist can walk you through the highest-impact fixes in a free 15-minute briefing."
-              : "Get every scored parameter, the Surface Red Flag, and the observation and risk analysis from this scan, saved for your team."}
+              ? "Your score breakdown is saved. If you'd like, I can walk you through the highest-impact fixes in a free 15-minute call."
+              : "Drop your name and work email and I'll send every scored parameter, the red flag, and what I'd fix first."}
           </p>
         </div>
 
         <div className="w-full max-w-sm shrink-0">
           {status === "done" ? (
             <div className="flex flex-col gap-3">
-              <p className="rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-center text-sm font-semibold text-electric">
+              <p className="rounded-lg border border-scorepass/40 bg-scorepass/10 px-3 py-2 text-center text-sm font-semibold text-scorepass">
                 Report unlocked. Check your inbox for next steps.
               </p>
-              <p className="text-center text-xs text-zinc-500">
-                Instant unlock. Zero spam.
+              <p className="text-center text-xs text-fog">
+                I'll only email about your diagnostic. No spam, ever.
               </p>
             </div>
           ) : (
@@ -601,7 +605,7 @@ function HomepageUnlock({
                 <p
                   id="home-unlock-error"
                   role="alert"
-                  className="rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-sm text-electric"
+                  className="rounded-lg border border-ember/40 bg-ambertint px-3 py-2 text-sm text-emberdeep"
                 >
                   {error}
                 </p>
@@ -609,8 +613,8 @@ function HomepageUnlock({
               <button type="submit" disabled={status === "sending"} className="btn-electric w-full">
                 {status === "sending" ? "Unlocking…" : "Unlock My Full Diagnostic Report →"}
               </button>
-              <p className="text-center text-xs text-zinc-500">
-                Instant unlock. Zero spam.
+              <p className="text-center text-xs text-fog">
+                I'll only email about your diagnostic. No spam, ever.
               </p>
             </form>
           )}
@@ -657,22 +661,22 @@ function HeroResults({
     <section id="results" className="scroll-mt-24" aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <span className={`chip ${pending ? "border-[#A855F7]/50 bg-[#A855F7]/10 text-[#E9D5FF]" : "border-electric/40 text-electric"}`}>
-            {pending ? "Preliminary Diagnostic" : "Assessment complete"}
+          <span className="chip">
+            {pending ? "Preliminary Diagnostic" : "Your results are in"}
           </span>
-          <h3 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Your Market Readiness Score</h3>
+          <h3 className="mt-3 font-display text-2xl tracking-tight text-ink sm:text-3xl">Your Market Readiness Score</h3>
           <p className="mt-1 max-w-2xl text-sm text-mist">{result.url}</p>
           {pending && (
-            <p className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-[#E9D5FF]">
+            <p className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-emberdeep">
               <span aria-hidden="true" className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#A78BFA] opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#C4B5FD]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ember opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ember" />
               </span>
-              Running Deep AI Crawl... Your final AI score is on its way.
+              Reading your site... Your final score is on its way.
             </p>
           )}
         </div>
-        <p className="text-xs text-zinc-500">Scored {m2Date(result.generatedAt)}</p>
+        <p className="text-xs text-fog">Scored {m2Date(result.generatedAt)}</p>
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
@@ -680,7 +684,7 @@ function HeroResults({
           <h4 className="text-sm font-semibold uppercase tracking-wider text-mist">Overall Score</h4>
           <div className="flex items-end gap-3">
             <span className="text-6xl font-extrabold leading-none tabular-nums text-ink">{score}</span>
-            <span className="pb-1 text-sm font-medium text-zinc-500">/100</span>
+            <span className="pb-1 text-sm font-medium text-fog">/100</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-mist">Status:</span>
@@ -688,7 +692,7 @@ function HeroResults({
               {g2Status(score)}
             </span>
           </div>
-          <p className="text-xs text-zinc-500">{band}</p>
+          <p className="text-xs text-fog">{band}</p>
         </div>
         <div className="flex flex-col justify-center gap-3">
           <h4 className="text-sm font-semibold uppercase tracking-wider text-mist">Pillars</h4>
@@ -708,10 +712,10 @@ function HeroResults({
       {redFlag && (
         <div className="mt-8">
           <div className="flex items-center gap-3">
-            <h4 className="text-lg font-bold tracking-tight text-ink">Surface Red Flag</h4>
+            <h4 className="font-display text-lg tracking-tight text-ink">The first thing I'd fix</h4>
             <span aria-hidden="true" className="h-px flex-1 bg-hairline" />
           </div>
-          <p className="mt-1 max-w-3xl text-sm text-mist">The single lowest-scoring parameter from your public site.</p>
+          <p className="mt-1 max-w-3xl text-sm text-mist">The single lowest-scoring area I found on your public site.</p>
           <div className="mt-4 max-w-md">
             <DimCard card={redFlag} />
           </div>
@@ -720,10 +724,10 @@ function HeroResults({
 
       <div className="mt-8">
         <div className="flex items-center gap-3">
-          <h4 className="text-lg font-bold tracking-tight text-ink">Full 6-Parameter Breakdown</h4>
-          {aiResult && <span className="chip border-electric/40 text-electric">Final AI Assessment</span>}
+          <h4 className="font-display text-lg tracking-tight text-ink">Full parameter breakdown</h4>
+          {aiResult && <span className="chip">Final assessment</span>}
         </div>
-        <p className="mt-1 max-w-3xl text-sm text-mist">Every scored parameter with its key observation and commercial risk, grouped by pillar.</p>
+        <p className="mt-1 max-w-3xl text-sm text-mist">Every scored area with what I noticed and why it matters, grouped by pillar.</p>
         {TEASER_PILLARS.map((p) => {
           const cards = dims.filter((d) => p.ids.includes(d.id));
           return (
@@ -738,13 +742,13 @@ function HeroResults({
                 ))}
               </div>
               {p.title === "Messaging & Value Prop" && (
-                <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-                  Pricing & Packaging Logic requires internal unit economics and deal context - reviewed directly in the MarketReady Audit.
+                <p className="mt-3 text-xs leading-relaxed text-fog">
+                  Pricing and packaging needs your internal numbers and deal context, so I review that with you directly in the MarketReady Audit.
                 </p>
               )}
               {p.title === "GTM & Launch Velocity" && (
-                <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-                  Note: Public web scans evaluate Conversion Readiness. Internal sales enablement and launch mechanics are reviewed directly in the MarketReady Audit.
+                <p className="mt-3 text-xs leading-relaxed text-fog">
+                  Note: public scans cover conversion readiness. Your internal sales motion and launch mechanics are something I review with you directly in the MarketReady Audit.
                 </p>
               )}
             </div>
@@ -752,27 +756,25 @@ function HeroResults({
         })}
       </div>
 
-      <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-electric/30 bg-electric/[0.06] px-6 py-8 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-ember/30 bg-ambertint/50 px-6 py-8 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h4 className="text-lg font-bold tracking-tight text-ink">Get the full 14-Day Positioning Sprint plan</h4>
+          <h4 className="font-display text-lg tracking-tight text-ink">Want my plan for fixing this?</h4>
           <p className="mt-1 max-w-xl text-sm text-mist">
-            A strategist will map every gap to a high-velocity fix and activate it. Book a free 15-minute diagnostic briefing.
+            I'll map every gap to a fix you can ship. Book a free 15-minute call and we'll walk through it together.
           </p>
         </div>
         <button
           type="button"
           onClick={onBookBriefing}
-          className="h-[46px] shrink-0 rounded-lg bg-[#14B8A6] px-6 text-[14px] font-bold transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
-          style={{ color: "#0F172A" }}
+          className="btn-ghost h-[46px] shrink-0 px-6 text-[14px] font-bold"
         >
-          Book a 15-Minute Diagnostic Briefing →
+          Book a 15-Minute Call →
         </button>
       </div>
 
       <HomepageUnlock
         result={result}
         submitted={submitted}
-        aiResult={aiResult}
         headlineScore={score}
         overallBand={typeof band === "string" ? band : String(band)}
         redFlag={redFlag}
@@ -780,10 +782,10 @@ function HeroResults({
       />
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-fog">
           {aiResult
-            ? "Deep AI assessment across the site's core pages plus an external market-intelligence scan."
-            : "Automated snapshot assessment: representative diagnostics, not a full site crawl."}
+            ? "My read of your site's core pages, plus a scan of how your market talks about the problem."
+            : "A quick snapshot from your public pages, not a full deep-dive. Your real score comes from running your URL."}
         </p>
         <button type="button" onClick={onReset} className="nav-link">
           Re-run assessment
@@ -818,18 +820,10 @@ export function HeroDiagnostic({
   const centered = variant === "centered";
 
   return (
-    <section id="top" className="relative overflow-hidden bg-[#0F172A] pt-[120px] pb-12">
+    <section id="top" className="relative overflow-hidden bg-cream pt-[120px] pb-12">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-electric/[0.07] blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-24 top-24 h-80 w-80 rounded-full bg-indigo/10 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-24 top-40 h-80 w-80 rounded-full bg-electric/10 blur-3xl"
+        className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-ember/[0.08] blur-3xl"
       />
       <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
         {showResult ? (
@@ -855,29 +849,28 @@ export function HeroDiagnostic({
           </div>
         ) : centered ? (
           <div className="mx-auto max-w-[760px] text-center">
-            <span className="inline-flex items-center rounded-full border border-electric/30 bg-[rgba(20,184,166,0.1)] px-3 py-1 text-[12px] font-semibold text-[#14B8A6]">
+            <span className="chip">
               <span aria-hidden="true" className="mr-1.5 text-[10px]">●</span>
               Free AI Audit &amp; Scorecard
             </span>
-            <h1 className="mt-5 text-[36px] font-bold leading-[1.15] tracking-tight text-[#F9FAFB] sm:text-[42px]">
-              Identify GTM Friction &amp; Revenue Leakage in Seconds.
+            <h1 className="mt-5 font-display text-[36px] font-bold leading-[1.15] tracking-tight text-ink sm:text-[42px]">
+              Are your GTM motions ready to convert?
             </h1>
-            <p className="mx-auto mt-4 max-w-[620px] text-[15px] leading-[1.65] text-[#9CA3AF]">
-              Paste your product URL and get an instant readiness score plus a qualitative leakage
-              read. No email, no account, and no cost.
+            <p className="mx-auto mt-4 max-w-[620px] text-[15px] leading-[1.65] text-mist">
+              I read your public site like a first-time buyer and show you where
+              your positioning leaks. Free, instant, no email needed.
             </p>
 
             <form
               onSubmit={handleSubmit}
               noValidate
-              className="mx-auto mt-8 max-w-[600px] rounded-2xl bg-[#111827] p-6 text-left"
-              style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+              className="glass-card mx-auto mt-8 max-w-[600px] p-6 text-left"
             >
               <label
                 htmlFor="calc-url"
-                className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-ink"
+                className="field-label"
               >
-                Website or Product URL <span className="text-electric">*</span>
+                Your website URL <span className="text-ember">*</span>
               </label>
               <input
                 id="calc-url"
@@ -887,51 +880,50 @@ export function HeroDiagnostic({
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://yourproduct.com"
                 autoComplete="url"
-                className="h-[44px] w-full rounded-lg border border-hairline bg-white/[0.04] px-3.5 text-[14px] text-ink outline-none transition placeholder:text-zinc-600 focus:border-electric focus:ring-2 focus:ring-electric/30"
+                className="field-input h-[44px] text-[14px]"
                 aria-describedby={error ? "calc-error" : undefined}
               />
               {error && (
-                <p id="calc-error" role="alert" className="mt-3 rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-left text-sm text-electric">
+                <p id="calc-error" role="alert" className="mt-3 rounded-lg border border-ember/40 bg-ambertint px-3 py-2 text-left text-sm text-emberdeep">
                   {error}
                 </p>
               )}
               <button
                 type="submit"
-                className="mt-4 h-[44px] w-full rounded-lg bg-[#14B8A6] px-5 text-[15px] font-bold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_24px_rgba(20,184,166,0.45)] active:scale-[0.98]"
+                className="btn-electric mt-4 h-[44px] w-full text-[15px]"
               >
                 Get Your MarketReady Score →
               </button>
             </form>
-            <p className="mt-3 text-center text-[12px] text-[#6B7280]">
-              Instant score · Leakage-level check · No email required
+            <p className="mt-3 text-center text-[12px] text-fog">
+              Free, instant, no email needed. I read your public site like a buyer would.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">6 Scored Parameters</span>
-              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">0 to 100 readiness score</span>
-              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">Surface Red Flag Detection</span>
-              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">14-day positioning sprint</span>
+              <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">Nine scored dimensions</span>
+              <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">0 to 100 readiness score</span>
+              <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">First red flag, free</span>
+              <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">Full breakdown in your inbox</span>
             </div>
           </div>
         ) : (
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-8">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
             <div className="text-center lg:text-left">
-              <span className="inline-flex items-center rounded-full border border-electric/30 bg-electric/[0.08] px-2.5 py-1 text-[11px] font-medium text-electric">
-                <span aria-hidden="true" className="mr-1.5 text-[10px]">●</span>
-                Market Readiness Assessment
-              </span>
-              <h1 className="mt-5 text-[38px] font-bold leading-[1.15] tracking-tight text-ink sm:text-[42px]">
+              <p className="eyebrow">Are you MarketReady?</p>
+              <h1 className="mt-4 font-display text-[38px] leading-[1.12] tracking-tight text-ink sm:text-[46px]">
                 Clear Positioning.{" "}
-                <span style={{ color: "#14B8A6" }}>Higher Conversion.</span> Zero Wasted Burn.
+                <span className="text-ember">Higher Conversion.</span> Zero Wasted Burn.
               </h1>
-              <p className="mt-4 max-w-[520px] text-[14px] leading-[1.5] text-[#9CA3AF] sm:text-[15px] lg:mx-0 mx-auto">
-                Identify where your positioning is leaking pipeline, pinpoint your exact messaging
-                friction, and fix it fast with a high-converting 14-day sprint.
+              <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-[1.65] text-mist sm:text-base lg:mx-0">
+                I built MarketReady because after fifteen years inside media and
+                tech brands, I kept watching great products lose. Not on the
+                product. On the language. Run your URL below and I'll show you
+                how your GTM reads to a first-time buyer.
               </p>
               <form onSubmit={handleSubmit} noValidate className="mx-auto mt-6 flex max-w-md flex-col gap-3 lg:mx-0">
                 <div className="text-left">
-                  <label htmlFor="calc-url" className="mb-1.5 block text-[12px] font-medium uppercase tracking-wide text-ink">
-                    Website or Product URL <span className="text-electric">*</span>
+                  <label htmlFor="calc-url" className="field-label">
+                    Your website URL <span className="text-ember">*</span>
                   </label>
                   <input
                     id="calc-url"
@@ -939,40 +931,62 @@ export function HeroDiagnostic({
                     name="url"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    placeholder="Enter your website URL..."
+                    placeholder="https://yourproduct.com"
                     autoComplete="url"
-                    className="h-[44px] w-full rounded-lg border border-hairline bg-white/[0.04] px-3.5 text-[14px] text-ink outline-none transition placeholder:text-zinc-600 focus:border-electric focus:ring-2 focus:ring-electric/30"
+                    className="field-input h-[48px] text-[15px]"
                     aria-describedby={error ? "calc-error" : undefined}
                   />
-                  <p className="mt-2 text-[12px] leading-relaxed text-zinc-500">
-                    Built for digitally native B2B SaaS and consumer tech products.
+                  <p className="mt-2 text-[12px] leading-relaxed text-fog">
+                    Free, instant, no email needed. I read your public site like a buyer would.
                   </p>
                 </div>
                 {error && (
-                  <p id="calc-error" role="alert" className="rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-left text-sm text-electric">
+                  <p id="calc-error" role="alert" className="rounded-lg border border-ember/40 bg-ambertint px-3 py-2 text-left text-sm text-emberdeep">
                     {error}
                   </p>
                 )}
                 <button
                   type="submit"
-                  className="h-[44px] w-full rounded-lg bg-[#14B8A6] px-5 py-2.5 text-[14px] font-bold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_24px_rgba(20,184,166,0.45)] active:scale-[0.98]"
+                  className="btn-electric h-[48px] w-full text-[15px]"
                 >
                   Get Your MarketReady Score →
                 </button>
-                <p className="text-left text-[11px] font-bold uppercase tracking-[0.08em] text-[#9CA3AF]">
-                  AI-POWERED POSITIONING DIAGNOSTIC • 60-SECOND CRAWL
+                <p className="text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-fog">
+                  My 60-second read · Built for B2B SaaS and consumer tech
                 </p>
               </form>
+              <div className="mt-6 flex items-center justify-center gap-4 lg:justify-start">
+                <img
+                  src="/founder-headshot.png"
+                  alt="Wasani, founder of MarketReady"
+                  className="h-12 w-12 rounded-full border-2 border-ember/30 object-cover"
+                  loading="eager"
+                />
+                <p className="text-left text-[13px] leading-snug text-mist">
+                  <span className="font-semibold text-ink">Wasani, Founder.</span>
+                  <br />
+                  Senior PMM, fifteen years in media and tech.
+                </p>
+              </div>
             </div>
-            <HeroMockup />
+            <div className="flex flex-col items-center gap-6">
+              <img
+                src="/founder-headshot.png"
+                alt="Wasani, founder of MarketReady"
+                className="w-full max-w-[340px] rounded-2xl border border-linen object-cover shadow-[0_1px_2px_rgba(28,25,23,0.06),0_20px_48px_rgba(180,83,9,0.16)]"
+                style={{ aspectRatio: "4 / 5" }}
+                loading="eager"
+              />
+              <HeroMockup />
+            </div>
           </div>
         )}
         {!showResult && !centered && (
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">6 Scored Parameters</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">0 to 100 readiness score</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">Surface Red Flag Detection</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-[#E5E7EB]">14-day positioning sprint</span>
+            <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">Nine scored dimensions</span>
+            <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">0 to 100 readiness score</span>
+            <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">First red flag, free</span>
+            <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">Full breakdown in your inbox</span>
           </div>
         )}
       </div>
