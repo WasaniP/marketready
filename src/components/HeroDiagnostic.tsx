@@ -19,24 +19,23 @@ import { apiUrl } from "~/lib/apiOrigin";
 
 
 /* ------------------------------------------------------------------ */
-/* Build #NN: Compact Hero diagnostic mockup (right column). Static     */
-/* illustrative/demo card: the scores are sample values, not a real     */
-/* measured scan. ORIGINAL purple/magenta "graphic-card" look, kept at  */
-/* the compact (~25% smaller) footprint for the 50/50 hero split.      */
+/* Owner revision spec §3: the sample-report card is the SOLE hero       */
+/* visual (founder photo removed). Larger card, anchored high in the     */
+/* right column; 4 parameter rows with a partial fade on the last so it  */
+/* reads as a real report. Flat surface per §8 — no ambient glow wash.   */
+/* Scores are illustrative samples, never a real result (§12).           */
 /* ------------------------------------------------------------------ */
 export function HeroMockup() {
   const rows = [
-    { label: "Category Positioning", score: "29/100", cls: "text-[#B45309]" },
-    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-[#B45309]" },
-    { label: "Differentiation Anchor", score: "21/100", cls: "text-[#92400E]" },
+    { label: "Category Positioning", score: "29/100", cls: "text-[#A15C2B]" },
+    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-[#A15C2B]" },
+    { label: "GTM Path & Offer", score: "27/100", cls: "text-[#A15C2B]" },
+    { label: "Differentiation Anchor", score: "21/100", cls: "text-[#93472A]" },
   ];
+  const rowCls =
+    "flex items-center justify-between gap-3 rounded-lg border border-hairline bg-cream px-3.5 py-2.5";
   return (
-    <div className="relative mx-auto w-full max-w-[400px]">
-      {/* Warm ambient glow behind the card */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-6 rounded-[20px] bg-ember/15 blur-2xl"
-      />
+    <div className="relative mx-auto w-full max-w-[480px]">
       <div
         className="relative overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(28,25,23,0.06),0_16px_40px_rgba(28,25,23,0.12)]"
         style={{ border: "1px solid #E3DCD2", borderRadius: "16px" }}
@@ -58,26 +57,32 @@ export function HeroMockup() {
             <span className="text-[9px]">●</span>Sample report
           </span>
         </div>
-        {/* 3 metric row cards */}
-        <div className="flex flex-col gap-2 bg-white p-4">
-          {rows.map((r) => (
-            <div
-              key={r.label}
-              className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-cream px-3.5 py-2.5"
-            >
-              <span className="min-w-0 text-[13px] font-medium text-mist">{r.label}</span>
+        {/* 4 metric rows; the last is partially faded like a real report */}
+        <div className="flex flex-col gap-2 bg-white p-4 sm:p-5">
+          {rows.slice(0, 3).map((r) => (
+            <div key={r.label} className={rowCls}>
+              <span className="min-w-0 text-[13px] font-medium text-navy">{r.label}</span>
               <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${r.cls}`}>
                 {r.score}
               </span>
             </div>
           ))}
+          <div className="relative h-[42px] overflow-hidden" aria-hidden="true">
+            <div className={rowCls}>
+              <span className="min-w-0 text-[13px] font-medium text-navy">{rows[3].label}</span>
+              <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${rows[3].cls}`}>
+                {rows[3].score}
+              </span>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/70 to-white" />
+          </div>
           {/* Illustrative callout */}
           <div className="mt-1 rounded-lg bg-ambertint px-3.5 py-2.5" style={{ border: "1px solid rgba(180,83,9,0.4)" }}>
             <p className="text-[11px] font-bold uppercase leading-snug tracking-wide text-emberdeep">
               Sample finding: category naming is too broad for high-intent buyers.
             </p>
           </div>
-          <p className="mt-1 text-center text-[11px] leading-relaxed text-fog">
+          <p className="mt-1 rounded-md border border-ember/30 bg-ambertint/60 px-3 py-1.5 text-center text-[11px] font-bold uppercase leading-relaxed tracking-wide text-emberdeep">
             Sample score for illustration — run your URL to get your real score.
           </p>
         </div>
@@ -820,11 +825,11 @@ export function HeroDiagnostic({
   const centered = variant === "centered";
 
   return (
-    <section id="top" className="relative overflow-hidden bg-cream pt-[120px] pb-12">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-ember/[0.08] blur-3xl"
-      />
+    /* Owner revision spec §6: hero on flat cream, top padding roughly half
+       the old value (fixed header is h-16 + pt-6/pb-4, so pt-24 clears it).
+       Spec §8: no gradient/glow wash in the hero — flat surface. §7: the
+       only section boundary here is the hairline above the Manifesto. */
+    <section id="top" className="relative bg-cream pt-24 pb-12 sm:pb-16">
       <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
         {showResult ? (
           <div
@@ -907,20 +912,24 @@ export function HeroDiagnostic({
             </div>
           </div>
         ) : (
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
+          <>
+          {/* Owner revision spec §3/§9: hero left column — kicker + full-ink
+              serif headline at ~80% of the old size (two balanced lines),
+              subhead tightened to the URL input. No founder photo anywhere
+              in the hero; the sample-report card anchors the right column. */}
+          <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
             <div className="text-center lg:text-left">
               <p className="eyebrow">Are you MarketReady?</p>
-              <h1 className="mt-4 font-display text-[38px] leading-[1.12] tracking-tight text-ink sm:text-[46px]">
-                Clear Positioning.{" "}
-                <span className="text-ember">Higher Conversion.</span> Zero Wasted Burn.
+              <h1 className="mt-3 font-display text-[30px] font-bold leading-[1.18] tracking-tight text-ink sm:text-[37px]">
+                Clear Positioning. Higher Conversion. Zero Wasted Burn.
               </h1>
-              <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-[1.65] text-mist sm:text-base lg:mx-0">
-                I built MarketReady because after fifteen years inside media and
-                tech brands, I kept watching great products lose. Not on the
-                product. On the language. Run your URL below and I'll show you
-                how your GTM reads to a first-time buyer.
+              <p className="mx-auto mt-3 max-w-[520px] text-[17px] font-medium leading-[1.6] text-mist lg:mx-0">
+                After eight years inside media and tech brands, I've watched
+                great products lose on language — not the product. Run your
+                URL and I'll show you how your GTM reads to a first-time
+                buyer.
               </p>
-              <form onSubmit={handleSubmit} noValidate className="mx-auto mt-6 flex max-w-md flex-col gap-3 lg:mx-0">
+              <form onSubmit={handleSubmit} noValidate className="mx-auto mt-5 flex max-w-md flex-col gap-3 lg:mx-0">
                 <div className="text-left">
                   <label htmlFor="calc-url" className="field-label">
                     Your website URL <span className="text-ember">*</span>
@@ -955,31 +964,14 @@ export function HeroDiagnostic({
                   My 60-second read · Built for B2B SaaS and consumer tech
                 </p>
               </form>
-              <div className="mt-6 flex items-center justify-center gap-4 lg:justify-start">
-                <img
-                  src="/founder-headshot.png"
-                  alt="Wasani, founder of MarketReady"
-                  className="h-12 w-12 rounded-full border-2 border-ember/30 object-cover"
-                  loading="eager"
-                />
-                <p className="text-left text-[13px] leading-snug text-mist">
-                  <span className="font-semibold text-ink">Wasani, Founder.</span>
-                  <br />
-                  Senior PMM, fifteen years in media and tech.
-                </p>
-              </div>
             </div>
-            <div className="flex flex-col items-center gap-6">
-              <img
-                src="/founder-headshot.png"
-                alt="Wasani, founder of MarketReady"
-                className="w-full max-w-[340px] rounded-2xl border border-linen object-cover shadow-[0_1px_2px_rgba(28,25,23,0.06),0_20px_48px_rgba(180,83,9,0.16)]"
-                style={{ aspectRatio: "4 / 5" }}
-                loading="eager"
-              />
+            {/* Spec §3: sample-report card is the sole hero visual, anchored
+                high in the right column. Stacks below the text on mobile. */}
+            <div className="lg:-mt-2 lg:pt-1">
               <HeroMockup />
             </div>
           </div>
+          </>
         )}
         {!showResult && !centered && (
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
