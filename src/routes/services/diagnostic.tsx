@@ -28,6 +28,7 @@ import { HeroDiagnostic } from "~/components/HeroDiagnostic";
 import { SectionHeading } from "~/components/services-ui";
 import { captureLead } from "~/lib/leads";
 import type { LeadPayload } from "~/lib/leads";
+import { apiUrl } from "~/lib/apiOrigin";
 import { ASSESSMENT_STORAGE_KEY } from "~/lib/storage";
 import { openCheckout, CHECKOUT_SERVICES } from "~/lib/checkout";
 import {
@@ -426,12 +427,14 @@ function DiagnosticEngine({ onComplete }: { onComplete: (state: DiagnosticState)
     void captureLead(leadPayload);
 
     // Diagnostic lead → Airtable-backed /api/leads (Source "Full
-    // Assessment"). Non-blocking: never throws, never delays the reveal,
+    // Assessment"). Posts to the canonical origin so the request never
+    // crosses the apex→www 308 (which can re-issue a POST as GET and drop
+    // the lead). Non-blocking: never throws, never delays the reveal,
     // and the results view renders the client-computed score regardless of
     // the outcome (score logic untouched: scoreDiagnostic stays the single
     // source of truth).
     try {
-      void fetch("/api/leads", {
+      void fetch(apiUrl("/api/leads"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
