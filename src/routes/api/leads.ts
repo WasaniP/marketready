@@ -1,33 +1,35 @@
 /**
- * POST /api/leads : the homepage diagnostic PDF-capture-bar lead capture.
+ * POST /api/leads : MarketReady diagnostic lead capture (Airtable-backed).
  *
- * Writes a diagnostic lead (value-first: no blur-gate; the PDF capture bar is
- * the single capture point) to the owner's Airtable base using ONLY
- * process.env.AIRTABLE_API_TOKEN / AIRTABLE_BASE_ID / AIRTABLE_TABLE_NAME
- * (never hard-coded, never logged). The record carries the first name, work
- * email, company (inferred from the submitted URL's domain, not a user field),
- * the website URL, the optional ICP, the lowest-scoring parameter, its
- * 2-part diagnostic synthesis (Key Observation + Commercial Risk) with its
- * friction/anchor labels, its raw DOM evidence quote, and the full 6-param
- * diagnostic payload as both a JSON blob and flattened per-parameter fields
- * (scores, friction labels, anchor labels, observations, commercial risk, and
- * per-parameter DOM evidence), so Airtable Automations can reference scores,
- * observations, and raw evidence directly (Email 1 immediate, Day 2, Day 4).
+ * Both diagnostic surfaces POST here with the same JSON shape:
+ *   - Homepage calculator (Source "Homepage Calculator"): first name, work
+ *     email, company inferred from the submitted URL's domain, website URL,
+ *     ICP, teaser score, red-flag detail, and the full diagnostic payload.
+ *   - Gated 5-dimension assessment (Source "Full Assessment"): first name,
+ *     work email, company/URL/ICP when known, computed score, readiness band,
+ *     primary friction, prescribed offer, and an answers breakdown.
  *
- * domEvidence is a raw literal site quote, carried server-side only and logged
- * to the "DOM Evidence" Airtable column for Automations; it is never rendered
- * in the public UI (which shows only Key Observation + Commercial Risk).
+ * Server behavior:
+ *   1. Reads ONLY process.env.AIRTABLE_API_TOKEN / AIRTABLE_BASE_ID /
+ *      AIRTABLE_TABLE_NAME (never hard-coded, never logged, never returned).
+ *   2. If any of the three is missing: persists the lead to the local
+ *      fallback (.data/leads.jsonl, same store the site has always used) with
+ *      marker airtable:"failed" + the error, and responds
+ *      { ok:false, error } (HTTP 200, no crash).
+ *   3. Otherwise POSTs { records:[{ fields }] } to
+ *      https://api.airtable.com/v0/{BASE_ID}/{TABLE_NAME} (table name URL
+ *      encoded: "Free diagnostic" contains a space).
+ *   4. On Airtable success responds { ok:true }. On Airtable failure still
+ *      persists to the JSONL fallback with airtable:"failed" + the Airtable
+ *      error message, and responds { ok:false, error }.
+ *   5. Only a malformed body / missing name / invalid email returns non-2xx.
  *
- * Failure handling (must NEVER block the client's optimistic PDF download):
- *   - If any AIRTABLE_* secret is absent, fall back to appending the lead to
- *     .data/leads.jsonl (consistent with how intake.ts falls back to
- *     .data/intakes.jsonl when Neon is not connected) and STILL return success.
- *   - If the Airtable POST itself throws or returns non-2xx, do the same
- *     JSONL fallback and still return success.
- *   - Only an unparseable body / invalid required fields returns non-2xx, so
- *     a genuinely malformed request is surfaced, but a valid lead is never
- *     shown as failed to the user.
+ * The Airtable column mapping lives in ONE constant (AIRTABLE_FIELD_MAP):
+ * remapping a column later means editing that constant and nothing else.
+ * Client-side scoring stays the single source of truth for the score value:
+ * this route never recomputes a score, it only carries what the client sent.
  */
+
 import { createFileRoute } from "@tanstack/react-router";
 import { mkdir, appendFile } from "node:fs/promises";
 import * as path from "node:path";
@@ -35,7 +37,27 @@ import * as path from "node:path";
 const AIRTABLE_API = "https://api.airtable.com/v0";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-/** One diagnostic parameter as captured from the results dashboard. */
+/* ------------------------------------------------------------------ */
+/* AIRTABLE COLUMN MAP: the ONLY place Airtable column names live.     */
+/* To remap a column later, edit the string on the right and nothing   */
+/* else. Keys are the internal lead fields; values are the Airtable    */
+/* column names (defaults match the owner's "Free diagnostic" table).  */
+/* ------------------------------------------------------------------ */
+const AIRTABLE_FIELD_MAP = {
+  name: "Name",
+  email: "Email",
+  company: "Company",
+  websiteUrl: "Website URL",
+  score: "Diagnostic Score",
+  readiness: "Readiness",
+  primaryFriction: "Primary Friction",
+  prescription: "Recommended Prescription",
+  breakdown: "Score Breakdown",
+  source: "Source",
+  dateSubmitted: "Date Submitted",
+} as const;
+
+/** One diagnostic parameter as sent by the homepage calculator. */
 interface PayloadDim {
   id: string;
   name: string;
@@ -46,14 +68,15 @@ interface PayloadDim {
   anchor_label?: string;
   keyObservation?: string;
   commercialRisk?: string;
-  /** Raw literal DOM quote backing this parameter (server-side carry only). */
-  evidence_snippet?: string;
   /** Legacy alias kept for continuity; the UI now sends keyObservation. */
   strategicImpact?: string;
+  /** Raw literal DOM quote backing this parameter (server-side carry only). */
+  evidence_snippet?: string;
   locked?: boolean;
   insufficientData?: boolean;
 }
-/** The full diagnostic payload the client serializes (6 scored parameters). */
+
+/** The full diagnostic payload the homepage calculator serializes. */
 interface DiagnosticPayload {
   score: number;
   overallBand: string;
@@ -68,8 +91,20 @@ interface LeadRequestBody {
   company?: unknown;
   websiteUrl?: unknown;
   icp?: unknown;
+  /** Homepage calculator score (teaser headline score). */
   overallScore?: unknown;
+  /** Gated-assessment score (single source of truth: src/lib/diagnostic). */
+  diagnosticScore?: unknown;
+  /** Gated-assessment readiness band (Market Ready / Needs Attention / ...). */
+  readiness?: unknown;
+  /** Legacy alias for the readiness band. */
+  riskLabel?: unknown;
+  /** Homepage red-flag parameter name; assessment sends primaryFriction. */
   lowestParameter?: unknown;
+  primaryFriction?: unknown;
+  /** Gated-assessment prescribed offer label. */
+  recommendedPrescription?: unknown;
+  prescription?: unknown;
   keyObservation?: unknown;
   commercialRisk?: unknown;
   frictionLabel?: unknown;
@@ -78,6 +113,10 @@ interface LeadRequestBody {
   strategicImpact?: unknown;
   diagnosticTakeaway?: unknown;
   domEvidence?: unknown;
+  /** Gated-assessment human-readable answers summary. */
+  scoreBreakdown?: unknown;
+  /** Which surface submitted: "Homepage Calculator" | "Full Assessment". */
+  source?: unknown;
   diagnosticPayload?: unknown;
 }
 
@@ -98,11 +137,15 @@ function asString(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
+function asFiniteNumber(v: unknown): number {
+  return typeof v === "number" && Number.isFinite(v) ? v : NaN;
+}
+
 function validPayload(v: unknown): DiagnosticPayload | null {
   if (!v || typeof v !== "object") return null;
   const p = v as Record<string, unknown>;
-  const score = typeof p.score === "number" && Number.isFinite(p.score) ? p.score : null;
-  if (score == null) return null;
+  const score = asFiniteNumber(p.score);
+  if (!Number.isFinite(score)) return null;
   const dims: PayloadDim[] = [];
   if (Array.isArray(p.dimensions)) {
     for (const d of p.dimensions) {
@@ -137,7 +180,16 @@ function validPayload(v: unknown): DiagnosticPayload | null {
             : typeof dd.diagnosticTakeaway === "string"
               ? dd.diagnosticTakeaway
               : undefined,
-        evidence_snippet: typeof dd.evidence_snippet === "string" ? dd.evidence_snippet : undefined,
+        evidence_snippet:
+          typeof dd.evidence_snippet === "string"
+            ? dd.evidence_snippet
+            : typeof dd.evidenceSnippet === "string"
+              ? dd.evidenceSnippet
+              : typeof dd.domEvidence === "string"
+                ? dd.domEvidence
+                : typeof dd.evidence === "string"
+                  ? dd.evidence
+                  : undefined,
         locked: dd.locked === true,
         insufficientData: dd.insufficientData === true,
       });
@@ -153,6 +205,116 @@ function validPayload(v: unknown): DiagnosticPayload | null {
   };
 }
 
+/** Normalized lead: everything downstream (Airtable fields, JSONL fallback,
+ * Score Breakdown text) is derived from this one shape. */
+interface NormalizedLead {
+  firstName: string;
+  workEmail: string;
+  company: string;
+  websiteUrl: string;
+  icp: string;
+  score: number; // NaN when no numeric score was sent
+  readiness: string;
+  primaryFriction: string;
+  prescription: string;
+  keyObservation: string;
+  commercialRisk: string;
+  frictionLabel: string;
+  anchorLabel: string;
+  domEvidence: string;
+  answersBreakdown: string; // gated-assessment answers summary, when sent
+  source: string;
+  payload: DiagnosticPayload | null;
+  capturedAt: string;
+}
+
+function normalizeLead(b: LeadRequestBody): NormalizedLead {
+  const websiteUrl = asString(b.websiteUrl);
+  const payload = validPayload(b.diagnosticPayload);
+  const scoreRaw = asFiniteNumber(b.overallScore);
+  const diagScoreRaw = asFiniteNumber(b.diagnosticScore);
+  const score = Number.isFinite(scoreRaw)
+    ? Math.round(Math.min(100, Math.max(0, scoreRaw)))
+    : Number.isFinite(diagScoreRaw)
+      ? Math.round(Math.min(100, Math.max(0, diagScoreRaw)))
+      : payload
+        ? Math.round(payload.score)
+        : NaN;
+  const sourceRaw = asString(b.source);
+  return {
+    firstName: asString(b.firstName),
+    workEmail: asString(b.workEmail),
+    company: asString(b.company) || inferCompany(websiteUrl),
+    websiteUrl,
+    icp: asString(b.icp),
+    score,
+    readiness:
+      asString(b.readiness) || (payload ? payload.overallBand : "") || asString(b.riskLabel),
+    primaryFriction: asString(b.primaryFriction) || asString(b.lowestParameter),
+    prescription: asString(b.recommendedPrescription) || asString(b.prescription),
+    keyObservation:
+      asString(b.keyObservation) || asString(b.strategicImpact) || asString(b.diagnosticTakeaway),
+    commercialRisk: asString(b.commercialRisk),
+    frictionLabel: asString(b.frictionLabel),
+    anchorLabel: asString(b.anchorLabel),
+    domEvidence: asString(b.domEvidence),
+    answersBreakdown: asString(b.scoreBreakdown),
+    source: sourceRaw || (payload ? "Homepage Calculator" : "Unknown"),
+    payload,
+    capturedAt: new Date().toISOString(),
+  };
+}
+
+/** Human-readable breakdown for the "Score Breakdown" column: red-flag detail
+ * plus the full diagnostic JSON, so Airtable Automations (Day 2 / Day 4) can
+ * reference scores, observations, and raw evidence without extra columns. */
+function buildScoreBreakdown(lead: NormalizedLead): string {
+  const lines: string[] = [];
+  if (Number.isFinite(lead.score)) {
+    lines.push(
+      `Score: ${lead.score}/100${lead.readiness ? ` (${lead.readiness})` : ""}`,
+    );
+  }
+  if (lead.primaryFriction) lines.push(`Primary Friction: ${lead.primaryFriction}`);
+  if (lead.prescription) lines.push(`Recommended Prescription: ${lead.prescription}`);
+  if (lead.icp) lines.push(`ICP: ${lead.icp}`);
+  if (lead.keyObservation) lines.push(`Key Observation: ${lead.keyObservation}`);
+  if (lead.commercialRisk) lines.push(`Commercial Risk: ${lead.commercialRisk}`);
+  const labels = [lead.frictionLabel, lead.anchorLabel].filter(Boolean);
+  if (labels.length) lines.push(`Labels: ${labels.join(" / ")}`);
+  if (lead.domEvidence) lines.push(`DOM Evidence: ${lead.domEvidence}`);
+  if (lead.answersBreakdown) lines.push(`Answers: ${lead.answersBreakdown}`);
+  if (lead.payload) {
+    const scored = lead.payload.dimensions
+      .filter((d) => !d.locked && typeof d.score === "number")
+      .map((d) => `${d.name}: ${d.score}/100`)
+      .join("; ");
+    if (scored) lines.push(`Parameter Scores: ${scored}`);
+    lines.push(`Full Diagnostic JSON: ${JSON.stringify(lead.payload)}`);
+  }
+  return lines.join("\n");
+}
+
+/** Map the normalized lead to Airtable columns (via AIRTABLE_FIELD_MAP only).
+ * The numeric score key is omitted when no finite score was sent. */
+function toAirtableFields(lead: NormalizedLead): Record<string, unknown> {
+  const m = AIRTABLE_FIELD_MAP;
+  const fields: Record<string, unknown> = {
+    [m.name]: lead.firstName,
+    [m.email]: lead.workEmail,
+    [m.company]: lead.company,
+    [m.websiteUrl]: lead.websiteUrl,
+    [m.readiness]: lead.readiness,
+    [m.primaryFriction]: lead.primaryFriction,
+    [m.prescription]: lead.prescription,
+    [m.breakdown]: buildScoreBreakdown(lead),
+    [m.source]: lead.source,
+    [m.dateSubmitted]: lead.capturedAt,
+  };
+  if (Number.isFinite(lead.score)) fields[m.score] = lead.score;
+  return fields;
+}
+
 /** Best-effort JSONL append (never throws). Consistent with intake.ts. */
 async function appendJsonl(record: unknown): Promise<void> {
   const dir = path.join(process.cwd(), ".data");
@@ -161,81 +323,51 @@ async function appendJsonl(record: unknown): Promise<void> {
   await appendFile(file, `${JSON.stringify(record)}\n`, "utf8");
 }
 
-/** Airtable fields object: overall + flattened per-parameter + full JSON blob. */
-function toAirtableFields(
-  firstName: string,
-  workEmail: string,
-  company: string,
-  websiteUrl: string,
-  icp: string,
-  overallScore: number,
-  lowestParameter: string,
-  keyObservation: string,
-  commercialRisk: string,
-  frictionLabel: string,
-  anchorLabel: string,
-  domEvidence: string,
-  payload: DiagnosticPayload,
-): Record<string, unknown> {
-  const fields: Record<string, unknown> = {
-    "First Name": firstName,
-    "Work Email": workEmail,
-    "Company": company || inferCompany(websiteUrl),
-    "Website URL": websiteUrl,
-    "ICP": icp,
-    "Overall Score": Number.isFinite(overallScore) ? overallScore : payload.score,
-    "Readiness Band": payload.overallBand,
-    "Generated At": payload.generatedAt,
-    "Lowest Parameter": lowestParameter,
-    "Key Observation": keyObservation,
-    "Commercial Risk": commercialRisk,
-    "Friction Label": frictionLabel,
-    "Anchor Label": anchorLabel,
-    "DOM Evidence": domEvidence,
-    "Diagnostic Payload": JSON.stringify(payload),
-  };
-  for (const d of payload.dimensions) {
-    if (d.locked) {
-      // Locked params are reserved: record the flag, no score.
-      fields[`${d.id} locked`] = true;
-      continue;
-    }
-    if (typeof d.score === "number") {
-      fields[`${d.id} score`] = d.score;
-    }
-    if (d.status) fields[`${d.id} status`] = d.status;
-    if (d.friction_label) fields[`${d.id} friction`] = d.friction_label;
-    if (d.anchor_label) fields[`${d.id} anchor`] = d.anchor_label;
-    if (d.keyObservation) fields[`${d.id} observation`] = d.keyObservation;
-    if (d.commercialRisk) fields[`${d.id} risk`] = d.commercialRisk;
-    // Legacy continuity column: the old strategic-impact synthesis may still be
-    // present in older payloads.
-    if (d.strategicImpact) fields[`${d.id} impact`] = d.strategicImpact;
-    if (d.evidence_snippet) fields[`${d.id} dom_evidence`] = d.evidence_snippet;
-    if (d.insufficientData) fields[`${d.id} insufficient_data`] = true;
-  }
-  return fields;
+/** Names of the required Airtable env vars that are currently missing. */
+function missingEnvVars(): string[] {
+  const missing: string[] = [];
+  if (!process.env.AIRTABLE_API_TOKEN) missing.push("AIRTABLE_API_TOKEN");
+  if (!process.env.AIRTABLE_BASE_ID) missing.push("AIRTABLE_BASE_ID");
+  if (!process.env.AIRTABLE_TABLE_NAME) missing.push("AIRTABLE_TABLE_NAME");
+  return missing;
 }
 
-/** POST a record to Airtable. Returns true on 2xx, false on any failure. */
-async function writeAirtable(fields: Record<string, unknown>): Promise<boolean> {
+/** POST one record to Airtable. Resolves { ok:true } on 2xx, else
+ * { ok:false, error } with the Airtable status + message (never the token). */
+async function writeAirtable(
+  fields: Record<string, unknown>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const token = process.env.AIRTABLE_API_TOKEN;
   const base = process.env.AIRTABLE_BASE_ID;
   const table = process.env.AIRTABLE_TABLE_NAME;
-  if (!token || !base || !table) return false;
+  if (!token || !base || !table) {
+    return {
+      ok: false,
+      error: `Airtable is not configured (missing ${missingEnvVars().join(", ")}).`,
+    };
+  }
   try {
-    const res = await fetch(`${AIRTABLE_API}/${encodeURIComponent(base)}/${encodeURIComponent(table)}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+    const res = await fetch(
+      `${AIRTABLE_API}/${encodeURIComponent(base)}/${encodeURIComponent(table)}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ records: [{ fields }] }),
       },
-      body: JSON.stringify({ fields }),
-    });
-    return res.ok;
+    );
+    if (res.ok) return { ok: true };
+    const detail = (await res.text().catch(() => "")).slice(0, 300);
+    return {
+      ok: false,
+      error: `Airtable rejected the lead (HTTP ${res.status})${detail ? `: ${detail}` : "."}`,
+    };
   } catch (err) {
-    console.warn("[leads] Airtable write failed, falling back to JSONL", err);
-    return false;
+    // Network / DNS failure: message only, never credentials.
+    const msg = err instanceof Error ? err.message : "network error";
+    return { ok: false, error: `Airtable request failed: ${msg}` };
   }
 }
 
@@ -252,88 +384,62 @@ export const Route = createFileRoute("/api/leads")({
             { status: 400 },
           );
         }
-        const b = (body ?? {}) as LeadRequestBody;
-        const firstName = asString(b.firstName);
-        const workEmail = asString(b.workEmail);
-        if (!firstName) {
+        const lead = normalizeLead((body ?? {}) as LeadRequestBody);
+        if (!lead.firstName) {
           return Response.json({ ok: false, error: "First name is required." }, { status: 400 });
         }
-        if (!EMAIL_RE.test(workEmail)) {
+        if (!EMAIL_RE.test(lead.workEmail)) {
           return Response.json(
             { ok: false, error: "A valid work email is required." },
             { status: 400 },
           );
         }
-        const websiteUrl = asString(b.websiteUrl);
-        const icp = asString(b.icp);
-        const lowestParameter = asString(b.lowestParameter);
-        // New 2-part diagnostic fields (red-flag parameter); legacy aliases
-        // are still accepted for continuity.
-        const keyObservation =
-          asString(b.keyObservation) || asString(b.strategicImpact) || asString(b.diagnosticTakeaway);
-        const commercialRisk = asString(b.commercialRisk);
-        const frictionLabel = asString(b.frictionLabel);
-        const anchorLabel = asString(b.anchorLabel);
-        const domEvidence = asString(b.domEvidence);
-        const overallScoreRaw = typeof b.overallScore === "number" ? b.overallScore : NaN;
-        const overallScore = Number.isFinite(overallScoreRaw)
-          ? Math.round(Math.min(100, Math.max(0, overallScoreRaw)))
-          : NaN;
-        const payload = validPayload(b.diagnosticPayload);
-        if (!payload) {
+        if (!Number.isFinite(lead.score) && !lead.payload && !lead.answersBreakdown) {
           return Response.json(
-            { ok: false, error: "A valid diagnostic payload is required." },
+            { ok: false, error: "A diagnostic score or breakdown is required." },
             { status: 400 },
           );
         }
-        const company = asString(b.company) || inferCompany(websiteUrl);
-        const fields = toAirtableFields(
-          firstName,
-          workEmail,
-          company,
-          websiteUrl,
-          icp,
-          Number.isFinite(overallScore) ? overallScore : payload.score,
-          lowestParameter,
-          keyObservation,
-          commercialRisk,
-          frictionLabel,
-          anchorLabel,
-          domEvidence,
-          payload,
-        );
 
-        // Layer 1: Airtable when all secrets are present. Never logged.
-        const wroteAirtable = await writeAirtable(fields);
-        if (wroteAirtable) {
-          return Response.json({ ok: true, source: "airtable" });
+        const fields = toAirtableFields(lead);
+
+        // Layer 1: Airtable when configured. The token is never logged.
+        const result = await writeAirtable(fields);
+        if (result.ok) {
+          return Response.json({ ok: true });
+        }
+        if (missingEnvVars().length > 0) {
+          console.warn("[leads] Airtable env vars missing; saving lead locally.");
+        } else {
+          // Status only: no PII, no credentials in the server log.
+          console.warn("[leads] Airtable write failed; saving lead locally.");
         }
 
-        // Layer 2: JSONL file fallback (also the path when secrets are absent).
-        // Never surface failure to the client: a valid unlock always resolves ok.
+        // Layer 2: JSONL fallback with a distinct failure marker so the owner
+        // can see exactly which submissions did not reach Airtable.
         const logRecord = {
-          firstName,
-          workEmail,
-          company,
-          websiteUrl,
-          icp,
-          overallScore: Number.isFinite(overallScore) ? overallScore : payload.score,
-          lowestParameter,
-          keyObservation,
-          commercialRisk,
-          frictionLabel,
-          anchorLabel,
-          domEvidence,
-          source: "pdf-capture-bar",
-          capturedAt: new Date().toISOString(),
-          diagnostic: payload,
+          firstName: lead.firstName,
+          workEmail: lead.workEmail,
+          company: lead.company,
+          websiteUrl: lead.websiteUrl,
+          icp: lead.icp,
+          diagnosticScore: Number.isFinite(lead.score) ? lead.score : null,
+          readiness: lead.readiness,
+          primaryFriction: lead.primaryFriction,
+          recommendedPrescription: lead.prescription,
+          scoreBreakdown: lead.answersBreakdown || buildScoreBreakdown(lead),
+          source: lead.source,
+          capturedAt: lead.capturedAt,
+          diagnostic: lead.payload,
+          airtable: "failed",
+          airtableError: result.error,
         };
         try {
           await appendJsonl(logRecord);
         } catch (err) {
           console.warn("[leads] JSONL append failed", err);
         }
-        return Response.json({ ok: true, source: "jsonl" });
+        return Response.json({ ok: false, error: result.error });
       },
     },
   },
