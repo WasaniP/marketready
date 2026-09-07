@@ -1,22 +1,24 @@
 /**
- * Knock transactional email: the optional "instant results" email sent to a
- * lead the moment their full diagnostic report is unlocked.
+ * Knock transactional emails: the optional "instant results" email sent to a
+ * lead the moment their full diagnostic report is unlocked, and the
+ * "booking/contact confirmation" email sent to a submitter the moment their
+ * booking request or contact message is received.
  *
- * Called from POST /api/leads (src/routes/api/leads.ts). The trigger runs IN
- * PARALLEL with the Airtable write — independent of its outcome (success OR
- * failure — the email never depends on Airtable) — and is AWAITED with a
- * bounded budget BEFORE the lead response returns. On a serverless host the
- * platform freezes background work once the response is flushed, so the old
- * fire-and-forget promise started after the write was cut off on cold/slow
- * requests and the email silently dropped. Awaiting a bounded trigger moves
- * the send inside the request's lifetime without letting it block the
- * response indefinitely.
+ * Both are called from server routes (POST /api/leads and POST /api/booking).
+ * The trigger runs IN PARALLEL with the Airtable write — independent of its
+ * outcome (success OR failure — the email never depends on Airtable) — and is
+ * AWAITED with a bounded budget BEFORE the route response returns. On a
+ * serverless host the platform freezes background work once the response is
+ * flushed, so the old fire-and-forget promise started after the write was cut
+ * off on cold/slow requests and the email silently dropped. Awaiting a bounded
+ * trigger moves the send inside the request's lifetime without letting it
+ * block the response indefinitely.
  *
- * FAIL-OPEN for the user: `triggerResultsEmail` NEVER throws and its outcome
- * never alters the lead response. All failures (missing config, network
- * error, non-2xx, timeout) are surfaced as a returned outcome AND
- * console.warn'ed with the run id / recipient / lead timestamp so a missed
- * email is debuggable in logs.
+ * FAIL-OPEN for the user: the trigger helpers NEVER throw and their outcomes
+ * never alter the route response. All failures (missing config, network error,
+ * non-2xx, timeout) are surfaced as a returned outcome AND console.warn'ed
+ * with the run id / recipient / request timestamp so a missed email is
+ * debuggable in logs.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * OWNER-SIDE SETUP (Knock dashboard — this code NEVER creates the workflow or
@@ -26,18 +28,24 @@
  *     KNOCK_API_KEY    Knock SERVER-side secret API key ("sk_test_..." for
  *                      development, "sk_..." for production). When missing or
  *                      empty the email is skipped entirely (fail-open) and the
- *                      lead response is unaffected.
- *     KNOCK_WORKFLOW   Optional. The key of the email workflow in the Knock
- *                      dashboard. Defaults to "marketready-diagnostic-results".
+ *                      route response is unaffected.
+ *     KNOCK_WORKFLOW   Optional. The key of the diagnostic-results email
+ *                      workflow in the Knock dashboard. Defaults to
+ *                      "marketready-diagnostic-results".
+ *     KNOCK_CONFIRMATION_WORKFLOW
+ *                      Optional. The key of the booking/contact confirmation
+ *                      email workflow in the Knock dashboard. Defaults to
+ *                      "marketready-booking-confirmation".
  *
- *   In Knock: create a workflow whose key matches the above (or set
- *   KNOCK_WORKFLOW), add an Email channel step, and reference the data keys
- *   below with Liquid syntax, e.g. {{ data.first_name }} … Knock templates use
- *   the EXACT keys passed here (camelCase as listed):
+ *   In Knock: create workflows whose keys match the above (or set the env
+ *   vars), add an Email channel step, and reference the data keys below with
+ *   Liquid syntax, e.g. {{ data.first_name }} … Knock templates use the EXACT
+ *   keys passed here (camelCase as listed).
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * DATA KEYS the Knock email template can reference (the `data` map of the
- * trigger call — every key below is always present unless noted):
+ * RESULTS-EMAIL DATA KEYS (the `data` map of the trigger call for the
+ * diagnostic results workflow — every key below is always present unless
+ * noted):
  *
  *   firstName        string          lead's first name
  *   workEmail        string          lead's work email (also the recipient)
@@ -68,22 +76,41 @@
  *                                    scored, non-locked parameters (empty
  *                                    array when no diagnostic payload sent)
  *
+ * BOOKING-CONFIRMATION DATA KEYS (the `data` map of the trigger call for the
+ * workflow that confirms a booking request or contact message — every key is
+ * always present unless noted):
+ *
+ *   firstName        string          submitter's first name
+ *   fullName         string          submitter's full name (template can
+ *                                    choose; firstName is derived from it)
+ *   workEmail        string          submitter's work email (also recipient)
+ *   company          string          company name ("not provided" when absent)
+ *   websiteUrl       string          website URL ("not provided" when absent)
+ *   serviceInterest  string          service interest label ("" when absent)
+ *   source           string          "booking_modal" | "contact_form" — lets
+ *                                    the template vary copy per surface
+ *   message          string          the contact message, when provided ("" if
+ *                                    not) — lets the template thank the
+ *                                    submitter for their details
+ *   capturedAt       string          ISO-8601 timestamp of the submission
+ *
  * FAIL-OPEN CONTRACT (enforced below):
- *   1. No KNOCK_API_KEY -> triggerResultsEmail() resolves { ok:false,
- *      reason:"skipped" } before any network work.
- *   2. triggerResultsEmail() never throws: missing config, network error,
- *      non-2xx, and timeout are all caught and surfaced as an outcome (and
- *      console.warn'ed with the run id / recipient / lead timestamp so a
- *      missed email is debuggable in logs).
+ *   1. No KNOCK_API_KEY -> the trigger resolves { ok:false, reason:"skipped" }
+ *      before any network work.
+ *   2. The trigger never throws: missing config, network error, non-2xx, and
+ *      timeout are all caught and surfaced as an outcome (and console.warn'ed
+ *      with the run id / recipient / request timestamp so a missed email is
+ *      debuggable in logs).
  *   3. The trigger is bounded: up to 2 attempts, each with a 4s AbortSignal
  *      timeout, so the total send budget is ~8s (the same bound PR #6 used)
  *      and a hung Knock call can never pin the request handler.
- *   The lead response is identical whether the email succeeds, fails, or is
+ *   The route response is identical whether the email succeeds, fails, or is
  *   skipped.
  */
 
 const KNOCK_API_BASE = "https://api.knock.app/v1";
-const DEFAULT_WORKFLOW_KEY = "marketready-diagnostic-results";
+const DEFAULT_RESULTS_WORKFLOW = "marketready-diagnostic-results";
+const DEFAULT_CONFIRMATION_WORKFLOW = "marketready-booking-confirmation";
 /** Per-attempt ceiling on the trigger call. Two bounded attempts keep the
  * total send budget at ~8s (the PR #6 bound) while still surviving a flaky
  * first attempt on a cold/slow instance. */
@@ -102,8 +129,9 @@ interface KnockParameter {
   insufficientData?: boolean;
 }
 
-/** The subset of the normalized lead (src/routes/api/leads.ts) the email
- * needs. Structural: NormalizedLead satisfies this without an import cycle. */
+/** The subset of the normalized lead (src/routes/api/leads.ts) the results
+ * email needs. Structural: NormalizedLead satisfies this without an import
+ * cycle. */
 export interface KnockEmailLead {
   firstName: string;
   workEmail: string;
@@ -131,9 +159,54 @@ export interface KnockEmailLead {
   } | null;
 }
 
-/** Build the `data` map passed to the Knock workflow trigger. Kept as its own
- * pure function so the template data keys (documented above) have exactly one
- * definition site. */
+/** The normalized booking request (src/routes/api/booking.ts) the confirmation
+ * email needs. Structural: the normalized booking satisfies this. */
+export interface KnockBookingConfirmation {
+  name: string;
+  workEmail: string;
+  company: string;
+  websiteUrl: string;
+  serviceInterest: string;
+  source: string;
+  capturedAt: string;
+  message: string;
+}
+
+/** TRUE for transient network/socket/DNS failures worth retrying (mirrors the
+ * lead-write retry policy in src/routes/api/leads.ts): Bun's "socket connection
+ * was closed unexpectedly" / "fetch failed", undici's "sending request failed",
+ * Node errno codes (ECONNRESET, ETIMEDOUT, ENOTFOUND, ECONNREFUSED, EAI_AGAIN,
+ * EPIPE), and closed/aborted streams. Anything else (e.g. a programming error)
+ * is not retried. */
+function isTransientNetworkError(msg: string): boolean {
+  return /socket connection was closed|fetch failed|sending request failed|econnreset|econnrefused|etimedout|enotfound|eai_again|epipe|network error|aborted|terminated|other side closed/i.test(
+    msg,
+  );
+}
+
+/** Outcome of a trigger attempt, consumed only for observability — never for
+ * the route response. `runId` is Knock's `workflow_run_id` when the trigger
+ * was accepted (2xx); `elapsedMs` is the whole send budget consumed. */
+export type KnockSendOutcome =
+  | { ok: true; runId: string; attempted: number; elapsedMs: number }
+  | {
+      ok: false;
+      reason: "skipped" | "rejected" | "failed" | "timeout";
+      attempted: number;
+      elapsedMs: number;
+      detail?: string;
+      runId?: string;
+    };
+
+/** Optional knobs for tests only — the site always uses the defaults. */
+export interface KnockSendOptions {
+  /** Per-attempt AbortSignal timeout in ms (default ATTEMPT_TIMEOUT_MS). */
+  attemptTimeoutMs?: number;
+}
+
+/** Build the `data` map passed to the Knock workflow trigger for the
+ * diagnostic-results email. Kept as its own pure function so the template data
+ * keys (documented above) have exactly one definition site. */
 export function buildResultsEmailData(
   lead: KnockEmailLead,
   fullBreakdown: string,
@@ -167,52 +240,43 @@ export function buildResultsEmailData(
   };
 }
 
-/** True for transient network/socket/DNS failures worth retrying (mirrors the
- * lead-write retry policy in src/routes/api/leads.ts): Bun's "socket connection
- * was closed unexpectedly" / "fetch failed", undici's "sending request failed",
- * Node errno codes (ECONNRESET, ETIMEDOUT, ENOTFOUND, ECONNREFUSED, EAI_AGAIN,
- * EPIPE), and closed/aborted streams. Anything else (e.g. a programming error)
- * is not retried. */
-function isTransientNetworkError(msg: string): boolean {
-  return /socket connection was closed|fetch failed|sending request failed|econnreset|econnrefused|etimedout|enotfound|eai_again|epipe|network error|aborted|terminated|other side closed/i.test(
-    msg,
-  );
+/** Build the `data` map passed to the Knock workflow trigger for the
+ * booking/contact confirmation email. The owner's template can vary copy on
+ * `source` (booking_modal vs contact_form) and thank by first name. */
+export function buildBookingConfirmationData(
+  booking: KnockBookingConfirmation,
+): Record<string, unknown> {
+  const firstName = booking.name.trim().split(/\s+/)[0] ?? "";
+  return {
+    firstName,
+    fullName: booking.name,
+    workEmail: booking.workEmail,
+    company: booking.company,
+    websiteUrl: booking.websiteUrl,
+    serviceInterest: booking.serviceInterest,
+    source: booking.source,
+    message: booking.message,
+    capturedAt: booking.capturedAt,
+  };
 }
 
-/** Outcome of a trigger attempt, consumed only for observability — never for
- * the lead response. `runId` is Knock's `workflow_run_id` when the trigger was
- * accepted (2xx); `elapsedMs` is the whole send budget consumed. */
-export type KnockSendOutcome =
-  | { ok: true; runId: string; attempted: number; elapsedMs: number }
-  | {
-      ok: false;
-      reason: "skipped" | "rejected" | "failed" | "timeout";
-      attempted: number;
-      elapsedMs: number;
-      detail?: string;
-      runId?: string;
-    };
-
-/** Optional knobs for tests only — the site always uses the defaults. */
-export interface KnockSendOptions {
-  /** Per-attempt AbortSignal timeout in ms (default ATTEMPT_TIMEOUT_MS). */
-  attemptTimeoutMs?: number;
-}
-
-/** Fire the Knock workflow trigger, AWAITED with a bounded budget so the call
- * completes before the lead response returns (the platform freezes background
+/** Fire a Knock workflow trigger, AWAITED with a bounded budget so the call
+ * completes before the route response returns (the platform freezes background
  * work after a response flushes on serverless hosts — fire-and-forget drops
- * the email on slow/cold requests). Resolves on ANY outcome (2xx, non-2xx,
+ * the email on slow/cold requests). Shared by the results email
+ * (triggerResultsEmail) and the booking-confirmation email
+ * (triggerBookingConfirmation). Resolves on ANY outcome (2xx, non-2xx,
  * network error, timeout) — failures are reported via console.warn with the
- * run id / recipient / lead timestamp, never thrown. Never logs or returns the
- * API key. */
-export async function triggerResultsEmail(
-  lead: KnockEmailLead,
-  fullBreakdown: string,
+ * run id / recipient / request timestamp, never thrown. Never logs or returns
+ * the API key. */
+export async function triggerKnockWorkflow(
+  workflowKey: string,
+  recipient: { id: string; email: string; name?: string },
+  data: Record<string, unknown>,
+  label: string,
   opts?: KnockSendOptions,
 ): Promise<KnockSendOutcome> {
   const apiKey = process.env.KNOCK_API_KEY;
-  const workflowKey = process.env.KNOCK_WORKFLOW?.trim() || DEFAULT_WORKFLOW_KEY;
   if (!apiKey) {
     // Not configured: nothing to do (fail-open). Silent — this is the normal
     // state until the owner wires the Knock secret, not a failure to log.
@@ -220,10 +284,10 @@ export async function triggerResultsEmail(
   }
   const startedAt = Date.now();
   const attemptTimeoutMs = opts?.attemptTimeoutMs ?? ATTEMPT_TIMEOUT_MS;
-  // Lead identity for logs: the recipient email is the unique key; capturedAt
-  // is the same timestamp written to the Airtable "Timestamp" column, so a log
-  // line maps 1:1 to a stored lead row.
-  const leadId = `${lead.workEmail}@${lead.capturedAt}`;
+  // Identity for logs: the recipient email is the unique key; capturedAt is
+  // the same timestamp written to Airtable, so a log line maps 1:1 to a
+  // stored row.
+  const leadId = `${recipient.email}@${String(data.capturedAt ?? "")}`;
   const url = `${KNOCK_API_BASE}/workflows/${encodeURIComponent(workflowKey)}/trigger`;
   let body: string;
   try {
@@ -233,19 +297,19 @@ export async function triggerResultsEmail(
       // stable id = lowercased email, plus name when we have one.
       recipients: [
         {
-          id: lead.workEmail.toLowerCase(),
-          email: lead.workEmail,
-          ...(lead.firstName ? { name: lead.firstName } : {}),
+          id: recipient.id,
+          email: recipient.email,
+          ...(recipient.name ? { name: recipient.name } : {}),
         },
       ],
-      data: buildResultsEmailData(lead, fullBreakdown),
+      data,
     });
   } catch (err) {
     // Programming error in payload assembly: fail-open, never throw to the
     // caller that awaits us.
     const msg = err instanceof Error ? err.message : "unknown error";
     console.warn(
-      `[knock][results-email] trigger FAILED reason=failed workflow=${workflowKey} ` +
+      `[knock][${label}] trigger FAILED reason=failed workflow=${workflowKey} ` +
         `lead=${leadId} attempt=0/0 elapsedMs=0 detail=payload-construction ${msg}`,
     );
     return { ok: false, reason: "failed", attempted: 0, elapsedMs: 0, detail: msg };
@@ -274,7 +338,7 @@ export async function triggerResultsEmail(
             : "";
         const elapsedMs = Date.now() - startedAt;
         console.info(
-          `[knock][results-email] triggered ok workflow=${workflowKey} ` +
+          `[knock][${label}] triggered ok workflow=${workflowKey} ` +
             `runId=${runId} lead=${leadId} attempt=${attempt}/${MAX_SEND_ATTEMPTS} elapsedMs=${elapsedMs}`,
         );
         return { ok: true, runId, attempted: attempt, elapsedMs };
@@ -284,7 +348,7 @@ export async function triggerResultsEmail(
       const detail = (await res.text().catch(() => "")).slice(0, 200);
       const elapsedMs = Date.now() - startedAt;
       console.warn(
-        `[knock][results-email] trigger FAILED reason=rejected workflow=${workflowKey} ` +
+        `[knock][${label}] trigger FAILED reason=rejected workflow=${workflowKey} ` +
           `lead=${leadId} attempt=${attempt}/${MAX_SEND_ATTEMPTS} HTTP ${res.status}${detail ? ` detail=${detail}` : ""} elapsedMs=${elapsedMs}`,
       );
       return {
@@ -306,7 +370,7 @@ export async function triggerResultsEmail(
         // exactly the failure mode this fix exists for, and it must be
         // visible even when the retry succeeds.
         console.warn(
-          `[knock][results-email] trigger attempt ${attempt}/${MAX_SEND_ATTEMPTS} failed ` +
+          `[knock][${label}] trigger attempt ${attempt}/${MAX_SEND_ATTEMPTS} failed ` +
             `reason=${isTimeout ? "timeout" : "failed"} workflow=${workflowKey} ` +
             `lead=${leadId} retrying detail=${msg}`,
         );
@@ -314,7 +378,7 @@ export async function triggerResultsEmail(
       }
       const elapsedMs = Date.now() - startedAt;
       console.warn(
-        `[knock][results-email] trigger FAILED reason=${isTimeout ? "timeout" : "failed"} ` +
+        `[knock][${label}] trigger FAILED reason=${isTimeout ? "timeout" : "failed"} ` +
           `workflow=${workflowKey} lead=${leadId} attempt=${attempt}/${MAX_SEND_ATTEMPTS} ` +
           `elapsedMs=${elapsedMs} detail=${msg}`,
       );
@@ -330,4 +394,43 @@ export async function triggerResultsEmail(
   // Unreachable: MAX_SEND_ATTEMPTS >= 1 and every path returns above.
   const elapsedMs = Date.now() - startedAt;
   return { ok: false, reason: "failed", attempted: MAX_SEND_ATTEMPTS, elapsedMs };
+}
+
+/** Fire the Knock diagnostic-results workflow trigger, AWAITED with a bounded
+ * budget (see triggerKnockWorkflow for the full contract). Workflow key:
+ * KNOCK_WORKFLOW env or "marketready-diagnostic-results". */
+export async function triggerResultsEmail(
+  lead: KnockEmailLead,
+  fullBreakdown: string,
+  opts?: KnockSendOptions,
+): Promise<KnockSendOutcome> {
+  const workflowKey = process.env.KNOCK_WORKFLOW?.trim() || DEFAULT_RESULTS_WORKFLOW;
+  return triggerKnockWorkflow(
+    workflowKey,
+    { id: lead.workEmail.toLowerCase(), email: lead.workEmail, name: lead.firstName || undefined },
+    buildResultsEmailData(lead, fullBreakdown),
+    "results-email",
+    opts,
+  );
+}
+
+/** Fire the Knock booking/contact confirmation workflow trigger, AWAITED with
+ * a bounded budget (see triggerKnockWorkflow for the full contract). Workflow
+ * key: KNOCK_CONFIRMATION_WORKFLOW env or "marketready-booking-confirmation".
+ * Sends to the submitter's workEmail with their name + the booking data map
+ * (source included so the template can vary copy). NEVER used for the
+ * diagnostic results workflow. */
+export async function triggerBookingConfirmation(
+  booking: KnockBookingConfirmation,
+  opts?: KnockSendOptions,
+): Promise<KnockSendOutcome> {
+  const workflowKey =
+    process.env.KNOCK_CONFIRMATION_WORKFLOW?.trim() || DEFAULT_CONFIRMATION_WORKFLOW;
+  return triggerKnockWorkflow(
+    workflowKey,
+    { id: booking.workEmail.toLowerCase(), email: booking.workEmail, name: booking.name || undefined },
+    buildBookingConfirmationData(booking),
+    "booking-confirmation",
+    opts,
+  );
 }

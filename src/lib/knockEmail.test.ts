@@ -28,8 +28,11 @@ import { mkdirSync, rmSync, existsSync } from "node:fs";
 import * as path from "node:path";
 import {
   buildResultsEmailData,
+  buildBookingConfirmationData,
   triggerResultsEmail,
+  triggerBookingConfirmation,
   type KnockEmailLead,
+  type KnockBookingConfirmation,
 } from "./knockEmail";
 import {
   Route as LeadsRoute,
@@ -85,6 +88,20 @@ const BASE_LEAD: KnockEmailLead = {
 
 const KNOCK_WORKFLOW_URL =
   "https://api.knock.app/v1/workflows/marketready-diagnostic-results/trigger";
+const CONFIRMATION_WORKFLOW_URL =
+  "https://api.knock.app/v1/workflows/marketready-booking-confirmation/trigger";
+
+/** Minimal booking request as normalized by POST /api/booking. */
+const BASE_BOOKING: KnockBookingConfirmation = {
+  name: "Ada Lovelace",
+  workEmail: "ada@analyticalengines.test",
+  company: "Analytical Engines",
+  websiteUrl: "https://analyticalengines.test",
+  serviceInterest: "MarketReady Sprint",
+  source: "booking_modal",
+  capturedAt: "2026-09-07T12:00:00.000Z",
+  message: "",
+};
 
 /** Save the real fetch so every test's mock is fully restored. */
 const ORIGINAL_FETCH = globalThis.fetch;
@@ -317,6 +334,128 @@ describe("triggerResultsEmail (fail-open, bounded, observable)", () => {
     const warnLines = logs.filter((l) => l.level === "warn");
     expect(warnLines.length).toBeGreaterThanOrEqual(1);
     expect(warnLines[0].text).toContain("lead=test+leads@mr.test");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* buildBookingConfirmationData — the template data-key contract        */
+/* ------------------------------------------------------------------ */
+describe("buildBookingConfirmationData (template data-key contract)", () => {
+  test("emits every documented key with the exact booking values", () => {
+    const data = buildBookingConfirmationData(BASE_BOOKING);
+    const expectedKeys = [
+      "firstName", "fullName", "workEmail", "company", "websiteUrl",
+      "serviceInterest", "source", "message", "capturedAt",
+    ];
+    for (const k of expectedKeys) {
+      expect(data, `missing data key: ${k}`).toHaveProperty(k);
+    }
+    expect(data.firstName).toBe("Ada");
+    expect(data.fullName).toBe("Ada Lovelace");
+    expect(data.workEmail).toBe("ada@analyticalengines.test");
+    expect(data.company).toBe("Analytical Engines");
+    expect(data.websiteUrl).toBe("https://analyticalengines.test");
+    expect(data.serviceInterest).toBe("MarketReady Sprint");
+    expect(data.source).toBe("booking_modal");
+    expect(data.message).toBe("");
+    expect(data.capturedAt).toBe("2026-09-07T12:00:00.000Z");
+  });
+
+  test("firstName is the first token of the full name; empty name -> empty firstName", () => {
+    const data = buildBookingConfirmationData({ ...BASE_BOOKING, name: "Grace Hopper" });
+    expect(data.firstName).toBe("Grace");
+    const empty = buildBookingConfirmationData({ ...BASE_BOOKING, name: "   " });
+    expect(empty.firstName).toBe("");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* triggerBookingConfirmation — fail-open, bounded, right workflow      */
+/* ------------------------------------------------------------------ */
+describe("triggerBookingConfirmation (confirmation workflow, fail-open)", () => {
+  test("uses KNOCK_CONFIRMATION_WORKFLOW env when set, else the default key", async () => {
+    process.env.KNOCK_API_KEY = "sk_test_conf";
+    const requested: string[] = [];
+    setFetchMock(async (url) => {
+      requested.push(url);
+      return new Response(JSON.stringify({ workflow_run_id: "run-conf-env" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    // Default key.
+    delete process.env.KNOCK_CONFIRMATION_WORKFLOW;
+    await triggerBookingConfirmation(BASE_BOOKING, { attemptTimeoutMs: 50 });
+    expect(requested[0]).toBe(CONFIRMATION_WORKFLOW_URL);
+
+    // Env override.
+    requested.length = 0;
+    process.env.KNOCK_CONFIRMATION_WORKFLOW = "custom-confirmation-workflow";
+    await triggerBookingConfirmation(BASE_BOOKING, { attemptTimeoutMs: 50 });
+    expect(requested[0]).toBe(
+      "https://api.knock.app/v1/workflows/custom-confirmation-workflow/trigger",
+    );
+    delete process.env.KNOCK_CONFIRMATION_WORKFLOW;
+  });
+
+  test("sends to the submitter with name + full booking data map, logs the run id", async () => {
+    process.env.KNOCK_API_KEY = "sk_test_conf";
+    let knockBody = "";
+    setFetchMock(async (_url, init) => {
+      knockBody = String(init.body);
+      return new Response(JSON.stringify({ workflow_run_id: "run-conf-ok" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    const { logs } = captureLogs();
+    const outcome = await triggerBookingConfirmation(BASE_BOOKING, { attemptTimeoutMs: 50 });
+    expect(outcome.ok).toBe(true);
+    const sent = JSON.parse(knockBody) as {
+      recipients: { id: string; email: string; name: string }[];
+      data: Record<string, unknown>;
+    };
+    expect(sent.recipients[0].email).toBe("ada@analyticalengines.test");
+    expect(sent.recipients[0].id).toBe("ada@analyticalengines.test");
+    expect(sent.recipients[0].name).toBe("Ada Lovelace");
+    expect(sent.data.source).toBe("booking_modal");
+    const infoLine = logs.find((l) => l.level === "info");
+    expect(infoLine?.text).toContain("workflow=marketready-booking-confirmation");
+    expect(infoLine?.text).toContain("runId=run-conf-ok");
+    expect(infoLine?.text).toContain("lead=ada@analyticalengines.test");
+  });
+
+  test("never fires the diagnostic-results workflow", async () => {
+    process.env.KNOCK_API_KEY = "sk_test_conf";
+    const requested: string[] = [];
+    setFetchMock(async (url) => {
+      requested.push(url);
+      return new Response(JSON.stringify({ workflow_run_id: "run-any" }), { status: 200 });
+    });
+    await triggerBookingConfirmation({ ...BASE_BOOKING, source: "contact_form" }, { attemptTimeoutMs: 50 });
+    expect(requested.every((u) => u.includes("marketready-booking-confirmation"))).toBe(true);
+    expect(requested.some((u) => u.includes("marketready-diagnostic-results"))).toBe(false);
+  });
+
+  test("skips silently when KNOCK_API_KEY is unset (fail-open)", async () => {
+    delete process.env.KNOCK_API_KEY;
+    const { logs } = captureLogs();
+    const outcome = await triggerBookingConfirmation(BASE_BOOKING, { attemptTimeoutMs: 50 });
+    expect(outcome).toEqual({ ok: false, reason: "skipped", attempted: 0, elapsedMs: 0 });
+    expect(logs).toHaveLength(0);
+  });
+
+  test("never throws on a non-2xx rejection and logs the workflow + recipient", async () => {
+    process.env.KNOCK_API_KEY = "sk_test_conf";
+    setFetchMock(async () => new Response("unknown workflow", { status: 404 }));
+    const { logs } = captureLogs();
+    const outcome = await triggerBookingConfirmation(BASE_BOOKING, { attemptTimeoutMs: 50 });
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) expect(outcome.reason).toBe("rejected");
+    const warnLine = logs.find((l) => l.level === "warn");
+    expect(warnLine?.text).toContain("workflow=marketready-booking-confirmation");
+    expect(warnLine?.text).toContain("HTTP 404");
+    expect(warnLine?.text).toContain("lead=ada@analyticalengines.test");
   });
 });
 

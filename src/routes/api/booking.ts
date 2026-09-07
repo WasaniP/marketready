@@ -5,8 +5,11 @@
  * /api/leads. This route exists as its OWN endpoint for one reason: the
  * diagnostic route (POST /api/leads) triggers the instant results email via
  * Knock, and a booking request must NEVER fire that email — it is not a
- * diagnostic submission and has no results to email. This file contains no
- * email logic and must never import src/lib/knockEmail.ts.
+ * diagnostic submission and has no results to email. The ONLY email this
+ * route may fire is the booking/contact CONFIRMATION workflow
+ * (triggerBookingConfirmation → KNOCK_CONFIRMATION_WORKFLOW, default
+ * "marketready-booking-confirmation") — never the diagnostic results
+ * workflow.
  *
  * JSON in: { name, workEmail, company?, websiteUrl?, serviceInterest?,
  * source?, capturedAt?, message? }. Only name + a valid work email are
@@ -32,6 +35,20 @@
  *      error, and responds { ok:false, error } (HTTP 200, friendly) so the
  *      modal can show its inline retry message.
  *   5. Only a malformed body / missing name / invalid email returns non-2xx.
+ *   6. Booking/contact confirmation email (INDEPENDENT of the Airtable
+ *      outcome — fires on Airtable success AND on the fail-open path, but
+ *      NOT on a server-side Airtable failure where the client is told to
+ *      retry, so a resubmit never double-emails): after the Airtable step
+ *      settles and just before an { ok:true } response, the normalized
+ *      booking is queued to Knock (src/lib/knockEmail.ts,
+ *      triggerBookingConfirmation) which triggers the owner's
+ *      "marketready-booking-confirmation" workflow to the submitter's
+ *      workEmail — the SAME workflow for bookings (modal) and contacts
+ *      (/contact page), with `source` in the payload so the template can
+ *      vary copy. Fail-open: skipped entirely when KNOCK_API_KEY is unset;
+ *      any send failure is console.warn'ed only and never blocks or alters
+ *      the booking response. The diagnostic results workflow is NEVER
+ *      triggered on this route.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -44,6 +61,8 @@ import {
   whitelistFields,
   writeAirtable,
 } from "~/lib/airtable";
+import { triggerBookingConfirmation } from "~/lib/knockEmail";
+import type { KnockBookingConfirmation } from "~/lib/knockEmail";
 
 /** The owner's bookings table (verified against the live metadata API:
  * tbl7EUWespmF9nPEj with exactly these 7 columns). Distinct from the
@@ -189,8 +208,30 @@ export const Route = createFileRoute("/api/booking")({
           BOOKINGS_FALLBACK_COLUMNS,
         );
 
+        // Normalized booking for the confirmation email (structurally matches
+        // KnockBookingConfirmation). Built once here so the email payload and
+        // the Airtable row share exactly the same normalized values.
+        const booking: KnockBookingConfirmation = {
+          name,
+          workEmail,
+          company,
+          websiteUrl,
+          serviceInterest,
+          source,
+          capturedAt,
+          message,
+        };
+
         const result = await writeAirtable(fields, BOOKINGS_TABLE);
         if (result.ok) {
+          // Booking/contact confirmation email: AWAITED with a bounded budget
+          // BEFORE the { ok:true } response returns (same cold-start fix as
+          // /api/leads' instant-results email — the platform freezes background
+          // work after a response flushes on serverless hosts). Fail-open:
+          // skipped when KNOCK_API_KEY is unset; a send failure never alters
+          // the booking response. Only the confirmation workflow fires here —
+          // the diagnostic results workflow is NEVER triggered on this route.
+          await triggerBookingConfirmation(booking);
           return Response.json({ ok: true });
         }
 
@@ -216,11 +257,18 @@ export const Route = createFileRoute("/api/booking")({
           } catch (err) {
             console.warn("[booking] JSONL append failed", err);
           }
+          // The visitor was told "we received it", so the confirmation email
+          // fires on this fail-open success path too (same awaited bounded
+          // trigger, never blocks the response).
+          await triggerBookingConfirmation(booking);
           return Response.json({ ok: true });
         }
 
         // Airtable is configured but the write failed: keep a local copy and
-        // tell the client so the modal shows its inline retry error.
+        // tell the client so the modal shows its inline retry error. NO
+        // confirmation email here — the visitor was told the request was NOT
+        // saved and to retry; emailing "we received it" would contradict the
+        // UI and double-email on resubmission.
         console.warn("[booking] Airtable write failed; booking saved locally.");
         try {
           await appendJsonl({
