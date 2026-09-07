@@ -1,20 +1,54 @@
 /**
- * MarketReady: Free AI Audit & Scorecard (/services/diagnostic).
+ * MarketReady Free Diagnostic (/services/diagnostic).
  *
- * The above-the-fold is the SAME shared Homepage Hero Diagnostic card used on
- * the homepage — rendered via <HeroDiagnostic> from src/components/HeroDiagnostic.tsx,
- * so the two are identical by construction (UI + crawl/score behavior). Below
- * the fold, a single unified "minimalist glass grid table" presents the
- * 5-dimensional friction matrix in a Dimension / What We Verify & Scan /
- * Revenue Impact layout, bridged by a CTA that funnels into the gated 5-D
- * assessment at /assessment.
+ * This page IS the live diagnostic tool (the gated 5-dimension engine moved
+ * here from /assessment, which now 308-redirects here):
+ *
+ *   Hero (shared <HeroDiagnostic> instant-scan card) → 5-Dimensional Friction
+ *   Matrix → the live interactive engine (#diagnostic-engine): five rating
+ *   steps (one per dimension, 1 to 5 scale) → lead gate (name + work email,
+ *   POST /api/leads Source "Full Assessment") → inline results (score,
+ *   readiness band, primary friction, dynamic prescription, dual CTAs with the
+ *   terms gate + booking modal, and the mr:leadSyncFailed banner).
+ *
+ * The score is NEVER computed or revealed before the gate: the results view
+ * renders only when a completed diagnostic (with the `gatedAt` marker) exists
+ * in localStorage key `marketready:diagnostic` (see src/lib/diagnostic.ts).
+ * In-progress answers survive refresh via the same key; a returning visitor
+ * with a completed run lands back on their results, and "Retake the
+ * diagnostic" restarts the flow fresh (the stored result is overwritten at
+ * the next gate submit, exactly as /assessment behaved).
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import { Header, Footer } from "~/components/Layout";
 import { BookingModal } from "~/components/BookingModal";
 import { HeroDiagnostic } from "~/components/HeroDiagnostic";
 import { SectionHeading } from "~/components/services-ui";
+import { captureLead } from "~/lib/leads";
+import type { LeadPayload } from "~/lib/leads";
+import { ASSESSMENT_STORAGE_KEY } from "~/lib/storage";
+import { openCheckout, CHECKOUT_SERVICES } from "~/lib/checkout";
+import {
+  DIMENSIONS,
+  RATING_LABELS,
+  readDiagnosticProgress,
+  readDiagnosticState,
+  writeDiagnosticProgress,
+  writeDiagnosticState,
+  scoreDiagnostic,
+  readinessBand,
+  bandColor,
+  primaryFriction,
+  prescriptionFor,
+  answersSummary,
+} from "~/lib/diagnostic";
+import type {
+  DiagnosticAnswers,
+  DiagnosticState,
+  DimensionId,
+} from "~/lib/diagnostic";
 
 export const Route = createFileRoute("/services/diagnostic")({
   head: () => ({
@@ -23,7 +57,7 @@ export const Route = createFileRoute("/services/diagnostic")({
       {
         name: "description",
         content:
-          "The MarketReady Free AI Audit & Scorecard. It identifies GTM friction and revenue leakage in seconds from your product URL alone, with no email required.",
+          "The MarketReady Free Diagnostic: five questions on positioning, messaging, GTM path, acquisition efficiency, and conversion, then your Market Ready Score and the recommended next step.",
       },
     ],
   }),
@@ -214,14 +248,10 @@ function FrictionTable() {
           })}
         </div>
 
-        {/* Bridge CTA — scrolls back to the hero URL input, funnels to /assessment */}
+        {/* Bridge CTA — anchors down to the live interactive engine on this page */}
         <div className="mt-10 text-center">
           <a
-            href="/assessment"
-            onClick={() => {
-              const hero = document.getElementById("top");
-              if (hero) hero.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
+            href="#diagnostic-engine"
             className="btn-electric h-[44px] px-7 text-sm"
             style={{ fontWeight: 700 }}
           >
@@ -234,23 +264,901 @@ function FrictionTable() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Interactive engine: questions → lead gate (ported from /assessment) */
+/* ------------------------------------------------------------------ */
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const GATE_STEP = DIMENSIONS.length; // 5: the lead gate after the questions
+
+/** sessionStorage flag read by the results view to show a discreet
+ * "report not saved" banner. Set on final /api/leads failure only; the
+ * results reveal stays immediate and non-blocking either way. */
+const LEAD_SYNC_FAILED_KEY = "mr:leadSyncFailed";
+function markLeadSyncFailed() {
+  try {
+    window.sessionStorage.setItem(LEAD_SYNC_FAILED_KEY, "1");
+  } catch {
+    // Storage unavailable (private mode): results still render.
+  }
+}
+
+/** Best-effort prefill from the homepage calculator (ASSESSMENT_STORAGE_KEY). */
+function readHomeAssessment(): {
+  url: string;
+  businessModel: string;
+  launchStage: string;
+  icp: string;
+} | null {
+  try {
+    const raw = window.localStorage.getItem(ASSESSMENT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      url?: unknown;
+      businessModel?: unknown;
+      launchStage?: unknown;
+      icp?: unknown;
+    };
+    if (!parsed || typeof parsed !== "object") return null;
+    return {
+      url: typeof parsed.url === "string" ? parsed.url : "",
+      businessModel: typeof parsed.businessModel === "string" ? parsed.businessModel : "",
+      launchStage: typeof parsed.launchStage === "string" ? parsed.launchStage : "",
+      icp: typeof parsed.icp === "string" ? parsed.icp : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function DiagnosticEngine({ onComplete }: { onComplete: (state: DiagnosticState) => void }) {
+  // Default state IS step 1 (no splash): the first client paint renders the
+  // Positioning question; saved progress is restored after mount.
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<Partial<DiagnosticAnswers>>({});
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Restore in-progress answers + step after hydration (refresh survival).
+  useEffect(() => {
+    const saved = readDiagnosticProgress();
+    if (saved) {
+      setAnswers(saved.answers);
+      let nextStep = saved.step;
+      // If the saved step points at an already-answered question (or is the
+      // gate), resume at the first unanswered question instead.
+      const firstUnanswered = DIMENSIONS.findIndex(
+        (d) => typeof saved.answers[d.id] !== "number",
+      );
+      if (firstUnanswered === -1) {
+        nextStep = GATE_STEP;
+      } else if (
+        nextStep >= DIMENSIONS.length ||
+        typeof saved.answers[DIMENSIONS[nextStep]?.id] !== "number"
+      ) {
+        nextStep = firstUnanswered;
+      }
+      setStep(nextStep);
+    }
+  }, []);
+
+  const goTo = (s: number) => {
+    setStep(s);
+    writeDiagnosticProgress({ answers, step: s });
+    document
+      .getElementById("diagnostic-engine")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const selectRating = (id: DimensionId, value: number) => {
+    const next = { ...answers, [id]: value };
+    setAnswers(next);
+    writeDiagnosticProgress({ answers: next, step });
+  };
+
+  const handleContinue = () => {
+    if (step >= DIMENSIONS.length) return;
+    if (typeof answers[DIMENSIONS[step]?.id] !== "number") return;
+    goTo(step + 1);
+  };
+
+  const handleBack = () => {
+    if (step === 0) return;
+    goTo(step - 1);
+  };
+
+  const handleGateSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+    if (!cleanName) {
+      setError("Enter your name so we know who to reach out to.");
+      return;
+    }
+    if (!EMAIL_RE.test(cleanEmail)) {
+      setError("Enter a valid work email, e.g. you@yourcompany.com");
+      return;
+    }
+    setError("");
+    setSubmitting(true);
+
+    // All five ratings are required to reach the gate (Continue is gated on
+    // each answer), so the reduce below always yields a complete set.
+    const full = DIMENSIONS.reduce<DiagnosticAnswers>((acc, d) => {
+      acc[d.id] = answers[d.id] ?? 3;
+      return acc;
+    }, {} as DiagnosticAnswers);
+    const score = scoreDiagnostic(full);
+    const band = readinessBand(score);
+    const completed: DiagnosticState = { answers: full, gatedAt: new Date().toISOString() };
+    writeDiagnosticState(completed);
+
+    // Lead capture: local fallback + best-effort server save (never throws).
+    const home = readHomeAssessment();
+    const summary = answersSummary(full);
+    const frictionId = primaryFriction(full);
+    const frictionName = DIMENSIONS.find((d) => d.id === frictionId)?.name ?? frictionId;
+    const rx = prescriptionFor(frictionId);
+    const prescriptionLabel =
+      rx === "sprint"
+        ? "14-Day Positioning Sprint ($5,000)"
+        : "Fractional GTM Advisory ($5,000/month)";
+    const payload: LeadPayload = {
+      email: cleanEmail,
+      url: home?.url || "not provided",
+      businessModel: home?.businessModel ?? "",
+      launchStage: home?.launchStage ?? "",
+      icp: home?.icp ?? "",
+      overall: score,
+      riskLabel: band,
+      generatedAt: new Date().toISOString(),
+      name: cleanName,
+      source: "assessment",
+    };
+    // answersSummary rides along on the payload (kept out of the LeadPayload
+    // type so src/lib/leads.ts stays untouched): the localStorage fallback
+    // record keeps it; the server insert ignores unknown fields.
+    const leadPayload: LeadPayload & { answersSummary: string } = {
+      ...payload,
+      answersSummary: summary,
+    };
+    void captureLead(leadPayload);
+
+    // Diagnostic lead → Airtable-backed /api/leads (Source "Full
+    // Assessment"). Non-blocking: never throws, never delays the reveal,
+    // and the results view renders the client-computed score regardless of
+    // the outcome (score logic untouched: scoreDiagnostic stays the single
+    // source of truth).
+    try {
+      void fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: cleanName,
+          workEmail: cleanEmail,
+          company: "",
+          websiteUrl: home?.url || "",
+          icp: home?.icp ?? "",
+          diagnosticScore: score,
+          readiness: band,
+          primaryFriction: frictionName,
+          recommendedPrescription: prescriptionLabel,
+          scoreBreakdown: summary,
+          source: "Full Assessment",
+        }),
+      })
+        .then((res) => res.json().catch(() => null))
+        .then((data) => {
+          if (data && data.ok === false) {
+            console.warn("[diagnostic] Lead sync did not reach Airtable:", data.error);
+            markLeadSyncFailed();
+          }
+        })
+        .catch(() => {
+          markLeadSyncFailed();
+        });
+    } catch {
+      // fetch itself threw synchronously (offline): results still render.
+      markLeadSyncFailed();
+    }
+
+    onComplete(completed);
+  };
+
+  const current = DIMENSIONS[step] ?? null;
+  const selectedRating = current ? answers[current.id] : undefined;
+
+  return (
+    <div className="relative mx-auto w-full max-w-2xl">
+      {/* Progress header */}
+      <div className="flex items-center justify-between">
+        <span className="chip border-electric/40 text-electric">
+          Market Readiness Diagnostic
+        </span>
+        <span className="text-sm font-semibold text-mist">
+          Step {Math.min(step + 1, GATE_STEP)} of {GATE_STEP}
+        </span>
+      </div>
+      {/* Dimension tracker */}
+      <div className="mt-4 flex flex-wrap gap-1.5" aria-hidden="true">
+        {DIMENSIONS.map((d, i) => {
+          const done = typeof answers[d.id] === "number";
+          const active = i === step && step < GATE_STEP;
+          return (
+            <span
+              key={d.id}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                active
+                  ? "border-electric/60 bg-electric/10 text-electric"
+                  : done
+                    ? "border-hairline bg-white/[0.03] text-zinc-400"
+                    : "border-hairline text-zinc-600"
+              }`}
+            >
+              {d.name}
+            </span>
+          );
+        })}
+      </div>
+      <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+        <div
+          className="h-full rounded-full bg-electric transition-all duration-300"
+          style={{
+            width: `${(Math.min(step, GATE_STEP) / GATE_STEP) * 100}%`,
+          }}
+        />
+      </div>
+
+      {/* Card */}
+      <div className="glass-card mt-6 p-6 sm:p-8">
+        {step < GATE_STEP && current ? (
+          <>
+            <h3 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+              {current.question}
+            </h3>
+            <p className="mt-2 text-sm text-zinc-500">
+              Rate how true this is for your company today.
+            </p>
+
+            {/* 1 to 5 rating control */}
+            <div
+              className="mt-8 grid grid-cols-5 gap-2 sm:gap-3"
+              role="radiogroup"
+              aria-label="Your rating"
+            >
+              {RATING_LABELS.map((label, i) => {
+                const value = i + 1;
+                const selected = selectedRating === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-label={`${value}: ${label}`}
+                    onClick={() => selectRating(current.id, value)}
+                    className={`flex h-14 flex-col items-center justify-center rounded-xl border text-lg font-bold transition-all duration-200 ${
+                      selected
+                        ? "border-electric/60 bg-electric/10 text-electric shadow-[0_0_16px_rgba(20,184,166,0.25)]"
+                        : "border-hairline bg-white/[0.02] text-mist hover:border-zinc-600 hover:text-ink"
+                    }`}
+                  >
+                    {value}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-2 flex justify-between text-xs text-zinc-500">
+              <span>Strongly disagree</span>
+              <span>Strongly agree</span>
+            </div>
+            <p className="mt-3 min-h-5 text-sm text-electric" aria-live="polite">
+              {typeof selectedRating === "number"
+                ? `Your rating: ${selectedRating}: ${RATING_LABELS[selectedRating - 1]}`
+                : ""}
+            </p>
+
+            {/* Back / Continue */}
+            <div className="mt-6 flex items-center justify-between gap-3 border-t border-hairline pt-6">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={step === 0}
+                className="btn-ghost disabled:opacity-40"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={handleContinue}
+                disabled={typeof selectedRating !== "number"}
+                className="btn-electric"
+              >
+                Continue →
+              </button>
+            </div>
+          </>
+        ) : (
+          /* -------------------------------------------------- */
+          /* Lead gate: the score stays behind this step       */
+          /* -------------------------------------------------- */
+          <>
+            <span className="chip border-electric/40 text-electric">
+              Your score is ready
+            </span>
+            <h3 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+              Unlock your Market Ready Score
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-mist">
+              Two quick fields: your score, readiness level, and the
+              recommended next step appear instantly.
+            </p>
+
+            <form onSubmit={handleGateSubmit} noValidate className="mt-6 flex flex-col gap-4">
+              <div>
+                <label htmlFor="diag-name" className="field-label">
+                  Name <span className="text-electric">*</span>
+                </label>
+                <input
+                  id="diag-name"
+                  type="text"
+                  name="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ada Lovelace"
+                  autoComplete="name"
+                  className="field-input"
+                />
+              </div>
+              <div>
+                <label htmlFor="diag-email" className="field-label">
+                  Work Email <span className="text-electric">*</span>
+                </label>
+                <input
+                  id="diag-email"
+                  type="email"
+                  name="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@yourcompany.com"
+                  autoComplete="email"
+                  className="field-input"
+                  aria-describedby={error ? "diag-error" : undefined}
+                />
+              </div>
+
+              {error && (
+                <p
+                  id="diag-error"
+                  role="alert"
+                  className="rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-sm text-electric"
+                >
+                  {error}
+                </p>
+              )}
+
+              <div className="flex items-center justify-between gap-3 border-t border-hairline pt-6">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={submitting}
+                  className="btn-ghost disabled:opacity-40"
+                >
+                  ← Back
+                </button>
+                <button type="submit" disabled={submitting} className="btn-electric">
+                  {submitting ? "Unlocking…" : "Get My Score →"}
+                </button>
+              </div>
+            </form>
+            <p className="mt-4 text-center text-xs text-zinc-500">
+              We only use this to send your score and next steps. No spam,
+              no obligation.
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Results view (ported from /assessment/results)                      */
+/* ------------------------------------------------------------------ */
+
+/** The sole Sprint-price constant. This stays the single source of truth
+ * for the results view. */
+const RX_PRICE = "$7,500";
+
+/** Checkout-gate terms label. Kept as ONE literal so the exact sentence
+ * ships contiguously in the bundle (QA greps it); the agreement name
+ * is split out at render time to become the /terms link. */
+const GATE_TERMS_LABEL =
+  "I agree to the MarketReady Productized Services Terms & Scope Agreement.";
+const GATE_TERMS_NAME = "MarketReady Productized Services Terms & Scope Agreement";
+const [GATE_TERMS_BEFORE = "", GATE_TERMS_AFTER = ""] = GATE_TERMS_LABEL.split(GATE_TERMS_NAME);
+
+/* ------------------------------------------------------------------ */
+/* Compact 240° gauge (same visual language as the homepage dashboard) */
+/* ------------------------------------------------------------------ */
+const GAUGE_CX = 140;
+const GAUGE_CY = 158;
+const GAUGE_R = 118;
+const GAUGE_SWEEP = 240;
+const GAUGE_START = -120;
+const HAIRLINE = "#1E293B";
+const INK = "#FAFAFA";
+const MIST = "#A1A1AA";
+
+function gaugePoint(deg: number): { x: number; y: number } {
+  const rad = (deg * Math.PI) / 180;
+  return {
+    x: GAUGE_CX + GAUGE_R * Math.sin(rad),
+    y: GAUGE_CY - GAUGE_R * Math.cos(rad),
+  };
+}
+
+function ScoreGauge({ score, color }: { score: number; color: string }) {
+  const frac = Math.max(0, Math.min(100, score)) / 100;
+  const p0 = gaugePoint(GAUGE_START);
+  const p1 = gaugePoint(GAUGE_START + GAUGE_SWEEP);
+  const track = `M ${p0.x.toFixed(2)} ${p0.y.toFixed(2)} A ${GAUGE_R} ${GAUGE_R} 0 1 1 ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+  const pe = gaugePoint(GAUGE_START + GAUGE_SWEEP * frac);
+  const largeArc = frac > 0.5 ? 1 : 0;
+  const progress =
+    score <= 0
+      ? ""
+      : `M ${p0.x.toFixed(2)} ${p0.y.toFixed(2)} A ${GAUGE_R} ${GAUGE_R} 0 ${largeArc} 1 ${pe.x.toFixed(2)} ${pe.y.toFixed(2)}`;
+  const glow = `drop-shadow(0 0 10px ${color}66)`;
+  return (
+    <svg
+      viewBox="0 0 280 210"
+      className="w-full max-w-[300px]"
+      role="img"
+      aria-label={`Market Readiness Score: ${score} out of 100`}
+    >
+      <path d={track} stroke={HAIRLINE} strokeWidth={16} strokeLinecap="round" fill="none" />
+      {progress && (
+        <path
+          d={progress}
+          stroke={color}
+          strokeWidth={16}
+          strokeLinecap="round"
+          fill="none"
+          style={{ filter: glow }}
+        />
+      )}
+      <text
+        x={GAUGE_CX}
+        y={GAUGE_CY - 10}
+        textAnchor="middle"
+        fontSize={54}
+        fontWeight={800}
+        fill={INK}
+        style={{ letterSpacing: "-0.03em" }}
+      >
+        {score}
+      </text>
+      <text x={GAUGE_CX} y={GAUGE_CY + 22} textAnchor="middle" fontSize={13} fontWeight={500} fill={MIST}>
+        out of 100
+      </text>
+    </svg>
+  );
+}
+
+/** Rating → status color (mirrors the design-system status palette). */
+function ratingColor(value: number): string {
+  if (value >= 4) return "#10B981";
+  if (value === 3) return "#F59E0B";
+  return "#EF4444";
+}
+
+function DiagnosticResults({
+  result,
+  onRetake,
+  onBook,
+}: {
+  result: DiagnosticState;
+  onRetake: () => void;
+  onBook: (service?: string) => void;
+}) {
+  // Checkout gate: the primary CTA opens this gate first (terms agreement),
+  // which then routes through the existing openCheckout flow.
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateChecked, setGateChecked] = useState(false);
+  const [gateHint, setGateHint] = useState("");
+  const gateCheckboxRef = useRef<HTMLInputElement>(null);
+  // Lead-sync failure flag: read client-side only, after mount (SSR-safe).
+  // Cleared after showing so the banner appears once.
+  const [leadSyncFailed, setLeadSyncFailed] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem(LEAD_SYNC_FAILED_KEY) === "1") {
+        setLeadSyncFailed(true);
+        window.sessionStorage.removeItem(LEAD_SYNC_FAILED_KEY);
+      }
+    } catch {
+      // Storage unavailable: nothing to surface.
+    }
+  }, []);
+
+  // Scroll-lock + focus while the gate is open (mirrors the booking modal).
+  useEffect(() => {
+    if (!gateOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const raf = window.requestAnimationFrame(() => gateCheckboxRef.current?.focus());
+    return () => {
+      window.cancelAnimationFrame(raf);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [gateOpen]);
+
+  /** Primary CTA → terms gate. Proceed routes through openCheckout (real
+   * Stripe redirect once SPRINT_PAYMENT_LINK is set; booking modal otherwise). */
+  const openGate = () => {
+    setGateChecked(false);
+    setGateHint("");
+    setGateOpen(true);
+  };
+
+  const proceedFromGate = () => {
+    if (!gateChecked) {
+      setGateHint("Please agree to the terms to continue.");
+      return;
+    }
+    setGateOpen(false);
+    openCheckout(CHECKOUT_SERVICES.sprint, onBook);
+  };
+
+  const gateKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      setGateOpen(false);
+    }
+  };
+
+  const score = scoreDiagnostic(result.answers);
+  const band = readinessBand(score);
+  const color = bandColor(band);
+  const friction = primaryFriction(result.answers);
+  const frictionName = DIMENSIONS.find((d) => d.id === friction)?.name ?? "Positioning";
+  const rx = prescriptionFor(friction);
+  const prescriptionName =
+    rx === "sprint"
+      ? `14-Day Positioning Sprint (${RX_PRICE})`
+      : `Fractional GTM Advisory (${RX_PRICE}/month)`;
+  const prescriptionLine =
+    rx === "sprint"
+      ? "A two-week engagement that turns the gaps this audit flagged into positioning architecture, homepage rewrites, and a core launch deck."
+      : "Ongoing fractional GTM support for acquisition and funnel execution alongside your team, starting where this audit found the friction.";
+
+  return (
+    <div className="relative mx-auto w-full max-w-2xl">
+      <span className="chip border-electric/40 text-electric">
+        Market Readiness Score
+      </span>
+      <h2 className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+        Your Market Ready Score
+      </h2>
+
+      {/* Lead-sync failure notice: discreet, on-brand; the score below
+          is client-computed and still accurate. Shown once per flag. */}
+      {leadSyncFailed && (
+        <div
+          role="status"
+          className="mt-6 rounded-xl border border-electric/40 bg-[#1E293B]/50 px-5 py-4 shadow-[0_0_30px_rgba(20,184,166,0.12)] backdrop-blur-md"
+        >
+          <p className="text-sm leading-relaxed text-mist">
+            <span className="font-semibold text-electric">
+              We couldn&apos;t save your diagnostic report to our system.{" "}
+            </span>
+            Your score below is still accurate. Re-enter your details via
+            the booking option below to receive the full breakdown and
+            prescription.
+          </p>
+        </div>
+      )}
+
+      {/* Score + readiness */}
+      <div className="glass-card mt-6 flex flex-col items-center p-6 sm:p-8">
+        <ScoreGauge score={score} color={color} />
+        <p
+          className="mt-2 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-bold"
+          style={{
+            color,
+            borderColor: `${color}55`,
+            backgroundColor: `${color}14`,
+          }}
+          aria-live="polite"
+        >
+          {band}
+        </p>
+        <p className="mt-3 text-sm text-zinc-500">
+          Based on your five responses, {score}/100 overall readiness.
+        </p>
+      </div>
+
+      {/* Primary friction */}
+      <div className="glass-card mt-4 p-6 sm:p-8">
+        <h3 className="text-xl font-bold tracking-tight text-ink">
+          Primary Friction Point:{" "}
+          <span className="text-electric">{frictionName}</span>
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-mist">
+          Your lowest-scoring dimension is the first place your go-to-market
+          leaks. This is where the fix starts.
+        </p>
+
+        {/* Per-dimension breakdown */}
+        <div className="mt-6 flex flex-col gap-3 border-t border-hairline pt-6">
+          {DIMENSIONS.map((d) => {
+            const value = result.answers[d.id];
+            const isFriction = d.id === friction;
+            return (
+              <div
+                key={d.id}
+                className={`flex items-center gap-3 rounded-lg border px-3.5 py-2.5 ${
+                  isFriction
+                    ? "border-electric/40 bg-electric/[0.06]"
+                    : "border-hairline bg-white/[0.02]"
+                }`}
+              >
+                <span className="w-40 shrink-0 text-sm font-medium text-ink">
+                  {d.name}
+                </span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${(value / 5) * 100}%`,
+                      backgroundColor: ratingColor(value),
+                    }}
+                  />
+                </div>
+                <span
+                  className="w-9 shrink-0 text-right text-sm font-bold"
+                  style={{ color: ratingColor(value) }}
+                >
+                  {value}/5
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Prescribed solution */}
+      <div className="glass-card mt-4 border-electric/30 p-6 sm:p-8">
+        <span className="chip border-electric/40 text-electric">
+          Recommended Prescription
+        </span>
+        <h3 className="mt-3 text-2xl font-bold tracking-tight text-ink">
+          {prescriptionName}
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-mist">{prescriptionLine}</p>
+      </div>
+
+      {/* Conversion CTAs */}
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          onClick={openGate}
+          className="btn-electric flex-1"
+        >
+          Start Your Sprint ($7,500) →
+        </button>
+        <button
+          type="button"
+          onClick={() => onBook(CHECKOUT_SERVICES.advisory)}
+          className="btn-ghost flex-1"
+        >
+          Talk to a GTM Strategist →
+        </button>
+      </div>
+      <p className="mt-3 text-center text-xs text-zinc-500">
+        No obligation. The free audit stands on its own.
+      </p>
+
+      <p className="mt-8 text-center">
+        <button
+          type="button"
+          onClick={onRetake}
+          className="text-sm font-medium text-zinc-500 transition-colors hover:text-electric"
+        >
+          Retake the diagnostic →
+        </button>
+      </p>
+
+      {gateOpen && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto p-4 sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="gate-modal-title"
+          onKeyDown={gateKeyDown}
+        >
+          {/* Backdrop: click closes */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setGateOpen(false)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-hairline bg-[#1E293B]/50 p-6 shadow-[0_0_60px_rgba(20,184,166,0.18)] backdrop-blur-xl sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <span className="chip border-electric/40 text-electric">Checkout</span>
+                <h4 id="gate-modal-title" className="mt-3 text-xl font-bold tracking-tight text-ink">
+                  Confirm your Sprint booking
+                </h4>
+                <p className="mt-1 text-sm leading-relaxed text-mist">
+                  14-Day Positioning Sprint, a one-time engagement, billed
+                  upfront. You&apos;ll complete a short booking form next; we&apos;ll
+                  handle scheduling from there.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGateOpen(false)}
+                aria-label="Close checkout dialog"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-hairline text-mist transition-colors hover:border-zinc-600 hover:text-ink"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-lg border border-hairline bg-white/[0.02] px-3.5 py-3 transition-colors hover:border-zinc-600">
+              <input
+                ref={gateCheckboxRef}
+                type="checkbox"
+                checked={gateChecked}
+                onChange={(e) => {
+                  setGateChecked(e.target.checked);
+                  if (e.target.checked) setGateHint("");
+                }}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-hairline accent-electric"
+              />
+              <span className="text-sm leading-relaxed text-mist">
+                {GATE_TERMS_BEFORE}
+                <a
+                  href="/terms"
+                  className="font-semibold text-electric underline decoration-electric/40 underline-offset-2 transition-colors hover:decoration-electric"
+                >
+                  {GATE_TERMS_NAME}
+                </a>
+                {GATE_TERMS_AFTER}
+              </span>
+            </label>
+
+            {gateHint && (
+              <p
+                role="alert"
+                className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-300"
+              >
+                {gateHint}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={proceedFromGate}
+              aria-disabled={!gateChecked}
+              className={`mt-5 w-full ${
+                gateChecked
+                  ? "btn-electric"
+                  : "cursor-not-allowed border border-hairline bg-white/[0.03] text-zinc-500"
+              } py-3 text-sm font-semibold`}
+            >
+              Proceed to Checkout
+            </button>
+            <p className="mt-3 text-center text-xs text-zinc-500">
+              No payment is taken on this page. You&apos;ll confirm next.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
+function scrollToEngine() {
+  // Defer a tick so the view swap paints before scrolling.
+  window.requestAnimationFrame(() => {
+    document
+      .getElementById("diagnostic-engine")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 function DiagnosticPage() {
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [preselectService, setPreselectService] = useState<string | undefined>(undefined);
+  // Completed gated result (null until the gate is passed). A returning
+  // visitor with a stored completed run lands back on their results.
+  const [result, setResult] = useState<DiagnosticState | null>(null);
+  const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    const stored = readDiagnosticState();
+    if (stored) {
+      setResult(stored);
+      setShowResults(true);
+    }
+  }, []);
+
   const closeBooking = () => setBookingOpen(false);
-  const openBooking = () => setBookingOpen(true);
+  const openBooking = (service?: string) => {
+    setPreselectService(service);
+    setBookingOpen(true);
+  };
+
+  const handleComplete = (completed: DiagnosticState) => {
+    setResult(completed);
+    setShowResults(true);
+    scrollToEngine();
+  };
+
+  const handleRetake = () => {
+    // Fresh flow: the stored result is overwritten at the next gate submit,
+    // exactly as /assessment behaved with its retake link.
+    setShowResults(false);
+    scrollToEngine();
+  };
 
   return (
     <div className="min-h-dvh bg-gradient-to-b from-[#0F172A] via-[#111827] to-[#030712]">
       <Header />
       <main>
         {/* Shared hero diagnostic card — centered single-column tool layout on this page */}
-        <HeroDiagnostic variant="centered" onBookBriefing={openBooking} />
+        <HeroDiagnostic variant="centered" onBookBriefing={() => openBooking()} />
 
         {/* 5-Dimensional Friction Matrix: minimalist glass grid table */}
         <FrictionTable />
+
+        {/* The live interactive engine: questions → gate → results */}
+        <section
+          id="diagnostic-engine"
+          className="relative scroll-mt-24 overflow-hidden px-5 py-10 sm:px-8 sm:py-14"
+        >
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-electric/[0.08] blur-3xl"
+          />
+          <div className="relative">
+            <div className="mx-auto mb-8 max-w-2xl text-center">
+              <span className="chip border-electric/40 text-electric">
+                Free Interactive Diagnostic
+              </span>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+                Run the diagnostic, get your score
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-mist sm:text-base">
+                Five quick ratings, then unlock your Market Ready Score, primary
+                friction point, and recommended prescription.
+              </p>
+            </div>
+            {showResults && result ? (
+              <DiagnosticResults result={result} onRetake={handleRetake} onBook={openBooking} />
+            ) : (
+              <DiagnosticEngine onComplete={handleComplete} />
+            )}
+          </div>
+        </section>
 
         {/* Bottom CTA */}
         <section className="bg-[#030712] px-5 py-12 sm:px-8 sm:py-14">
@@ -263,15 +1171,21 @@ function DiagnosticPage() {
               prescribes the exact fix for your primary friction source.
             </p>
             <div className="mt-7">
-              <a href="/assessment" className="btn-electric px-7 py-3.5 text-base">
-                Unlock Full 5-D Assessment &amp; Prescription →
+              <a href="#diagnostic-engine" className="btn-electric px-7 py-3.5 text-base">
+                Start the Free Diagnostic →
               </a>
             </div>
           </div>
         </section>
       </main>
-      <Footer onBook={openBooking} />
-      {bookingOpen && <BookingModal open={bookingOpen} onClose={closeBooking} />}
+      <Footer onBook={() => openBooking()} />
+      {bookingOpen && (
+        <BookingModal
+          open={bookingOpen}
+          onClose={closeBooking}
+          initialService={preselectService}
+        />
+      )}
     </div>
   );
 }

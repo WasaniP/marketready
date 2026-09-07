@@ -8,7 +8,7 @@
  * with STRICT continuous 1-9 numbering (3 tags per pillar, no overlap), an
  * emerald BUILT FOR / rose NOT FOR qual strip, and a bottom CTA banner.
  * Pricing honored: Free Diagnostic, $3,000 Audit (recommended), $7,500 Sprint,
- * Custom Advisory. Reuses /assessment, /services/audit, /services/sprint,
+ * Custom Advisory. Reuses /services/diagnostic, /services/audit, /services/sprint,
  * /services/fractional. 0 em/en dashes (commas / colons / periods only; arrows
  * and glyphs are fine).
  */
@@ -61,7 +61,7 @@ const TIERS: Tier[] = [
     bestFor: "Immediate Snapshot",
     cta: "Run Free Assessment",
     ctaStyle: "outline",
-    href: "/assessment",
+    href: "/services/diagnostic",
   },
   {
     id: "audit",
@@ -312,7 +312,7 @@ function ServicesPage() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
-                href="/assessment"
+                href="/services/diagnostic"
                 className="inline-flex items-center justify-center rounded-lg bg-teal-400 px-7 py-3.5 text-base font-bold text-slate-950 transition-colors hover:bg-teal-300"
               >
                 Get Your MarketReady Score →
@@ -675,7 +675,7 @@ function ServicesPage() {
             </p>
             <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
-                href="/assessment"
+                href="/services/diagnostic"
                 className="inline-flex items-center justify-center rounded-lg bg-teal-400 px-7 py-3.5 text-base font-bold text-slate-950 shadow-[0_0_22px_rgba(20,184,166,0.4)] transition-colors hover:bg-teal-300"
               >
                 Run Free Assessment →

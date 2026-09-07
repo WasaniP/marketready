@@ -209,7 +209,7 @@ function OnboardingSuccess() {
               <div className="mb-6 rounded-xl border border-hairline bg-white/[0.03] p-4 text-sm leading-relaxed text-mist">
                 This page is for clients who have booked a Sprint. If that's
                 you, continue below; otherwise,{" "}
-                <a href="/assessment" className="font-semibold text-electric transition-colors hover:text-ink">
+                <a href="/services/diagnostic" className="font-semibold text-electric transition-colors hover:text-ink">
                   run the free assessment first →
                 </a>
               </div>

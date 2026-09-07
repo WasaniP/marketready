@@ -146,7 +146,7 @@ function BlogPostPage() {
           </div>
 
           {/* Sticky end-of-article CTA: prominent glass card, teal glow.
-              Links to the /assessment route (build #22; the full 5-dimension diagnostic page lands in build #23). */}
+              Links to /services/diagnostic (the live 5-dimension diagnostic tool). */}
           <div className="sticky bottom-6 z-10 mt-14">
             <div className="rounded-2xl border border-electric/40 bg-[#1E293B]/70 p-8 text-center shadow-[0_0_48px_rgba(20,184,166,0.18)] backdrop-blur-xl">
               <h2 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
@@ -157,7 +157,7 @@ function BlogPostPage() {
                 minute.
               </p>
               <a
-                href="/assessment"
+                href="/services/diagnostic"
                 className="btn-electric mt-6 w-full px-8 py-3 text-base sm:w-auto"
               >
                 Get Your MarketReady Score™

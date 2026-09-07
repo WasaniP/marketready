@@ -304,7 +304,7 @@ function AuditPage() {
           <button type="button" onClick={bookAudit} className="btn-electric px-7 py-3.5 text-base">
             Book Your Audit ($3,000) →
           </button>
-          <a href="/assessment" className="btn-ghost px-7 py-3.5 text-base">
+          <a href="/services/diagnostic" className="btn-ghost px-7 py-3.5 text-base">
             Run the Free Diagnostic First →
           </a>
         </SubPageHero>
@@ -471,7 +471,7 @@ function AuditPage() {
               <button type="button" onClick={bookAudit} className="btn-electric px-7 py-3.5 text-base">
                 Book Your Audit
               </button>
-              <a href="/assessment" className="btn-ghost px-7 py-3.5 text-base">
+              <a href="/services/diagnostic" className="btn-ghost px-7 py-3.5 text-base">
                 Run the Free Diagnostic First →
               </a>
             </div>

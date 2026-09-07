@@ -131,7 +131,7 @@ function ContactPage() {
                   In the meantime, the assessment takes two minutes and tells
                   you exactly where your go-to-market leaks.
                 </p>
-                <a href="/assessment" className="btn-electric mt-2 w-full">
+                <a href="/services/diagnostic" className="btn-electric mt-2 w-full">
                   Meanwhile, run your free score →
                 </a>
               </div>
