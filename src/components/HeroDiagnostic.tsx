@@ -76,14 +76,13 @@ export function HeroMockup() {
             </div>
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/70 to-white" />
           </div>
-          {/* Illustrative callout */}
-          <div className="mt-1 rounded-lg bg-ambertint px-3.5 py-2.5" style={{ border: "1px solid rgba(180,83,9,0.4)" }}>
-            <p className="text-[11px] font-bold uppercase leading-snug tracking-wide text-emberdeep">
-              Sample finding: category naming is too broad for high-intent buyers.
-            </p>
-          </div>
-          <p className="mt-1 rounded-md border border-ember/30 bg-ambertint/60 px-3 py-1.5 text-center text-[11px] font-bold uppercase leading-relaxed tracking-wide text-emberdeep">
-            Sample score for illustration — run your URL to get your real score.
+          {/* Sample finding inline beneath the lowest-scoring row */}
+          <p className="text-[11px] leading-relaxed text-emberdeep">
+            Sample finding: category naming is too broad for high-intent buyers.
+          </p>
+          {/* Single merged disclaimer line */}
+          <p className="rounded-md border border-ember/30 bg-ambertint/60 px-3 py-1.5 text-center text-[11px] font-bold uppercase leading-relaxed tracking-wide text-emberdeep">
+            Sample score for illustration, run your URL to get your real score.
           </p>
         </div>
       </div>
@@ -382,7 +381,7 @@ function CrawlScanner({ mode = "demo", url }: { mode?: "demo" | "loading"; url?:
               </p>
             </div>
             <p className="mt-1 text-center text-[11px] leading-relaxed text-fog">
-              Sample score for illustration — run your URL to get your real score.
+              Sample score for illustration, run your URL to get your real score.
             </p>
           </div>
         )}
@@ -536,12 +535,12 @@ function HomepageUnlock({
           setStatus("done");
         } else {
           console.warn("[homepage] Lead sync did not reach Airtable:", data?.error);
-          setError("We couldn't save your report — please try again.");
+          setError("We couldn't save your report. Please try again.");
           setStatus("error");
         }
       })
       .catch(() => {
-        setError("We couldn't save your report — please try again.");
+        setError("We couldn't save your report. Please try again.");
         setStatus("error");
       });
   };
@@ -920,12 +919,12 @@ export function HeroDiagnostic({
           <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
             <div className="text-center lg:text-left">
               <p className="eyebrow">Are you MarketReady?</p>
-              <h1 className="mt-3 font-display text-[30px] font-bold leading-[1.18] tracking-tight text-ink sm:text-[37px]">
+              <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-ink sm:text-[30px]">
                 Clear Positioning. Higher Conversion. Zero Wasted Burn.
               </h1>
               <p className="mx-auto mt-3 max-w-[520px] text-[17px] font-medium leading-[1.6] text-mist lg:mx-0">
-                After eight years inside media and tech brands, I've watched
-                great products lose on language — not the product. Run your
+                After years inside media and tech brands, I've watched
+                great products lose on language, not the product. Run your
                 URL and I'll show you how your GTM reads to a first-time
                 buyer.
               </p>
@@ -972,14 +971,6 @@ export function HeroDiagnostic({
             </div>
           </div>
           </>
-        )}
-        {!showResult && !centered && (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-            <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">Nine scored dimensions</span>
-            <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">0 to 100 readiness score</span>
-            <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">First red flag, free</span>
-            <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">Full breakdown in your inbox</span>
-          </div>
         )}
       </div>
     </section>

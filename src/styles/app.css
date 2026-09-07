@@ -7,8 +7,9 @@
      (ink / mist / electric / indigo / hairline / obsidian / night / panel)
      are remapped here so the whole site re-themes consistently. */
   --color-cream: #faf8f5; /* page bg, warm off-white */
-  --color-sand: #f2ede6; /* alt section bg, card fills */
+  --color-sand: #ebe4da; /* alt section bg, card fills (owner pass: darkened from #F2EDE6) */
   --color-linen: #e3dcd2; /* borders / dividers / strokes */
+  --color-hairline: #ddd4c8; /* section-boundary hairline (owner pass: from #E3DCD2) */
   --color-ink: #1c1917; /* primary headings + body */
   --color-mist: #57534e; /* secondary / subheads */
   --color-fog: #8c8681; /* captions / eyebrows / meta */
@@ -111,9 +112,10 @@
     @apply rounded-full border border-linen bg-ambertint/60 px-3 py-1 text-xs font-medium text-emberdeep;
   }
 
-  /* Small-caps kicker above serif headlines. */
+  /* Small-caps kicker above serif headlines. Owner pass: ~12px, tighter
+     letterspacing so it reads as a label, not compete with headlines. */
   .eyebrow {
-    @apply text-xs font-bold uppercase tracking-[0.18em] text-ember;
+    @apply text-[12px] font-bold uppercase tracking-[0.14em] text-ember;
   }
 }
 

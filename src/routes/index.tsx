@@ -142,16 +142,16 @@ const HOW_IT_WORKS_STEPS = [
 /* ------------------------------------------------------------------ */
 function Manifesto() {
   return (
-    <section id="manifesto" className="scroll-mt-24 border-t border-hairline bg-sand py-16 sm:py-24">
-      <div className="mx-auto max-w-3xl px-5 text-center sm:px-8">
+    <section id="manifesto" className="scroll-mt-24 border-t border-hairline bg-cream py-14 sm:py-[4.5rem]">
+      <div className="mx-auto max-w-2xl px-5 text-center sm:px-8">
         <p className="eyebrow text-navy">Why I built this</p>
-        <blockquote className="mt-4 font-display text-2xl leading-snug text-ink sm:text-[2rem]">
-          "Most startups don't have a product problem. They have a language
+        <blockquote className="mt-5 font-display text-xl leading-snug text-ink sm:text-[22px]">
+          Most startups don't have a product problem. They have a language
           problem. I started MarketReady so founders could hear, plainly, how
           their GTM sounds to a first-time buyer, and fix it before it costs
-          them the launch."
+          them the launch.
         </blockquote>
-        <p className="mt-5 text-sm font-semibold text-ember">— Wasani, Founder</p>
+        <p className="mt-5 text-sm font-semibold text-ember">Wasani, Founder</p>
       </div>
     </section>
   );
@@ -164,33 +164,44 @@ function Manifesto() {
 /* ------------------------------------------------------------------ */
 function FrictionObservations() {
   const cards = [
-    "I've sat on demo calls where the first 30 minutes go to explaining the category, not selling the product. That's not a sales problem. That's a positioning problem.",
-    "I've watched founders pour six figures into paid traffic before fixing copy that bounces visitors in under 8 seconds. The ads were never the problem.",
-    "When buyers can't tell you apart from a cheaper option, your reps discount to close. I've seen this kill margins on otherwise strong products.",
+    {
+      header: "Explaining, not selling",
+      body: "I've sat on demo calls where the first 30 minutes go to explaining the category, not selling the product. That's not a sales problem. That's a positioning problem.",
+    },
+    {
+      header: "The ads were never the problem",
+      body: "I've watched founders pour six figures into paid traffic before fixing copy that bounces visitors in under 8 seconds. The ads were never the problem.",
+    },
+    {
+      header: "Discounting to close",
+      body: "When buyers can't tell you apart from a cheaper option, your reps discount to close. I've seen this kill margins on otherwise strong products.",
+    },
   ];
   return (
-    <section id="friction" className="scroll-mt-24 bg-sand py-16 sm:py-24">
+    <section id="friction" className="scroll-mt-24 border-t border-hairline bg-sand py-14 sm:py-[4.5rem]">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="eyebrow text-navy">What I keep seeing</p>
-          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
-            The patterns I see holding back growth
-          </h2>
-          <p className="mt-3 text-base leading-relaxed text-mist">
-            After years inside media and tech brands, I notice the same three
-            failure modes. If any of these sound familiar, your positioning is
-            doing it, not your product.
-          </p>
-        </div>
-        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
-          {cards.map((observation) => (
-            <article key={observation.slice(0, 32)} className="glass-card-sand flex flex-col p-8">
-              <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-lg bg-ambertint text-lg font-bold text-ember">
-                ✦
-              </span>
-              <p className="mt-4 flex-1 text-[15px] leading-relaxed text-mist">{observation}</p>
-            </article>
-          ))}
+        <div className="grid items-start gap-6 md:grid-cols-12 md:gap-8">
+          <div className="md:col-span-4">
+            <p className="eyebrow text-navy">What I keep seeing</p>
+            <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
+              The patterns I see holding back growth
+            </h2>
+            <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
+              After years inside media and tech brands, I notice the same three
+              failure modes. If any of these sound familiar, your positioning is
+              doing it, not your product.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-5 md:col-span-8 md:grid-cols-3">
+            {cards.map((card) => (
+              <article key={card.header} className="glass-card-sand flex h-full flex-col p-6">
+                <h3 className="font-display text-lg font-semibold leading-snug text-navy">
+                  {card.header}
+                </h3>
+                <p className="mt-3 flex-1 text-[15px] leading-relaxed text-mist">{card.body}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -224,25 +235,24 @@ function HowItWorks() {
     <section
       ref={sectionRef}
       id="how-it-works"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-16 sm:py-24"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-16 sm:py-[4.5rem]"
     >
       <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="mx-auto max-w-2xl text-center">
+        <div className="max-w-2xl">
           <p className="eyebrow text-navy">How I work</p>
-          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
-            Diagnose <span className="text-navy">→</span> Prescribe{" "}
-            <span className="text-navy">→</span> Activate
+          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
+            Diagnose. Prescribe. Activate.
           </h2>
-          <p className="mt-3 text-base leading-relaxed text-mist">
+          <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
             One readiness score, three moves. I diagnose where your positioning
             breaks, prescribe the highest-impact fixes, and activate them with you.
           </p>
-          <p className="mt-3 text-base leading-relaxed text-mist">
+          <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
             I built this in this exact order because most founders try to activate before they've diagnosed the actual problem. That's how budget gets wasted on the wrong fix.
           </p>
         </div>
 
-        <div className="relative mt-10">
+        <div className="relative mt-6">
           <div
             aria-hidden="true"
             className={`absolute left-[16%] right-[16%] top-[13px] hidden h-px bg-navy/60 md:block ${line}`}
@@ -264,7 +274,7 @@ function HowItWorks() {
           </ol>
         </div>
 
-        <div className="mt-10 text-center">
+        <div className="mt-8">
           <a href="/services/diagnostic" className="btn-electric">
             Get Your MarketReady Score →
           </a>
@@ -452,7 +462,7 @@ function DiagnosticEngine() {
     <section
       ref={sectionRef}
       id="methodology"
-      className="relative scroll-mt-24 overflow-hidden bg-navy py-16 sm:py-24"
+      className="relative scroll-mt-24 overflow-hidden bg-navy py-16 sm:py-[4.5rem]"
     >
       <div className="relative mx-auto w-full max-w-6xl overflow-hidden px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
@@ -640,15 +650,15 @@ function FounderStory() {
   return (
     <section
       id="founder"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream px-6 py-14 sm:py-16"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream px-6 py-14 sm:py-[4.5rem]"
     >
       <div className="relative mx-auto max-w-4xl">
-        <div className="mx-auto flex max-w-3xl flex-col items-center space-y-4 text-center">
+        <div className="flex max-w-3xl flex-col space-y-4">
           <p className="eyebrow">A note from the founder</p>
-          <h2 className="font-display text-3xl text-ink lg:text-4xl">
+          <h2 className="font-display text-3xl text-ink lg:text-[32px]">
             I've sat in the rooms where launches are won and lost.
           </h2>
-          <p className="mt-3 text-lg leading-relaxed text-mist">
+          <p className="mt-1 max-w-[42rem] text-lg leading-relaxed text-mist">
             Hi, I'm Wasani. I've spent 8+ years leading product marketing at Amazon, Warner Bros. Discovery (Bleacher Report), and other high-growth companies. I started MarketReady because I kept seeing the same thing: founders and growth teams scaling spend before their positioning could support it. This isn't an agency. It's me, working directly with you.
           </p>
         </div>
@@ -723,34 +733,36 @@ function ServicesStack() {
   return (
     <section
       id="services"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-navy px-4 py-14 sm:py-16"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream px-4 py-14 sm:py-[4.5rem]"
     >
       <div className="relative mx-auto max-w-[1100px]">
-        <p className="eyebrow text-center !text-amber-200">How we can work together</p>
-        <h2 className="mt-3 text-center font-display text-[26px] font-bold leading-tight text-white lg:text-[32px]">
-          Got your score? Here's how I help you fix the gaps.
-        </h2>
-        <p className="mb-8 mt-3 text-center text-[13px] leading-snug text-white/70 sm:text-sm">
-          Pick the option that fits where you are right now. You work directly with me on every deliverable. No account managers, no junior hand-offs.
-        </p>
+        <div className="max-w-2xl">
+          <p className="eyebrow text-navy">How we can work together</p>
+          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
+            Got your score? Here's how I help you fix the gaps.
+          </h2>
+          <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
+            Pick the option that fits where you are right now. You work directly with me on every deliverable. No account managers, no junior hand-offs.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
           {SERVICE_CARDS.map((s) => (
             <div
               key={s.name}
-              className="flex h-full flex-col rounded-xl border border-white/15 bg-white/[0.06] p-5 backdrop-blur-sm"
+              className="glass-card flex h-full flex-col p-6"
             >
-              <p className="text-center text-[11px] font-semibold uppercase tracking-wider text-amber-200/90">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-fog">
                 {s.stage}
               </p>
-              <h3 className="mt-2 text-center font-display text-lg text-white">{s.name}</h3>
-              <p className="mb-3 mt-2 text-center text-xs leading-relaxed text-white/70">
+              <h3 className="mt-2 font-display text-lg text-ink">{s.name}</h3>
+              <p className="mb-3 mt-2 text-sm leading-relaxed text-mist">
                 {s.body}
               </p>
-              <ul className="space-y-1.5 text-xs text-white/85">
+              <ul className="space-y-1.5 text-sm text-mist">
                 {s.points.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <span className="shrink-0 text-amber-200">✓</span>
+                    <span className="shrink-0 text-ember">✓</span>
                     <span className="leading-snug">{item}</span>
                   </li>
                 ))}
@@ -759,8 +771,8 @@ function ServicesStack() {
                 href={s.href}
                 className={
                   s.primary
-                    ? "btn-electric mt-4 w-full"
-                    : "mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/30 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:border-amber-200 hover:text-amber-200 active:scale-[0.98]"
+                    ? "btn-electric mt-5 w-full"
+                    : "btn-ghost mt-5 w-full"
                 }
               >
                 {s.cta}
@@ -803,16 +815,16 @@ function FaqAccordion() {
   return (
     <section
       id="faq"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-sand py-14 sm:py-16"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-sand py-14 sm:py-[4.5rem]"
     >
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="mx-auto max-w-2xl text-center">
+        <div className="max-w-2xl">
           <p className="eyebrow">Questions I get asked</p>
-          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
+          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
             Frequently asked questions
           </h2>
         </div>
-        <div className="mx-auto mt-8 max-w-3xl">
+        <div className="mt-8 max-w-3xl">
           <div className="flex flex-col gap-3">
             {FAQ_ITEMS.map((item, i) => {
               const isOpen = openIndex === i;
