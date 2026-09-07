@@ -23,6 +23,15 @@
  *      persists to the JSONL fallback with airtable:"failed" + the Airtable
  *      error message, and responds { ok:false, error }.
  *   5. Only a malformed body / missing name / invalid email returns non-2xx.
+ *   6. Instant results email (INDEPENDENT of the Airtable outcome — fires on
+ *      success AND failure): after the Airtable write completes, the full
+ *      diagnostic payload + the exact "Full Breakdown" text are queued to
+ *      Knock (src/lib/knockEmail.ts) which triggers the owner's email
+ *      workflow to the lead's workEmail. Fail-open: skipped entirely when
+ *      KNOCK_API_KEY is unset; any send failure is console.warn'ed only and
+ *      never blocks or alters the lead response. See src/lib/knockEmail.ts
+ *      for the env vars (KNOCK_API_KEY, KNOCK_WORKFLOW) and the data keys the
+ *      Knock email template can reference.
  *
  * The Airtable column mapping lives in ONE constant (AIRTABLE_FIELD_MAP):
  * remapping a column later means editing that constant and nothing else.
@@ -33,6 +42,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { mkdir, appendFile } from "node:fs/promises";
 import * as path from "node:path";
+import { queueResultsEmail } from "~/lib/knockEmail";
 
 const AIRTABLE_API = "https://api.airtable.com/v0";
 const AIRTABLE_META_API = "https://api.airtable.com/v0/meta";
@@ -558,6 +568,12 @@ export const Route = createFileRoute("/api/leads")({
 
         // Layer 1: Airtable when configured. The token is never logged.
         const result = await writeAirtable(fields);
+        // Instant results email: queued AFTER the Airtable write completes and
+        // INDEPENDENT of its outcome (success or failure) — the email must not
+        // depend on Airtable. Fire-and-forget + guarded, so it can never block
+        // or fail either response path (fail-open, see src/lib/knockEmail.ts).
+        // `fullBreakdown` mirrors the Airtable "Full Breakdown" column exactly.
+        queueResultsEmail(lead, buildScoreBreakdown(lead));
         if (result.ok) {
           return Response.json({ ok: true });
         }
