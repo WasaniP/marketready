@@ -51,15 +51,38 @@ export const SERVICES_LINKS = [
 /* Small primitives                                                    */
 /* ------------------------------------------------------------------ */
 
-export function Wordmark({ className = "h-7" }: { className?: string }) {
+export function Wordmark({
+  className = "h-7",
+  tone = "light",
+}: {
+  className?: string;
+  tone?: "light" | "dark";
+}) {
+  /* Owner revision spec §2: inline wordmark in primary dark text with a rust
+     underline + dot (replaces the PNG, which washed out on cream). On dark
+     surfaces the text renders in warm neutral with the same rust accents. */
+  const text = tone === "dark" ? "text-[#F2EDE6]" : "text-ink";
   return (
-    <a href="/" className="flex items-center" aria-label="MarketReady home">
-      <img
-        src="/MarketReady-03-horizontal-dark.png"
-        alt="MarketReady Logo"
-        className={`${className} w-auto`}
-      />
+    <a href="/" className={`flex flex-col leading-none ${className}`} aria-label="MarketReady home">
+      <span className={`font-display text-[22px] font-bold tracking-tight ${text}`}>
+        MarketReady<span className="text-ember">.</span>
+      </span>
+      <span aria-hidden="true" className="mt-1 h-[3px] w-full rounded-full bg-ember" />
     </a>
+  );
+}
+
+/** LinkedIn "in" icon (small inline SVG). */
+export function LinkedInIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      className={`${className} shrink-0`}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.55C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.72C24 .77 23.2 0 22.22 0z" />
+    </svg>
   );
 }
 
@@ -77,6 +100,25 @@ export function ChevronDown({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Owner-spec chrome tokens (inline here: Layout is the only consumer, so  */
+/* these live in this file rather than app.css)                            */
+/* ------------------------------------------------------------------ */
+
+/* Owner spec §10: nav/score CTA is an outline button — transparent
+   background, 1px rust (#B85C38 = ember) border, rust text. Only the
+   in-hero CTA stays solid rust. */
+const NAV_CTA_OUTLINE =
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-ember bg-transparent px-5 py-2.5 text-sm font-semibold text-ember transition-colors duration-200 hover:bg-ambertint active:scale-[0.98]";
+
+/* Owner spec §6: footer links — warm neutral on pine-dark, white on hover. */
+const FOOTER_LINK =
+  "text-sm text-[#F2EDE6]/80 transition-colors hover:text-white";
+
+/* Owner spec §6: outline CTA for use on the pine-dark footer band. */
+const FOOTER_CTA_OUTLINE =
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#F2EDE6]/40 bg-transparent px-5 py-2.5 text-sm font-semibold text-[#F2EDE6] transition-colors duration-200 hover:border-white hover:text-white active:scale-[0.98]";
 
 /* ------------------------------------------------------------------ */
 /* Services dropdown (desktop nav)                                     */
@@ -134,7 +176,7 @@ export function ServicesDropdown() {
         <div
           role="menu"
           aria-label="Services"
-          className="absolute left-0 top-full z-50 mt-2 w-96 rounded-xl border border-hairline bg-obsidian/95 p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+          className="absolute left-0 top-full z-50 mt-2 w-96 rounded-xl border border-linen bg-white p-1.5 shadow-[0_16px_48px_rgba(28,25,23,0.14)]"
         >
           {SERVICES_LINKS.map((l) => (
             <a
@@ -142,12 +184,12 @@ export function ServicesDropdown() {
               role="menuitem"
               href={l.href}
               onClick={() => setOpen(false)}
-              className="group block rounded-lg px-3 py-2.5 transition-colors hover:bg-electric/15"
+              className="group block rounded-lg px-3 py-2.5 transition-colors hover:bg-ambertint"
             >
-              <span className="block text-sm font-semibold text-mist transition-colors group-hover:text-electric">
+              <span className="block text-sm font-semibold text-ink transition-colors group-hover:text-emberdeep">
                 {l.name}
               </span>
-              <span className="mt-0.5 block text-xs leading-snug text-zinc-500 transition-colors group-hover:text-electric/80">
+              <span className="mt-0.5 block text-xs leading-snug text-fog transition-colors group-hover:text-ember">
                 {l.subtext}
               </span>
             </a>
@@ -157,12 +199,12 @@ export function ServicesDropdown() {
             role="menuitem"
             href="/services"
             onClick={() => setOpen(false)}
-            className="group flex items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.05]"
+            className="group flex items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-ambertint"
           >
-            <span className="text-sm font-semibold text-electric">Explore all services →</span>
+            <span className="text-sm font-semibold text-ember">Explore all services →</span>
             <svg
               aria-hidden="true"
-              className="h-4 w-4 text-zinc-500 transition-colors group-hover:text-electric"
+              className="h-4 w-4 text-fog transition-colors group-hover:text-ember"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -249,16 +291,22 @@ export function Header() {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled || menuOpen
-          ? "border-b border-hairline bg-obsidian/85 backdrop-blur-xl"
+          ? "border-b border-linen bg-cream/90 shadow-[0_1px_2px_rgba(28,25,23,0.05)] backdrop-blur-xl"
           : "border-b border-transparent bg-transparent"
       }`}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 pt-6 pb-4 mb-9 sm:px-8">
         <Wordmark />
 
-        {/* Build #22: How It Works | Services ▾ | Resources | About */}
+        {/* Build #22, rev owner spec §11: "How It Works" is a scroll anchor
+            (dotted underline marker) while Services/Resources/About are page
+            links — visually differentiated, behavior unchanged. */}
         <nav aria-label="Primary" className="hidden items-center gap-6 md:flex">
-          <a href="/#how-it-works" className="nav-link">
+          <a
+            href="/#how-it-works"
+            className="nav-link border-b border-dotted border-fog/60 pb-0.5"
+            title="Scroll to How It Works on this page"
+          >
             How It Works
           </a>
           <ServicesDropdown />
@@ -268,11 +316,23 @@ export function Header() {
           <a href="/about" className="nav-link">
             About
           </a>
+          <a
+            href="https://www.linkedin.com/in/wasanip/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Wasani on LinkedIn"
+            title="Wasani on LinkedIn"
+            className="inline-flex items-center text-fog transition-colors hover:text-ember"
+          >
+            <LinkedInIcon className="h-4 w-4" />
+          </a>
         </nav>
 
         <div className="flex items-center gap-3">
-          <a href="/services/diagnostic" className="btn-electric hidden sm:inline-flex">
-            Get Your MarketReady Score →
+          {/* Owner spec §10: nav CTA is outline; only the in-hero CTA is
+              solid rust. "Check my score" varies the audit-button microcopy. */}
+          <a href="/services/diagnostic" className={`${NAV_CTA_OUTLINE} hidden sm:inline-flex`}>
+            Check my score
           </a>
           <button
             type="button"
@@ -304,7 +364,7 @@ export function Header() {
         <nav
           ref={drawerRef}
           aria-label="Mobile"
-          className="border-t border-hairline bg-obsidian/95 px-5 py-4 backdrop-blur-xl md:hidden"
+          className="border-t border-hairline bg-cream/95 px-5 py-4 backdrop-blur-xl md:hidden"
         >
           <ul className="flex flex-col gap-1">
             <li>
@@ -312,7 +372,7 @@ export function Header() {
                 type="button"
                 onClick={() => setServicesOpen((v) => !v)}
                 aria-expanded={servicesOpen}
-                className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-mist hover:bg-white/[0.05] hover:text-ink"
+                className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-ink hover:bg-sand hover:text-ember"
               >
                 Services
                 <ChevronDown
@@ -326,10 +386,10 @@ export function Header() {
                       <a
                         href={l.href}
                         onClick={() => setMenuOpen(false)}
-                        className="block rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.05]"
+                        className="block rounded-lg px-3 py-2 transition-colors hover:bg-sand"
                       >
                         <span className="block text-sm font-medium text-mist">{l.name}</span>
-                        <span className="mt-0.5 block text-xs leading-snug text-zinc-500">
+                        <span className="mt-0.5 block text-xs leading-snug text-fog">
                           {l.subtext}
                         </span>
                       </a>
@@ -339,7 +399,7 @@ export function Header() {
                     <a
                       href="/services"
                       onClick={() => setMenuOpen(false)}
-                      className="block rounded-lg px-3 py-2 text-sm font-semibold text-electric transition-colors hover:bg-white/[0.05]"
+                      className="block rounded-lg px-3 py-2 text-sm font-semibold text-ember transition-colors hover:bg-sand"
                     >
                       Explore all services →
                     </a>
@@ -351,16 +411,16 @@ export function Header() {
               <a
                 href="/#how-it-works"
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-mist hover:bg-white/[0.05] hover:text-ink"
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-ink hover:bg-sand hover:text-ember"
               >
-                How It Works
+                How It Works <span className="text-xs text-fog">(on this page ↓)</span>
               </a>
             </li>
             <li>
               <a
                 href="/resources"
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-mist hover:bg-white/[0.05] hover:text-ink"
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-ink hover:bg-sand hover:text-ember"
               >
                 Resources
               </a>
@@ -369,14 +429,23 @@ export function Header() {
               <a
                 href="/about"
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-mist hover:bg-white/[0.05] hover:text-ink"
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-ink hover:bg-sand hover:text-ember"
               >
                 About
               </a>
             </li>
-            <li className="mt-2">
-              <a href="/services/diagnostic" className="btn-electric w-full">
-                Get Your MarketReady Score →
+            <li className="mt-2 flex flex-col gap-2">
+              <a href="/services/diagnostic" className={`${NAV_CTA_OUTLINE} w-full`}>
+                Check my score
+              </a>
+              <a
+                href="https://www.linkedin.com/in/wasanip/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-mist transition-colors hover:text-ember"
+              >
+                <LinkedInIcon className="h-4 w-4" />
+                Wasani on LinkedIn
               </a>
             </li>
           </ul>
@@ -391,58 +460,66 @@ export function Header() {
 /* ------------------------------------------------------------------ */
 
 /**
- * Footer (build #25 : redesigned per owner spec).
- *
- * Deep slate/navy band (#0B132B) with a subtle slate top separation. Brand +
- * mission, a nav column that mirrors the header (How It Works / Services /
- * Resources / About) plus a prominent teal-tinted Score CTA, and a contact
- * column with the direct mailto line + the Book 14-Day Sprint button (onBook).
- * A legal strip holds the copyright, Privacy Policy, Terms, and the standing
- * notice line. No pricing appears here.
+ * Footer (owner revision spec §6/§12): pine-dark band (#14332D) with warm
+ * neutral text. Brand + first-person tagline, a nav column mirroring the
+ * header plus the outline Score CTA, and a contact column with the direct
+ * mailto line + the Book 14-Day Sprint button (onBook). A legal strip holds
+ * the copyright, Privacy Policy, Terms, and the standing notice line.
+ * No pricing appears here.
  */
 export function Footer({ onBook }: { onBook: () => void }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="border-t border-slate-800/60 bg-[#0B132B]">
+    <footer className="bg-[#14332D] text-[#F2EDE6]">
       {/* Main footer body */}
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[2fr_1fr_1fr] md:py-16">
         {/* Brand + mission */}
         <div className="max-w-sm">
-          <Wordmark className="h-7" />
-          <p className="mt-4 text-sm leading-relaxed text-mist">
-            MarketReady diagnoses where your GTM is breaking, prescribes the
-            highest-impact fixes, and activates them in 14 days.
+          <Wordmark tone="dark" />
+          <p className="mt-4 text-sm leading-relaxed text-[#F2EDE6]/85">
+            Are You MarketReady? I diagnose where your GTM is breaking,
+            prescribe the highest-impact fixes, and activate them in 14 days.
+            Wasani, Founder
           </p>
         </div>
 
         {/* Mirror of the top navigation + Score CTA */}
         <nav aria-label="Footer" className="flex flex-col items-start gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#F2EDE6]/60">
             Navigate
           </span>
           <a
             href="/services/diagnostic"
-            className="text-sm font-semibold text-electric transition-colors hover:text-ink"
+            className={FOOTER_CTA_OUTLINE}
           >
-            Get Your MarketReady Score →
+            Check my score
           </a>
-          <a href="/#how-it-works" className="nav-link">
+          <a href="/#how-it-works" className={FOOTER_LINK}>
             How It Works
           </a>
-          <a href="/services" className="nav-link">
+          <a href="/services" className={FOOTER_LINK}>
             Services
           </a>
-          <a href="/resources" className="nav-link">
+          <a href="/resources" className={FOOTER_LINK}>
             Resources
           </a>
-          <a href="/about" className="nav-link">
+          <a href="/about" className={FOOTER_LINK}>
             About
+          </a>
+          <a
+            href="https://www.linkedin.com/in/wasanip/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${FOOTER_LINK} inline-flex items-center gap-2`}
+          >
+            <LinkedInIcon className="h-3.5 w-3.5" />
+            Wasani on LinkedIn
           </a>
         </nav>
 
         {/* Contact */}
         <div className="flex flex-col items-start gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#F2EDE6]/60">
             Get started
           </span>
           <button
@@ -454,7 +531,7 @@ export function Footer({ onBook }: { onBook: () => void }) {
           </button>
           <a
             href="mailto:hello@getmarketready.co"
-            className="mt-1 text-sm text-electric underline decoration-electric/40 underline-offset-2 transition-colors hover:text-ink hover:decoration-ink/40"
+            className="mt-1 text-sm text-[#F2EDE6]/85 underline decoration-[#F2EDE6]/40 underline-offset-2 transition-colors hover:text-white hover:decoration-white/60"
           >
             Have questions? Email us at hello@getmarketready.co
           </a>
@@ -462,27 +539,27 @@ export function Footer({ onBook }: { onBook: () => void }) {
       </div>
 
       {/* Legal strip */}
-      <div className="border-t border-slate-800/60">
+      <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-6 sm:px-8 md:flex-row md:items-center md:justify-between">
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-[#F2EDE6]/60">
             © {year} MarketReady. All rights reserved.
           </p>
           <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2">
             <a
               href="/privacy"
-              className="text-xs text-zinc-500 transition-colors hover:text-ink"
+              className="text-xs text-[#F2EDE6]/60 transition-colors hover:text-white"
             >
               Privacy Policy
             </a>
             <a
               href="/terms"
-              className="text-xs text-zinc-500 transition-colors hover:text-ink"
+              className="text-xs text-[#F2EDE6]/60 transition-colors hover:text-white"
             >
               Terms of Service
             </a>
           </nav>
         </div>
-        <p className="border-t border-slate-800/60 px-5 pb-6 pt-3 text-center text-xs text-zinc-600 sm:px-8">
+        <p className="border-t border-white/10 px-5 pb-6 pt-3 text-center text-xs text-[#F2EDE6]/50 sm:px-8">
           MarketReady Strategy Group: Go-To-Market Enablement &amp; Positioning.
         </p>
       </div>
