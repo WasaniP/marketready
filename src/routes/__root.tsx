@@ -11,12 +11,12 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       {
-        title: "MarketReady: Clear Positioning. Higher Conversion. Zero Wasted Burn.",
+        title: "Are You MarketReady? Clear Positioning. Higher Conversion. Zero Wasted Burn.",
       },
       {
         name: "description",
         content:
-          "The 14-day messaging sprint for founders and growth teams scaling high-value offers. MarketReady audits positioning & GTM readiness across 9 PMM parameters: then fixes the gaps.",
+          "Are you MarketReady? I audit your positioning and GTM readiness across 9 PMM parameters, then prescribe the highest-impact fixes and activate them in a 14-day sprint.",
       },
       { name: "theme-color", content: "#030712" },
       /* OpenGraph (Build #31) */
@@ -24,22 +24,22 @@ export const Route = createRootRoute({
       { property: "og:site_name", content: "MarketReady" },
       {
         property: "og:title",
-        content: "MarketReady: Clear Positioning. Higher Conversion. Zero Wasted Burn.",
+        content: "Are You MarketReady? Clear Positioning. Higher Conversion. Zero Wasted Burn.",
       },
       {
         property: "og:description",
         content:
-          "MarketReady audits your positioning and GTM readiness across 9 PMM parameters, then prescribes the highest-impact fixes and activates them in a 14-day sprint.",
+          "Are you MarketReady? I audit your positioning and GTM readiness across 9 PMM parameters, then prescribe the highest-impact fixes and activate them in a 14-day sprint.",
       },
       { property: "og:url", content: SITE_URL },
       { property: "og:image", content: `${SITE_URL}/MarketReady-03-horizontal-dark.png` },
       /* Twitter card (Build #31) */
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "MarketReady: Clear Positioning. Higher Conversion. Zero Wasted Burn." },
+      { name: "twitter:title", content: "Are You MarketReady? Clear Positioning. Higher Conversion. Zero Wasted Burn." },
       {
         name: "twitter:description",
         content:
-          "MarketReady audits your positioning and GTM readiness across 9 PMM parameters, then prescribes the highest-impact fixes and activates them in a 14-day sprint.",
+          "Are you MarketReady? I audit your positioning and GTM readiness across 9 PMM parameters, then prescribe the highest-impact fixes and activate them in a 14-day sprint.",
       },
       { name: "twitter:image", content: `${SITE_URL}/MarketReady-03-horizontal-dark.png` },
     ],
