@@ -934,7 +934,7 @@ function FractionalPage() {
               <button type="button" onClick={applyRetainer} className="btn-electric px-7 py-3.5 text-base">
                 Apply for Retainer →
               </button>
-              <a href="/assessment" className="btn-ghost px-7 py-3.5 text-base">
+              <a href="/services/diagnostic" className="btn-ghost px-7 py-3.5 text-base">
                 Run the Free Diagnostic →
               </a>
             </div>

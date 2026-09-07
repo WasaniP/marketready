@@ -6,7 +6,7 @@
  * submitted; single 100% upfront payment, non-refundable once work commences;
  * liability capped at the fee paid. Plus minimal, honest boilerplate (scope,
  * client responsibilities, IP, governing law, State of California). No
- * pricing figures appear here (pricing surfaces only on /assessment/results).
+ * pricing figures appear here (pricing surfaces only on /services/diagnostic as the dynamic prescription).
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -162,7 +162,7 @@ function TermsPage() {
                   contact page
                 </a>
                 , or{" "}
-                <a href="/assessment" className="font-semibold text-electric transition-colors hover:text-ink">
+                <a href="/services/diagnostic" className="font-semibold text-electric transition-colors hover:text-ink">
                   run your MarketReady score →
                 </a>{" "}
                 to see where your go-to-market stands.

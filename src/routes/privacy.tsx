@@ -163,7 +163,7 @@ function PrivacyPage() {
                 </a>
                 , or{" "}
                 <a
-                  href="/assessment"
+                  href="/services/diagnostic"
                   className="font-semibold text-electric transition-colors hover:text-ink"
                 >
                   run your MarketReady score →

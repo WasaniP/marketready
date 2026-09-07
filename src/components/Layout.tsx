@@ -11,7 +11,7 @@
  * the #methodology homepage section stays). 'Services' label now navigates to
  * /services, with a chevron toggle for the dropdown; the dropdown gains a final
  * 'Explore all services →' item. Header CTA replaced with
- * 'Get Your MarketReady Score →' → /assessment (btn-electric). Footer gains a
+ * 'Get Your MarketReady Score →' → /services/diagnostic (btn-electric). Footer gains a
  * links row: /services, /resources, /terms, /contact. Copyright line unchanged.
  */
 import { useEffect, useRef, useState } from "react";
@@ -271,7 +271,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <a href="/assessment" className="btn-electric hidden sm:inline-flex">
+          <a href="/services/diagnostic" className="btn-electric hidden sm:inline-flex">
             Get Your MarketReady Score →
           </a>
           <button
@@ -375,7 +375,7 @@ export function Header() {
               </a>
             </li>
             <li className="mt-2">
-              <a href="/assessment" className="btn-electric w-full">
+              <a href="/services/diagnostic" className="btn-electric w-full">
                 Get Your MarketReady Score →
               </a>
             </li>
@@ -421,7 +421,7 @@ export function Footer({ onBook }: { onBook: () => void }) {
             Navigate
           </span>
           <a
-            href="/assessment"
+            href="/services/diagnostic"
             className="text-sm font-semibold text-electric transition-colors hover:text-ink"
           >
             Get Your MarketReady Score →

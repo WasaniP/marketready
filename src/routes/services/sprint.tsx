@@ -351,7 +351,7 @@ function SprintPage() {
             Book Your 14-Day Sprint ($7,500) →
           </button>
           <a
-            href="/assessment"
+            href="/services/diagnostic"
             className="rounded-lg border border-slate-700 px-7 py-3.5 text-base font-medium text-slate-300 transition-colors hover:bg-slate-800/40"
           >
             Haven't run the Diagnostic yet?
@@ -436,7 +436,7 @@ function SprintPage() {
                 <p className="mt-3 text-sm leading-relaxed text-rose-200/45">
                   Pre-MVP concepts, or teams who haven't run the Diagnostic yet. If that's you,
                  {" "}
-                  <a href="/assessment" className="underline decoration-rose-300/40 underline-offset-2 hover:text-rose-200">
+                  <a href="/services/diagnostic" className="underline decoration-rose-300/40 underline-offset-2 hover:text-rose-200">
                     run the free Diagnostic first
                   </a>{" "}
                   so the fix targets your real gaps rather than guesswork.
