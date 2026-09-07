@@ -2,8 +2,9 @@
  * MarketReady booking modal : the "Book 14-Day Sprint" overlay.
  *
  * Replaces every external Cal.com link on the site with an in-app modal that
- * captures a lead (name, work email, company, website : prefilled from the
- * assessment when present) plus a 3-service interest checklist, then posts it
+ * captures a lead (name, work email, company, website : all four required —
+ * prefilled from the assessment when present) plus a 3-service interest
+ * checklist, then posts it
  * to POST /api/booking, which writes a row to the owner's Airtable "Bookings"
  * table. Success is shown ONLY after the server confirms { ok:true }; on a
  * network failure or { ok:false } the form stays up with an inline retry
@@ -188,7 +189,15 @@ export function BookingModal({
       setError("Enter a valid work email, e.g. you@yourcompany.com");
       return;
     }
-    if (cleanWebsite && !isValidUrl(cleanWebsite)) {
+    if (!cleanCompany) {
+      setError("Enter your company.");
+      return;
+    }
+    if (!cleanWebsite) {
+      setError("Enter your website URL, e.g. https://yourproduct.com");
+      return;
+    }
+    if (!isValidUrl(cleanWebsite)) {
       setError("Enter a valid website URL, e.g. https://yourproduct.com");
       return;
     }
@@ -397,7 +406,7 @@ export function BookingModal({
               </div>
               <div>
                 <label htmlFor="booking-company" className="field-label">
-                  Company <span className="text-zinc-500">(optional)</span>
+                  Company <span className="text-electric">*</span>
                 </label>
                 <input
                   id="booking-company"
@@ -412,7 +421,7 @@ export function BookingModal({
               </div>
               <div>
                 <label htmlFor="booking-website" className="field-label">
-                  Website <span className="text-zinc-500">(optional)</span>
+                  Website <span className="text-electric">*</span>
                 </label>
                 <input
                   id="booking-website"

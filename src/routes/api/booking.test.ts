@@ -7,13 +7,16 @@
  *     (same EMAIL_RE + fail-fast shape as POST /api/leads).
  *   2. Happy path: one record POSTed to the owner's "Bookings" table (NOT
  *     the diagnostic "Free diagnostic" table), with empty fields dropped.
- *   3. The route NEVER touches Knock: no fetch to any knock.app URL — that
- *     is the reason /api/booking exists as its own endpoint.
+ *   3. The route fires ONLY the booking/contact confirmation workflow
+ *     (marketready-booking-confirmation) — NEVER the diagnostic results
+ *     workflow (marketready-diagnostic-results). The confirmation is what
+ *     makes /api/booking's Knock usage distinct from /api/leads.
  *   4. Fail-open: with Airtable env vars missing the route responds
  *     { ok:true } and appends the request to the JSONL fallback with marker
  *     airtable:"unconfigured"; with a configured-but-failing Airtable it
  *     responds { ok:false, friendly error } and falls back with
- *     airtable:"failed". The token is never logged.
+ *     airtable:"failed". The token is never logged. An email failure never
+ *     changes the response.
  *
  * Runs with `bun test` (no extra dependencies). Like knockEmail.test.ts this
  * file is excluded from the app tsconfig (bun:test types are not part of the
@@ -34,6 +37,8 @@ const META_URL = (base: string) =>
   `https://api.airtable.com/v0/meta/bases/${base}/tables`;
 const BOOKINGS_URL = (base: string) =>
   `https://api.airtable.com/v0/${base}/Bookings`;
+const CONFIRMATION_WORKFLOW_URL =
+  "https://api.knock.app/v1/workflows/marketready-booking-confirmation/trigger";
 
 /** "Bookings" schema exactly as the live metadata API returns it. */
 const BOOKINGS_SCHEMA = {
@@ -56,7 +61,16 @@ const BOOKINGS_SCHEMA = {
 };
 
 const ORIGINAL_FETCH = globalThis.fetch;
-const ENV_KEYS = ["AIRTABLE_API_TOKEN", "AIRTABLE_BASE_ID", "AIRTABLE_TABLE_NAME"] as const;
+const ENV_KEYS = [
+  "AIRTABLE_API_TOKEN",
+  "AIRTABLE_BASE_ID",
+  "AIRTABLE_TABLE_NAME",
+  // Knock must be tracked too: the shell may export KNOCK_API_KEY, and the
+  // confirmation trigger would fetch (and break the "no knock call" assertions)
+  // unless these are restored to their original state between tests.
+  "KNOCK_API_KEY",
+  "KNOCK_CONFIRMATION_WORKFLOW",
+] as const;
 const ORIGINAL_ENV = ENV_KEYS.map((k) => process.env[k]);
 
 let tmpDir = "";
@@ -96,6 +110,11 @@ function setEnv(token?: string, base?: string, table?: string) {
   else process.env.AIRTABLE_BASE_ID = base;
   if (table === undefined) delete process.env.AIRTABLE_TABLE_NAME;
   else process.env.AIRTABLE_TABLE_NAME = table;
+  // Knock is deliberately off by default in this suite: the confirmation
+  // trigger must prove it only fires where the tests assert it. Tests that
+  // exercise the email set KNOCK_API_KEY themselves.
+  delete process.env.KNOCK_API_KEY;
+  delete process.env.KNOCK_CONFIRMATION_WORKFLOW;
 }
 
 /** Replace globalThis.fetch with a URL-routed mock; returns [mock, calls]. */
@@ -218,15 +237,78 @@ describe("POST /api/booking Airtable write", () => {
     restoreEnv();
   });
 
-  test("NEVER calls Knock — the whole point of the separate route", async () => {
+  test("only fires the CONFIRMATION workflow (never the diagnostic results workflow)", async () => {
     setEnv("tok", "appTEST", "Free diagnostic");
+    process.env.KNOCK_API_KEY = "sk_test_conf";
+    let knockCalls = 0;
     const { calls } = setFetchMock((url) => {
       if (url === META_URL("appTEST")) return Response.json(BOOKINGS_SCHEMA);
-      return Response.json({}, { status: 200 });
+      if (url === BOOKINGS_URL("appTEST")) return Response.json({}, { status: 200 });
+      if (url.includes("api.knock.app")) {
+        knockCalls++;
+        return Response.json({ workflow_run_id: "run-conf" }, { status: 200 });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    const res = await post(VALID_BODY);
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { ok: boolean }).ok).toBe(true);
+
+    const knockUrls = calls.filter((c) => c.url.includes("api.knock.app")).map((c) => c.url);
+    expect(knockCalls).toBe(1);
+    // The confirmation workflow — the reason the booking route may touch Knock.
+    expect(knockUrls[0]).toBe(CONFIRMATION_WORKFLOW_URL);
+    // And NEVER the diagnostic results workflow.
+    expect(knockUrls.some((u) => u.includes("marketready-diagnostic-results"))).toBe(false);
+    delete process.env.KNOCK_API_KEY;
+    restoreEnv();
+  });
+
+  test("confirmation email fires with the submitter as recipient + booking data (source included)", async () => {
+    setEnv("tok", "appTEST", "Free diagnostic");
+    process.env.KNOCK_API_KEY = "sk_test_conf";
+    let knockBody = "";
+    setFetchMock((url, init) => {
+      if (url === META_URL("appTEST")) return Response.json(BOOKINGS_SCHEMA);
+      if (url === BOOKINGS_URL("appTEST")) return Response.json({}, { status: 200 });
+      if (url.includes("api.knock.app")) {
+        knockBody = String(init.body);
+        return Response.json({ workflow_run_id: "run-conf" }, { status: 200 });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
     });
     await post(VALID_BODY);
-    expect(calls.length).toBeGreaterThan(0);
-    expect(calls.some((c) => /knock\.app/i.test(c.url))).toBe(false);
+    const sent = JSON.parse(knockBody) as {
+      recipients: { id: string; email: string; name: string }[];
+      data: Record<string, unknown>;
+    };
+    expect(sent.recipients).toHaveLength(1);
+    expect(sent.recipients[0].email).toBe(VALID_BODY.workEmail);
+    expect(sent.recipients[0].name).toBe(VALID_BODY.name);
+    expect(sent.data.firstName).toBe("Ada");
+    expect(sent.data.company).toBe("Analytical Engines");
+    expect(sent.data.websiteUrl).toBe("https://analyticalengines.test");
+    expect(sent.data.serviceInterest).toBe("MarketReady Sprint");
+    expect(sent.data.source).toBe("booking_modal");
+    expect(sent.data.capturedAt).toBe("2026-09-07T12:00:00.000Z");
+    delete process.env.KNOCK_API_KEY;
+    restoreEnv();
+  });
+
+  test("confirmation email FAILS OPEN: a Knock failure still returns {ok:true}", async () => {
+    setEnv("tok", "appTEST", "Free diagnostic");
+    process.env.KNOCK_API_KEY = "sk_test_conf";
+    setFetchMock((url) => {
+      if (url === META_URL("appTEST")) return Response.json(BOOKINGS_SCHEMA);
+      if (url === BOOKINGS_URL("appTEST")) return Response.json({}, { status: 200 });
+      if (url.includes("api.knock.app")) return new Response("unknown workflow", { status: 404 });
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    const res = await post(VALID_BODY);
+    expect(res.status).toBe(200);
+    // Email rejection must NEVER change the booking response.
+    expect(((await res.json()) as { ok: boolean }).ok).toBe(true);
+    delete process.env.KNOCK_API_KEY;
     restoreEnv();
   });
 
@@ -258,12 +340,37 @@ describe("POST /api/booking fail-open", () => {
     const res = await post(VALID_BODY);
     expect(res.status).toBe(200);
     expect(((await res.json()) as { ok: boolean }).ok).toBe(true);
-    expect(calls).toHaveLength(0); // no Airtable, and never any email call
+    expect(calls).toHaveLength(0); // no Airtable, and (KNOCK off) never any email call
     const file = path.join(tmpDir, ".data", "bookings.jsonl");
     expect(existsSync(file)).toBe(true);
     const record = JSON.parse(readFileSync(file, "utf8").trim().split("\n").pop()!) as Record<string, unknown>;
     expect(record.airtable).toBe("unconfigured");
     expect(record.workEmail).toBe(VALID_BODY.workEmail);
+  });
+
+  test("fail-open env-missing path still fires the confirmation email when Knock is configured", async () => {
+    setEnv(undefined, undefined, undefined);
+    process.env.KNOCK_API_KEY = "sk_test_conf";
+    let knockBody = "";
+    const { calls } = setFetchMock((url, init) => {
+      // No Airtable calls (env missing) — but the confirmation trigger still
+      // fires because the visitor is told "we received it".
+      if (url.includes("api.knock.app")) {
+        knockBody = String(init.body);
+        return Response.json({ workflow_run_id: "run-envmissing" }, { status: 200 });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    const res = await post(VALID_BODY);
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { ok: boolean }).ok).toBe(true);
+    const sent = JSON.parse(knockBody) as { data: Record<string, unknown> };
+    expect(sent.data.source).toBe("booking_modal");
+    expect(sent.data.workEmail).toBe(VALID_BODY.workEmail);
+    const knockUrls = calls.filter((c) => c.url.includes("api.knock.app")).map((c) => c.url);
+    expect(knockUrls[0]).toBe(CONFIRMATION_WORKFLOW_URL);
+    delete process.env.KNOCK_API_KEY;
+    restoreEnv();
   });
 
   test("Airtable HTTP failure -> ok:false + friendly error + JSONL 'failed'", async () => {
@@ -378,6 +485,40 @@ describe("contact form → POST /api/booking", () => {
       Message: "We're pre-launch and our positioning is muddy.",
     });
     expect(calls.some((c) => /knock\.app/i.test(c.url))).toBe(false);
+    restoreEnv();
+  });
+
+  test("contact form fires the CONFIRMATION workflow with source contact_form", async () => {
+    setEnv("tok", "appTEST", "Free diagnostic");
+    process.env.KNOCK_API_KEY = "sk_test_conf";
+    let knockBody = "";
+    const { calls } = setFetchMock((url, init) => {
+      if (url === META_URL("appTEST")) return Response.json(BOOKINGS_SCHEMA);
+      if (url === BOOKINGS_URL("appTEST")) return Response.json({}, { status: 200 });
+      if (url.includes("api.knock.app")) {
+        knockBody = String(init.body);
+        return Response.json({ workflow_run_id: "run-conf-contact" }, { status: 200 });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    const res = await post({
+      name: "Ada Lovelace",
+      workEmail: "ada@analyticalengines.test",
+      company: "Analytical Engines",
+      websiteUrl: "not provided",
+      message: "We're pre-launch and our positioning is muddy.",
+      source: "contact_form",
+      capturedAt: "2026-09-08T09:00:00.000Z",
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { ok: boolean }).ok).toBe(true);
+    const sent = JSON.parse(knockBody) as { data: Record<string, unknown> };
+    expect(sent.data.source).toBe("contact_form");
+    expect(sent.data.message).toContain("positioning is muddy");
+    const knockUrls = calls.filter((c) => c.url.includes("api.knock.app")).map((c) => c.url);
+    expect(knockUrls[0]).toBe(CONFIRMATION_WORKFLOW_URL);
+    expect(knockUrls.some((u) => u.includes("marketready-diagnostic-results"))).toBe(false);
+    delete process.env.KNOCK_API_KEY;
     restoreEnv();
   });
 });
