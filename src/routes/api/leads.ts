@@ -35,27 +35,66 @@ import { mkdir, appendFile } from "node:fs/promises";
 import * as path from "node:path";
 
 const AIRTABLE_API = "https://api.airtable.com/v0";
+const AIRTABLE_META_API = "https://api.airtable.com/v0/meta";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /* ------------------------------------------------------------------ */
 /* AIRTABLE COLUMN MAP: the ONLY place Airtable column names live.     */
 /* To remap a column later, edit the string on the right and nothing   */
 /* else. Keys are the internal lead fields; values are the Airtable    */
-/* column names (defaults match the owner's "Free diagnostic" table).  */
+/* column names (match the owner's "Free diagnostic" table exactly).   */
+/* NOTE: "First Name" / "Company" columns may not exist in the owner's   */
+/* table yet. They are included in this map anyway so rows flow the moment */
+/* they are added: toAirtableFields() whitelists its output against the    */
+/* live table schema and drops unknown columns instead of failing the      */
+/* whole write. "Revenue Leakage ($)" stays unmapped until a leakage value */
+/* exists in the client payload.                                           */
 /* ------------------------------------------------------------------ */
 const AIRTABLE_FIELD_MAP = {
-  name: "Name",
-  email: "Email",
+  firstName: "First Name",
   company: "Company",
-  websiteUrl: "Website URL",
-  score: "Diagnostic Score",
-  readiness: "Readiness",
+  websiteUrl: "Submitted URL",
+  email: "Contact Email",
+  score: "PMM Diagnostic Score",
+  readiness: "Readiness Band",
   primaryFriction: "Primary Friction",
-  prescription: "Recommended Prescription",
-  breakdown: "Score Breakdown",
-  source: "Source",
-  dateSubmitted: "Date Submitted",
+  prescription: "Prescription",
+  breakdown: "Full Breakdown",
+  source: "From Source",
+  dateSubmitted: "Timestamp",
 } as const;
+
+/** The 9 columns that existed before First Name / Company were wired.
+ * Used as the safe fallback set when the metadata (schema) fetch fails:
+ * in that case First Name / Company are skipped rather than risking an
+ * UNKNOWN_FIELD_NAME rejection for columns the owner hasn't added yet. */
+const ORIGINAL_FIELD_NAMES: ReadonlySet<string> = new Set([
+  "Submitted URL",
+  "Contact Email",
+  "PMM Diagnostic Score",
+  "Readiness Band",
+  "Primary Friction",
+  "Prescription",
+  "Full Breakdown",
+  "From Source",
+  "Timestamp",
+]);
+
+/** Exact allowed values of the Readiness Band single-select column. */
+const VALID_READINESS_BANDS: ReadonlySet<string> = new Set([
+  "Market Ready",
+  "Needs Attention",
+  "High Launch Risk",
+]);
+
+/** Exact allowed values of the Primary Friction single-select column. */
+const PRIMARY_FRICTION_OPTIONS = [
+  "Positioning",
+  "Messaging",
+  "GTM Path",
+  "Acquisition Efficiency",
+  "Conversion",
+] as const;
 
 /** One diagnostic parameter as sent by the homepage calculator. */
 interface PayloadDim {
@@ -295,24 +334,111 @@ function buildScoreBreakdown(lead: NormalizedLead): string {
   return lines.join("\n");
 }
 
+/** Map a free-form parameter/red-flag name to the closest Primary Friction
+ * single-select option. Order matters: check Acquisition before Messaging so
+ * e.g. "Acquisition Efficiency" doesn't match a Messaging pattern first.
+ * Returns "" when nothing maps — the caller must omit the field (sending the
+ * raw name would make Airtable try to auto-create a new option and 422). */
+function mapPrimaryFriction(raw: string): string {
+  if (!raw) return "";
+  if (/Acquisition|Efficiency|ICP/i.test(raw)) return "Acquisition Efficiency";
+  if (/Conversion/i.test(raw)) return "Conversion";
+  if (/GTM Path|Launch|Go-to-Market|GTM/i.test(raw)) return "GTM Path";
+  if (/Category Positioning|Positioning/i.test(raw)) return "Positioning";
+  if (/Hero Messaging|Messaging & Value Prop|Value Proposition|Messaging/i.test(raw))
+    return "Messaging";
+  // Exact option (any case) still resolves, so future callers that already
+  // send a valid option keep flowing.
+  const exact = PRIMARY_FRICTION_OPTIONS.find(
+    (o) => o.toLowerCase() === raw.trim().toLowerCase(),
+  );
+  return exact ?? "";
+}
+
 /** Map the normalized lead to Airtable columns (via AIRTABLE_FIELD_MAP only).
- * The numeric score key is omitted when no finite score was sent. */
+ * Rules that keep Airtable from 422ing on single-select columns:
+ *  - Empty-string values are dropped generically (Airtable would try to
+ *    create a new "" select option and reject the whole write).
+ *  - Readiness Band: only one of the 3 exact allowed values is sent.
+ *  - Primary Friction: only a mapped option is sent; unmapped -> omitted.
+ *  - First Name / Company: only when non-empty (existence in the table is
+ *    enforced separately by whitelistFields()).
+ *  - Numeric score keeps the existing isFinite guard. */
 function toAirtableFields(lead: NormalizedLead): Record<string, unknown> {
   const m = AIRTABLE_FIELD_MAP;
+  const readiness = VALID_READINESS_BANDS.has(lead.readiness) ? lead.readiness : "";
+  const primaryFriction = mapPrimaryFriction(lead.primaryFriction);
   const fields: Record<string, unknown> = {
-    [m.name]: lead.firstName,
-    [m.email]: lead.workEmail,
+    [m.firstName]: lead.firstName,
     [m.company]: lead.company,
+    [m.email]: lead.workEmail,
     [m.websiteUrl]: lead.websiteUrl,
-    [m.readiness]: lead.readiness,
-    [m.primaryFriction]: lead.primaryFriction,
+    [m.readiness]: readiness,
+    [m.primaryFriction]: primaryFriction,
     [m.prescription]: lead.prescription,
     [m.breakdown]: buildScoreBreakdown(lead),
     [m.source]: lead.source,
     [m.dateSubmitted]: lead.capturedAt,
   };
   if (Number.isFinite(lead.score)) fields[m.score] = lead.score;
-  return fields;
+  return Object.fromEntries(
+    Object.entries(fields).filter(([, v]) => v !== undefined && v !== null && v !== ""),
+  );
+}
+
+/** Cached set of column names that actually exist in the owner's table
+ * (from the metadata API). Null = not fetched yet / fetch failed. */
+let knownColumns: Set<string> | null = null;
+let schemaFetchInFlight: Promise<Set<string> | null> | null = null;
+
+/** Fetch the table schema ONCE (lazily, cached at module level) via the
+ * metadata API. Resolves the set of column names, or null on any failure
+ * (caller then falls back to ORIGINAL_FIELD_NAMES). Never logs or returns
+ * the token. */
+function fetchTableSchema(): Promise<Set<string> | null> {
+  if (knownColumns) return Promise.resolve(knownColumns);
+  if (schemaFetchInFlight) return schemaFetchInFlight;
+  schemaFetchInFlight = (async (): Promise<Set<string> | null> => {
+    try {
+      const token = process.env.AIRTABLE_API_TOKEN;
+      const base = process.env.AIRTABLE_BASE_ID;
+      if (!token || !base) return null;
+      const res = await fetch(
+        `${AIRTABLE_META_API}/bases/${encodeURIComponent(base)}/tables`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok) return null;
+      const data = (await res.json().catch(() => null)) as {
+        tables?: { name?: string; fields?: { name?: string }[] }[];
+      } | null;
+      const tableName = process.env.AIRTABLE_TABLE_NAME;
+      const table = data?.tables?.find((t) => t.name === tableName);
+      if (!table || !Array.isArray(table.fields)) return null;
+      const names = new Set<string>();
+      for (const f of table.fields) {
+        if (f && typeof f.name === "string" && f.name) names.add(f.name);
+      }
+      knownColumns = names;
+      return names;
+    } catch {
+      return null;
+    } finally {
+      schemaFetchInFlight = null;
+    }
+  })();
+  return schemaFetchInFlight;
+}
+
+/** Drop any field whose column does not exist in the table, so adding new
+ * mappings (First Name / Company) can never break writes before the owner
+ * adds the columns. When the schema is unknown (metadata fetch failed),
+ * falls back to ORIGINAL_FIELD_NAMES (First Name / Company skipped). */
+function whitelistFields(
+  fields: Record<string, unknown>,
+  schema: Set<string> | null,
+): Record<string, unknown> {
+  const allowed = schema ?? ORIGINAL_FIELD_NAMES;
+  return Object.fromEntries(Object.entries(fields).filter(([k]) => allowed.has(k)));
 }
 
 /** Best-effort JSONL append (never throws). Consistent with intake.ts. */
@@ -401,7 +527,7 @@ export const Route = createFileRoute("/api/leads")({
           );
         }
 
-        const fields = toAirtableFields(lead);
+        const fields = whitelistFields(toAirtableFields(lead), await fetchTableSchema());
 
         // Layer 1: Airtable when configured. The token is never logged.
         const result = await writeAirtable(fields);
