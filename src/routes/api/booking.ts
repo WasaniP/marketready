@@ -9,9 +9,11 @@
  * email logic and must never import src/lib/knockEmail.ts.
  *
  * JSON in: { name, workEmail, company?, websiteUrl?, serviceInterest?,
- * source?, capturedAt? }. Only name + a valid work email are required;
- * everything else is best-effort (company is inferred from the website
- * domain when omitted, mirroring the diagnostic lead flow).
+ * source?, capturedAt?, message? }. Only name + a valid work email are
+ * required; everything else is best-effort (company is inferred from the
+ * website domain when omitted, mirroring the diagnostic lead flow). The
+ * optional free-text `message` maps to the owner's "Message" column
+ * (added to "Bookings" for the /contact form).
  *
  * Server behavior (mirrors src/routes/api/leads.ts, fail-open):
  *   1. Reads ONLY process.env.AIRTABLE_API_TOKEN / AIRTABLE_BASE_ID
@@ -58,11 +60,15 @@ const BOOKINGS_FALLBACK_COLUMNS: ReadonlySet<string> = new Set([
   "Service Interest",
   "Source",
   "Timestamp",
+  "Message",
 ]);
 
 /** Single-line text columns: hard cap so a bloated payload can never
  * exceed Airtable's cell limits (they hold 100k chars; these are contacts). */
 const MAX_LINE = 500;
+
+/** Free-text Message column cap (multiline, owner-added for /contact). */
+const MAX_MESSAGE = 5000;
 
 interface BookingRequestBody {
   name?: unknown;
@@ -72,6 +78,7 @@ interface BookingRequestBody {
   serviceInterest?: unknown;
   source?: unknown;
   capturedAt?: unknown;
+  message?: unknown;
 }
 
 /** Best-effort company inference from a URL, e.g. https://www.acme.com -> "acme".
@@ -106,6 +113,7 @@ function toBookingFields(b: {
   serviceInterest: string;
   source: string;
   capturedAt: string;
+  message: string;
 }): Record<string, unknown> {
   const fields: Record<string, unknown> = {
     Name: b.name,
@@ -115,6 +123,7 @@ function toBookingFields(b: {
     "Service Interest": b.serviceInterest,
     Source: b.source,
     Timestamp: b.capturedAt,
+    Message: b.message,
   };
   return Object.fromEntries(
     Object.entries(fields).filter(([, v]) => v !== undefined && v !== null && v !== ""),
@@ -163,6 +172,9 @@ export const Route = createFileRoute("/api/booking")({
         const serviceInterest = asLine(raw.serviceInterest);
         // The modal always sends source:"booking_modal"; default defensively.
         const source = asLine(raw.source) || "booking_modal";
+        // Free-text contact message (the /contact form sends it under
+        // `message`); maps to the "Message" column. Multi-line-safe.
+        const message = asLine(raw.message, MAX_MESSAGE);
         // Airtable dateTime columns accept ISO 8601; trust the client's
         // timestamp only when it parses, else stamp on receipt.
         const capturedRaw = asString(raw.capturedAt);
@@ -172,7 +184,7 @@ export const Route = createFileRoute("/api/booking")({
             : new Date().toISOString();
 
         const fields = whitelistFields(
-          toBookingFields({ name, workEmail, company, websiteUrl, serviceInterest, source, capturedAt }),
+          toBookingFields({ name, workEmail, company, websiteUrl, serviceInterest, source, capturedAt, message }),
           await fetchTableSchema(BOOKINGS_TABLE),
           BOOKINGS_FALLBACK_COLUMNS,
         );
@@ -198,6 +210,7 @@ export const Route = createFileRoute("/api/booking")({
               serviceInterest,
               source,
               capturedAt,
+              message,
               airtable: "unconfigured",
             });
           } catch (err) {
@@ -218,6 +231,7 @@ export const Route = createFileRoute("/api/booking")({
             serviceInterest,
             source,
             capturedAt,
+            message,
             airtable: "failed",
             airtableError: result.error,
           });

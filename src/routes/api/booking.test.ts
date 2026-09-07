@@ -25,6 +25,7 @@ import { mkdtempSync, rmSync, readFileSync, existsSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { Route as BookingRoute } from "./booking";
+import { buildContactBooking } from "~/lib/contactPayload";
 
 const bookingPOST = BookingRoute.options.server.handlers
   .POST as (ctx: { request: Request }) => Promise<Response>;
@@ -48,6 +49,7 @@ const BOOKINGS_SCHEMA = {
         { name: "Service Interest" },
         { name: "Source" },
         { name: "Timestamp" },
+        { name: "Message" },
       ],
     },
   ],
@@ -301,6 +303,81 @@ describe("POST /api/booking fail-open", () => {
     const res = await post(VALID_BODY);
     expect(attempts).toBe(3);
     expect(((await res.json()) as { ok: boolean }).ok).toBe(false);
+    restoreEnv();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Contact form → /api/booking (source "contact_form", Message column) */
+/* ------------------------------------------------------------------ */
+
+describe("contact form → POST /api/booking", () => {
+  test("buildContactBooking maps fields incl. message and source contact_form", () => {
+    const p = buildContactBooking({
+      name: "Ada Lovelace",
+      workEmail: "ada@analyticalengines.test",
+      company: "Analytical Engines",
+      message: "We're pre-launch and our positioning is muddy.",
+      interest: "Sprint",
+    }, "2026-09-08T09:00:00.000Z");
+    expect(p).toEqual({
+      name: "Ada Lovelace",
+      workEmail: "ada@analyticalengines.test",
+      company: "Analytical Engines",
+      websiteUrl: "not provided",
+      serviceInterest: "Contact: Sprint",
+      source: "contact_form",
+      capturedAt: "2026-09-08T09:00:00.000Z",
+      message: "We're pre-launch and our positioning is muddy.",
+    });
+  });
+
+  test("buildContactBooking handles empty optional company/interest", () => {
+    const p = buildContactBooking({
+      name: "Grace Hopper",
+      workEmail: "grace@compiler.test",
+      message: "Questions about the audit.",
+    });
+    expect(p.company).toBe("");
+    expect(p.serviceInterest).toBeUndefined();
+    expect(p.source).toBe("contact_form");
+    expect(p.websiteUrl).toBe("not provided");
+    expect(p.message).toBe("Questions about the audit.");
+  });
+
+  test("route writes the contact row to Bookings with Message populated", async () => {
+    setEnv("tok", "appTEST", "Free diagnostic");
+    const { calls } = setFetchMock((url) => {
+      if (url === META_URL("appTEST")) return Response.json(BOOKINGS_SCHEMA);
+      if (url === BOOKINGS_URL("appTEST")) return Response.json({}, { status: 200 });
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    const res = await post({
+      name: "Ada Lovelace",
+      workEmail: "ada@analyticalengines.test",
+      company: "Analytical Engines",
+      websiteUrl: "not provided",
+      message: "We're pre-launch and our positioning is muddy.",
+      source: "contact_form",
+      capturedAt: "2026-09-08T09:00:00.000Z",
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { ok: boolean }).ok).toBe(true);
+    const write = calls.find((c) => c.url === BOOKINGS_URL("appTEST"));
+    expect(write).toBeDefined();
+    const fields = (JSON.parse(write!.init.body as string) as {
+      records: { fields: Record<string, unknown> }[];
+    }).records[0].fields;
+    expect(fields).toEqual({
+      Name: "Ada Lovelace",
+      "Work Email": "ada@analyticalengines.test",
+      Company: "Analytical Engines",
+      "Website URL": "not provided",
+      Source: "contact_form",
+      Timestamp: "2026-09-08T09:00:00.000Z",
+      Message: "We're pre-launch and our positioning is muddy.",
+    });
+    expect(calls.some((c) => /knock\.app/i.test(c.url))).toBe(false);
     restoreEnv();
   });
 });
