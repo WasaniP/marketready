@@ -458,8 +458,28 @@ function missingEnvVars(): string[] {
   return missing;
 }
 
+/** Tiny inline sleep for retry backoff (no new dependencies). */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** True for transient network/socket/DNS failures worth retrying: Bun's
+ * "The socket connection was closed unexpectedly" / "fetch failed", undici's
+ * "sending request failed", Node errno codes (ECONNRESET, ETIMEDOUT,
+ * ENOTFOUND, ECONNREFUSED, EAI_AGAIN, EPIPE), and closed/aborted streams.
+ * Anything else (e.g. a programming error) is not retried. */
+function isTransientNetworkError(msg: string): boolean {
+  return /socket connection was closed|fetch failed|sending request failed|econnreset|econnrefused|etimedout|enotfound|eai_again|epipe|network error|aborted|terminated|other side closed/i.test(
+    msg,
+  );
+}
+
 /** POST one record to Airtable. Resolves { ok:true } on 2xx, else
- * { ok:false, error } with the Airtable status + message (never the token). */
+ * { ok:false, error } with the Airtable status + message (never the token).
+ * Transient network failures (socket drops, DNS blips) are retried up to
+ * 3 total attempts with a short backoff (~400ms then ~900ms). HTTP
+ * responses are never retried: res.ok returns immediately, and a 4xx/5xx
+ * rejection is permanent (retrying cannot help). */
 async function writeAirtable(
   fields: Record<string, unknown>,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -472,29 +492,36 @@ async function writeAirtable(
       error: `Airtable is not configured (missing ${missingEnvVars().join(", ")}).`,
     };
   }
-  try {
-    const res = await fetch(
-      `${AIRTABLE_API}/${encodeURIComponent(base)}/${encodeURIComponent(table)}`,
-      {
+  const url = `${AIRTABLE_API}/${encodeURIComponent(base)}/${encodeURIComponent(table)}`;
+  const MAX_ATTEMPTS = 3;
+  const RETRY_DELAYS_MS = [400, 900] as const;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ records: [{ fields }] }),
-      },
-    );
-    if (res.ok) return { ok: true };
-    const detail = (await res.text().catch(() => "")).slice(0, 300);
-    return {
-      ok: false,
-      error: `Airtable rejected the lead (HTTP ${res.status})${detail ? `: ${detail}` : "."}`,
-    };
-  } catch (err) {
-    // Network / DNS failure: message only, never credentials.
-    const msg = err instanceof Error ? err.message : "network error";
-    return { ok: false, error: `Airtable request failed: ${msg}` };
+      });
+      if (res.ok) return { ok: true };
+      const detail = (await res.text().catch(() => "")).slice(0, 300);
+      return {
+        ok: false,
+        error: `Airtable rejected the lead (HTTP ${res.status})${detail ? `: ${detail}` : "."}`,
+      };
+    } catch (err) {
+      // Network / DNS / socket failure: message only, never credentials.
+      const msg = err instanceof Error ? err.message : "network error";
+      if (attempt < MAX_ATTEMPTS && isTransientNetworkError(msg)) {
+        await sleep(RETRY_DELAYS_MS[attempt - 1]);
+        continue;
+      }
+      return { ok: false, error: `Airtable request failed: ${msg}` };
+    }
   }
+  return { ok: false, error: "Airtable request failed: network error" };
 }
 
 export const Route = createFileRoute("/api/leads")({
