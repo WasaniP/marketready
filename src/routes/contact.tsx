@@ -2,15 +2,22 @@
  * MarketReady Contact page (build #24).
  *
  * Lead form (Name, Work Email, Company, "How can we help?", interest select)
- * captured through the same `captureLead` lib the booking modal uses: source
- * "contact". Honest confirmation only: no claims that emails are sent, no
- * fabricated responses. The team follows up manually.
+ * posted server-side to POST /api/booking (source "contact_form"), which
+ * writes a row to the owner's Airtable "Bookings" table — same path the
+ * booking modal uses, so contacts and bookings land in one table. Success is
+ * shown ONLY after the server confirms { ok:true }; on network failure or
+ * { ok:false } the form stays up with an inline retry error. The localStorage
+ * captureLead copy is kept as a harmless local fallback. Honest confirmation
+ * only: no claims that emails are sent, no fabricated responses. The team
+ * follows up manually.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Header, Footer } from "~/components/Layout";
 import { BookingModal } from "~/components/BookingModal";
+import { apiUrl } from "~/lib/apiOrigin";
+import { buildContactBooking } from "~/lib/contactPayload";
 import { captureLead } from "~/lib/leads";
 import type { LeadPayload } from "~/lib/leads";
 
@@ -44,7 +51,7 @@ function ContactPage() {
   const [status, setStatus] = useState<"form" | "submitting" | "done">("form");
   const closeBooking = () => setBookingOpen(false);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const cleanName = name.trim();
     const cleanEmail = email.trim();
@@ -66,6 +73,7 @@ function ContactPage() {
     setError("");
     setStatus("submitting");
 
+    // localStorage fallback (harmless, keeps a local copy even offline).
     const payload: LeadPayload = {
       email: cleanEmail,
       url: "not provided",
@@ -77,11 +85,44 @@ function ContactPage() {
       generatedAt: new Date().toISOString(),
       name: cleanName,
       company: cleanCompany || undefined,
-      source: "contact",
+      source: "contact_form",
       serviceInterest: interest ? `Contact: ${interest}` : undefined,
       message: cleanMessage,
     };
     void captureLead(payload);
+
+    // Server round-trip: the contact must reach the owner's Airtable
+    // "Bookings" table (via POST /api/booking, source "contact_form") before
+    // we show success — posting through apiUrl() so the apex→www 308 can
+    // never drop the body. Only a resolved { ok:true } flips to the success
+    // state; a network failure or { ok:false } restores the form with an
+    // inline retry error (mirrors the booking modal).
+    let saved = false;
+    try {
+      const res = await fetch(apiUrl("/api/booking"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          buildContactBooking({
+            name: cleanName,
+            workEmail: cleanEmail,
+            company: cleanCompany,
+            message: cleanMessage,
+            interest,
+          }),
+        ),
+      });
+      const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+      saved = res.ok && data?.ok === true;
+    } catch {
+      saved = false;
+    }
+
+    if (!saved) {
+      setStatus("form");
+      setError("Something went wrong saving your message — please try again.");
+      return;
+    }
     setStatus("done");
   };
 

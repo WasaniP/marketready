@@ -4,9 +4,9 @@
  * 'Nine deliverables, shipped in 14 days' (from the owner-approved copy spec)
  * plus the honest terms line (one round of revisions) and explicit exclusions.
  * Both CTAs route honestly: 'Book a Call' opens the booking modal with
- * 'MarketReady Sprint' pre-selected; 'Skip the call, buy now' uses the same
+ * 'MarketReady Sprint' pre-selected; 'Get the Sprint' uses the same
  * lead-capture booking path (Stripe is not wired, so there is no fake
- * checkout).
+ * checkout and no 'buy now' wording).
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/services/sprint")({
       {
         name: "description",
         content:
-          "The MarketReady 14-Day Positioning Sprint at $7,500: nine strategy and launch assets built from your Diagnostic score, including positioning architecture, messaging framework, homepage copy, and launch assets.",
+          "The MarketReady 14-Day Positioning Sprint at $5,000: nine strategy and launch assets built from your Diagnostic score, including positioning architecture, messaging framework, homepage copy, and launch assets.",
       },
     ],
   }),
@@ -348,7 +348,7 @@ function SprintPage() {
             onClick={bookSprint}
             className="rounded-lg bg-teal-400 px-7 py-3.5 text-base font-bold text-slate-950 transition-colors hover:bg-teal-300"
           >
-            Book Your 14-Day Sprint ($7,500) →
+            Book Your 14-Day Sprint ($5,000) →
           </button>
           <a
             href="/services/diagnostic"
@@ -509,7 +509,7 @@ function SprintPage() {
                 Book a Call →
               </button>
               <button type="button" onClick={bookSprint} className="btn-ghost px-7 py-3.5 text-base">
-                Skip the call, buy now →
+                Get the Sprint →
               </button>
             </div>
             <p className="mt-4 text-xs text-zinc-500">

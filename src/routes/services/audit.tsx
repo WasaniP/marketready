@@ -446,10 +446,10 @@ function AuditPage() {
                   assets built from your Diagnostic score. Best when the gap is clear and you need
                   the fix shipped in 14 days.
                 </p>
-                <p className="mt-5 text-sm font-semibold text-zinc-300">14 days · $7,500</p>
+                <p className="mt-5 text-sm font-semibold text-zinc-300">14 days · $5,000</p>
                 <div className="mt-auto pt-6">
                   <a href="/services/sprint" className="btn-ghost w-full px-6 py-3 text-center text-sm">
-                    Explore 14-Day Sprint - $7,500
+                    Explore 14-Day Sprint - $5,000
                   </a>
                 </div>
               </div>

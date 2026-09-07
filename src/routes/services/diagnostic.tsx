@@ -672,7 +672,7 @@ function DiagnosticEngine({ onComplete }: { onComplete: (state: DiagnosticState)
 
 /** The sole Sprint-price constant. This stays the single source of truth
  * for the results view. */
-const RX_PRICE = "$7,500";
+const RX_PRICE = "$5,000";
 
 /** Checkout-gate terms label. Kept as ONE literal so the exact sentence
  * ships contiguously in the bundle (QA greps it); the agreement name
@@ -951,7 +951,7 @@ function DiagnosticResults({
           onClick={openGate}
           className="btn-electric flex-1"
         >
-          Start Your Sprint ($7,500) →
+          Start Your Sprint ($5,000) →
         </button>
         <button
           type="button"
