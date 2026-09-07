@@ -16,6 +16,7 @@
   --color-emberdeep: #93472A; /* rust hover / pressed */
   --color-ambertint: #FBEDE6; /* rust tint: badges / highlights */
   --color-navy: #1F4A42; /* deep pine: section headers, widget frame, footer */
+  --color-pinetint: #E4EDEA; /* pine tint: labels on the pine section */
   --color-scorework: #A15C2B; /* diagnostic: needs work */
   --color-scorerefine: #8A6A1F; /* diagnostic: needs refinement */
   --color-scorepass: #1F4A42; /* diagnostic: strong / passing (pine) */
@@ -70,6 +71,18 @@
   /* Warm light card: white fill, linen border, soft warm shadow. */
   .glass-card {
     @apply rounded-xl border border-hairline bg-white shadow-[0_1px_2px_rgba(28,25,23,0.05),0_10px_28px_rgba(28,25,23,0.07)];
+  }
+
+  /* Owner revision spec §8: cards on sand (#F2EDE6) sections use cream fill
+     with the same linen border + soft shadow as .glass-card. */
+  .glass-card-sand {
+    @apply rounded-xl border border-hairline bg-cream shadow-[0_1px_2px_rgba(28,25,23,0.05),0_10px_28px_rgba(28,25,23,0.07)];
+  }
+
+  /* Owner revision spec §8: cards on the pine (#1F4A42) section use
+     #14332D fill with a #2E5C53 border and NO shadow. */
+  .pine-card {
+    @apply rounded-xl border border-[#2E5C53] bg-[#14332D];
   }
 
   /* Primary CTA: rust fill, white text, deeper rust on hover. */
