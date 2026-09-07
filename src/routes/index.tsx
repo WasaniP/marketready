@@ -6,11 +6,6 @@ import { BookingModal } from "~/components/BookingModal";
 import { Header, Footer, ChevronDown } from "~/components/Layout";
 
 /* ------------------------------------------------------------------ */
-/* Build #32 / #34: LIVE AI diagnostic (client-side call + fallback).  */
-/* The response shape + defensive normalization live in lib/audit/ai.ts */
-/* ------------------------------------------------------------------ */
-
-/* ------------------------------------------------------------------ */
 /* Constants                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -55,7 +50,7 @@ const METHODOLOGY_COPY: Record<string, { measures: string; why: string }> = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Build #7: Diagnostic Engine pillars + how-it-works copy             */
+/* Diagnostic Engine pillars                                           */
 /* ------------------------------------------------------------------ */
 
 type PillarAccent = "electric" | "indigo";
@@ -109,8 +104,7 @@ const PILLARS: Pillar[] = [
   },
 ];
 
-/** One-line description per parameter for the Diagnostic Engine cells
- * (drawn from the audit copy module's measures/why wording). */
+/** One-line description per parameter for the Diagnostic Engine cells. */
 const CELL_LINES: Record<string, string> = {
   positioning: "A first-time visitor can name the category you own within the first screen.",
   icp: "A specific, named buyer anchors the messaging, not a vague crowd.",
@@ -123,178 +117,95 @@ const CELL_LINES: Record<string, string> = {
   launch: "A dated launch kit: narrative, assets, targets, and owners.",
 };
 
-/** Build #22/#35: Diagnose → Prescribe → Activate staged funnel (reframes the
- * old three-step "how it works" copy; the section id #how-it-works stays).
- * Prices are surfaced on the homepage: Stage 02 shows the $5,000 Sprint and
- * Stage 03 the ongoing advisory retainer. The $3,000 MarketReady Audit is a
- * services-page offering and intentionally does NOT appear here. */
+/** Diagnose → Prescribe → Activate, in the founder's voice. */
 const HOW_IT_WORKS_STEPS = [
   {
     n: "01",
     name: "Diagnose",
-    body: "Run the free AI audit and scorecard to surface your positioning friction.",
+    body: "I run your site through the free diagnostic and show you exactly where your positioning is leaking trust.",
   },
   {
     n: "02",
     name: "Prescribe",
-    body: "The 14-Day Sprint turns flagged gaps into positioning, messaging, and a launch deck.",
+    body: "I turn the flagged gaps into a fix plan: positioning, messaging, and the assets that carry them.",
   },
   {
     n: "03",
     name: "Activate",
-    body: "Ongoing advisory keeps launch momentum compounding after the sprint.",
+    body: "We ship the fixes together in a focused sprint, then keep your launch momentum compounding.",
   },
 ] as const;
 
-
-
+/* ------------------------------------------------------------------ */
+/* Manifesto: first-person statement of why MarketReady exists.        */
+/* No stats, no proof points, just the founder's belief.               */
+/* ------------------------------------------------------------------ */
+function Manifesto() {
+  return (
+    <section id="manifesto" className="scroll-mt-24 border-t border-hairline bg-cream py-14 sm:py-16">
+      <div className="mx-auto max-w-3xl px-5 text-center sm:px-8">
+        <p className="eyebrow">Why I built this</p>
+        <blockquote className="mt-4 font-display text-2xl leading-snug text-ink sm:text-[2rem]">
+          "Most startups don't have a product problem. They have a language
+          problem. I started MarketReady so founders could hear, plainly, how
+          their GTM sounds to a first-time buyer, and fix it before it costs
+          them the launch."
+        </blockquote>
+        <p className="mt-5 text-sm font-semibold text-ember">— Wasani, Founder</p>
+      </div>
+    </section>
+  );
+}
 
 /* ------------------------------------------------------------------ */
-/* Build #NN: Problem Agitation section ("The Invisible Tax").           */
-/* Directly below the hero. 3 compact dark-slate cards, teal icons.    */
+/* Friction observations: first-person, stat-free. The old metric      */
+/* cards (47% / 61% / 28%) are gone per owner requirement: no          */
+/* fabricated sources or figures.                                      */
 /* ------------------------------------------------------------------ */
-function ProblemAgitation() {
+function FrictionObservations() {
   const cards = [
     {
-      title: "The Sales Velocity Drain",
-      metric: "47%",
-      metricLabel: ' deals lost to "no decision"',
-      icon: (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-          <path d="M3 17l6-6 4 4 8-8" />
-          <path d="M21 7v5h-5" />
-        </svg>
-      ),
-      bullets: [
-        <>
-          <strong className="font-bold text-ink">Demo calls waste 30 mins</strong> educating category
-          rather than closing value.
-        </>,
-        <>
-          <strong className="font-bold text-ink">Extended sales cycles</strong> caused by unclear
-          buyer payoff and hesitation.
-        </>,
-      ],
+      title: "Demos that turn into category lessons",
+      body: "I see founders spend the first thirty minutes of every demo explaining what category they're in, instead of closing on value. When your site doesn't stake the category, your sales team pays for it on every call.",
+      signoff: "That's the friction I hear about most.",
     },
     {
-      title: "The Marketing Burn Multiplier",
-      metric: "61%",
-      metricLabel: " paid traffic bounce rate",
-      icon: (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-        </svg>
-      ),
-      bullets: [
-        <>
-          <strong className="font-bold text-ink">Visitors bounce in 8 seconds</strong> due to
-          feature-heavy, outcome-light copy.
-        </>,
-        <>
-          <strong className="font-bold text-ink">Skyrocketing CAC</strong> pouring high-cost paid
-          traffic into a leaky landing page.
-        </>,
-      ],
+      title: "Marketing spend that leaks on arrival",
+      body: "I watch teams pour budget into ads and outbound that land on feature-heavy, outcome-light pages. Visitors bounce in seconds, not because the product is weak, but because the payoff was never named.",
+      signoff: "Traffic can't fix a message that doesn't land.",
     },
     {
-      title: "The Competitive Discount Trap",
-      metric: "28%",
-      metricLabel: " avg rep discount rate",
-      icon: (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-          <path d="M7 7h.01" />
-        </svg>
-      ),
-      bullets: [
-        <>
-          <strong className="font-bold text-ink">Constant comparison</strong> to generic or
-          lower-cost market alternatives.
-        </>,
-        <>
-          <strong className="font-bold text-ink">Loss of pricing power</strong> forcing heavy
-          discounting to secure signatures.
-        </>,
-      ],
+      title: "Discounting to win comparisons you shouldn't be in",
+      body: "When your difference isn't named, buyers file you next to the cheapest alternative and ask for a discount. I see good products lose pricing power they never had to give up.",
+      signoff: "Positioning is what protects your price.",
     },
   ];
   return (
-    <section
-      id="problem"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-[#0B1220] py-10"
-    >
-      <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="flex flex-col items-center text-center" style={{ marginBottom: 48 }}>
-          {/* Eyebrow pill */}
-          <span
-            className="mb-4 inline-block rounded-full px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider"
-            style={{
-              color: "#14B8A6",
-              letterSpacing: "0.08em",
-              background: "rgba(20,184,166,0.1)",
-              border: "1px solid rgba(20,184,166,0.25)",
-            }}
-          >
-            ● THE COST OF WEAK FOUNDATIONS
-          </span>
-          <h2
-            className="text-[32px] font-bold text-[#F9FAFB] sm:text-[36px]"
-            style={{ lineHeight: 1.25, maxWidth: 800 }}
-          >
-            Scaling Spend Before Messaging Precision Is Just{" "}
-            <span style={{ color: "#14B8A6" }}>Paid Churn</span>
+    <section id="friction" className="scroll-mt-24 border-t border-hairline bg-sand py-14 sm:py-16">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="eyebrow">What I keep seeing</p>
+          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
+            The patterns I see holding back growth
           </h2>
-          <p
-            className="text-[15px] text-[#9CA3AF]"
-            style={{ lineHeight: 1.5, maxWidth: 640, marginTop: 12 }}
-          >
-            When your category anchor and buyer outcomes aren't crystal clear, every dollar put into
-            ads, outbound, or sales hiring goes straight into a leaky conversion funnel.
+          <p className="mt-3 text-base leading-relaxed text-mist">
+            After years inside media and tech brands, I notice the same three
+            failure modes. If any of these sound familiar, your positioning is
+            doing it, not your product.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
           {cards.map((c) => (
-            <div
-              key={c.title}
-              className="group relative rounded-xl p-7 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(20,184,166,0.2)]"
-              style={{
-                background: "rgba(17,24,39,0.75)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(45,212,191,0.2)",
-                borderTop: "1px solid rgba(45,212,191,0.4)",
-              }}
-            >
-              {/* Mini status tag, top-right */}
-              <span className="absolute right-5 top-4 text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
-                <span className="text-[9px] text-electric">●</span> FRICTION
+            <article key={c.title} className="glass-card flex flex-col p-7">
+              <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-lg bg-ambertint text-lg font-bold text-ember">
+                ✦
               </span>
-              {/* Big metric callout */}
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-[34px] font-extrabold leading-none" style={{ color: "#14B8A6" }}>
-                  {c.metric}
-                </span>
-                <span className="text-[13px] text-[#9CA3AF]">{c.metricLabel}</span>
-              </div>
-              {/* Header: glowing teal badge + title */}
-              <div className="mt-5 flex items-center gap-2.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(20,184,166,0.12)] text-[18px] text-electric shadow-[0_0_18px_rgba(20,184,166,0.35)]">
-                  {c.icon}
-                </span>
-                <h3 className="text-[18px] font-semibold leading-tight text-ink">{c.title}</h3>
-              </div>
-              {/* Teal-chevron bullets */}
-              <ul className="mt-4 space-y-2">
-                {c.bullets.map((b, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[13px] leading-relaxed text-mist">
-                    <span aria-hidden="true" className="mt-0.5 shrink-0 text-[13px] leading-none text-electric">
-                      →
-                    </span>
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <h3 className="mt-4 font-display text-xl leading-snug text-ink">{c.title}</h3>
+              <p className="mt-3 flex-1 text-[15px] leading-relaxed text-mist">{c.body}</p>
+              <p className="mt-4 border-t border-hairline pt-4 text-sm font-semibold italic text-ember">
+                {c.signoff}
+              </p>
+            </article>
           ))}
         </div>
       </div>
@@ -303,23 +214,8 @@ function ProblemAgitation() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Page sections                                                       */
+/* Methodology stepper: Diagnose → Prescribe → Activate                */
 /* ------------------------------------------------------------------ */
-
-
-/* ------------------------------------------------------------------ */
-/* Build #32 / #34: LIVE AI diagnostic (client-side call + fallback).  */
-/* The response shape + defensive normalization live in lib/audit/ai.ts */
-/* ------------------------------------------------------------------ */
-
-
-
-
-
-/** Build #28: Methodology: horizontal stepper (borderless step nodes joined
- * by a gradient connector line). Replaces the old numbered-card pipeline.
- * Captions (Free Instant Audit / 5-D Assessment / 14-Day Sprint) kept as small
- * sub-captions under each node. */
 function HowItWorks() {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
@@ -344,56 +240,52 @@ function HowItWorks() {
     <section
       ref={sectionRef}
       id="how-it-works"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-[#0B1220] py-8"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-14 sm:py-16"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-24 right-[-10%] h-80 w-80 rounded-full bg-indigo/[0.08] blur-3xl"
-      />
       <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="chip border-electric/40 text-electric">Methodology</span>
-          <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink sm:text-2xl">
-            Diagnose <span className="text-electric">→</span> Prescribe{" "}
-            <span className="text-electric">→</span> Activate
+          <p className="eyebrow">How I work</p>
+          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
+            Diagnose <span className="text-ember">→</span> Prescribe{" "}
+            <span className="text-ember">→</span> Activate
           </h2>
-          <p className="mt-2 text-sm text-mist sm:text-base">
-            One readiness scorecard, three moves: diagnose the friction, prescribe the fixes,
-            activate the launch.
+          <p className="mt-3 text-base leading-relaxed text-mist">
+            One readiness score, three moves. I diagnose where your positioning
+            breaks, prescribe the highest-impact fixes, and activate them with you.
           </p>
         </div>
 
-        {/* Stepper */}
-        <div className="relative mt-5">
-          {/* Gradient connector line (desktop only): draws on when the section is seen */}
+        <div className="relative mt-10">
           <div
             aria-hidden="true"
-            className={`absolute left-[16%] right-[16%] top-[13px] hidden h-px bg-gradient-to-r from-electric/0 via-electric/60 to-indigo/60 md:block ${line}`}
+            className={`absolute left-[16%] right-[16%] top-[13px] hidden h-px bg-gradient-to-r from-ember/0 via-ember/60 to-navy/60 md:block ${line}`}
           />
-          <ol className="grid gap-6 md:grid-cols-3 md:gap-6">
+          <ol className="grid gap-8 md:grid-cols-3 md:gap-6">
             {HOW_IT_WORKS_STEPS.map((step, i) => (
               <li
                 key={step.n}
                 className={`relative flex flex-col items-center text-center ${reveal}`}
                 style={{ animationDelay: `${220 + i * 180}ms` }}
               >
-                {/* Small indicator dot */}
-                <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-electric/40 bg-[#0B1220] text-[10px] font-bold text-electric shadow-[0_0_12px_rgba(20,184,166,0.35)]">
-                  <span
-                    aria-hidden="true"
-                    className="absolute -inset-1 rounded-full bg-electric/15 blur-sm"
-                  />
+                <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-ember/40 bg-cream text-[10px] font-bold text-ember shadow-[0_0_12px_rgba(180,83,9,0.25)]">
                   <span className="relative">{step.n}</span>
                 </span>
+                <h3 className="mt-4 font-display text-xl text-ink">{step.name}</h3>
+                <p className="mt-2 max-w-xs text-sm leading-relaxed text-mist">{step.body}</p>
               </li>
             ))}
           </ol>
+        </div>
+
+        <div className="mt-10 text-center">
+          <a href="/services/diagnostic" className="btn-electric">
+            Get Your MarketReady Score →
+          </a>
         </div>
       </div>
     </section>
   );
 }
-
 
 function EngineCardRow({
   paramId,
@@ -409,15 +301,15 @@ function EngineCardRow({
   onToggle: () => void;
 }) {
   const meta = METHODOLOGY_COPY[paramId];
-  const isTeal = accent === "electric";
+  const isEmber = accent === "electric";
   return (
     <div
       className={`border-l-2 transition-colors duration-200 ${
         expanded
-          ? isTeal
-            ? "border-electric/60 bg-electric/[0.04]"
-            : "border-indigo/60 bg-indigo/[0.04]"
-          : "border-transparent hover:bg-white/[0.02]"
+          ? isEmber
+            ? "border-ember/60 bg-ember/[0.05]"
+            : "border-navy/50 bg-navy/[0.04]"
+          : "border-transparent hover:bg-ink/[0.02]"
       }`}
     >
       <button
@@ -430,16 +322,16 @@ function EngineCardRow({
           <h4 className="text-sm font-semibold text-ink">{PARAMETER_NAMES[paramId]}</h4>
           <span
             className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
-              isTeal
-                ? "border-electric/30 bg-electric/10 text-electric"
-                : "border-indigo/30 bg-indigo/10 text-indigo"
+              isEmber
+                ? "border-ember/30 bg-ambertint text-emberdeep"
+                : "border-navy/25 bg-navy/[0.06] text-navy"
             }`}
           >
             {tag}
           </span>
         </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 shrink-0 text-zinc-500 transition-transform duration-200 ${
+          className={`h-3.5 w-3.5 shrink-0 text-fog transition-transform duration-200 ${
             expanded ? "rotate-180" : ""
           }`}
         />
@@ -447,8 +339,8 @@ function EngineCardRow({
       {expanded && (
         <div className="px-5 pb-4">
           <p className="text-xs leading-relaxed text-mist">{CELL_LINES[paramId]}</p>
-          <p className="mt-2.5 border-t border-hairline pt-2.5 text-xs leading-relaxed text-zinc-400">
-            <span className={`font-medium ${isTeal ? "text-electric" : "text-indigo"}`}>
+          <p className="mt-2.5 border-t border-hairline pt-2.5 text-xs leading-relaxed text-mist">
+            <span className={`font-medium ${isEmber ? "text-ember" : "text-navy"}`}>
               Why it matters:{" "}
             </span>
             {meta.why}
@@ -460,26 +352,23 @@ function EngineCardRow({
 }
 
 /* ------------------------------------------------------------------ */
-/* Build #NN: Diagnostic Engine, owner 2-column spec (Pillar stack +   */
-/* mint gauge). The 68/100 gauge and the per-pillar status pills are   */
-/* ILLUSTRATIVE DEMO UI only, not a real measured score of any site.  */
+/* Diagnostic Engine (owner 2-column spec: pillar stack + gauge).      */
+/* The 38/100 gauge and pillar status pills are ILLUSTRATIVE DEMO UI   */
+/* only, not a real measured score of any site.                        */
+/* ------------------------------------------------------------------ */
 function EngineMintGauge({ active }: { active: boolean }) {
   const r = 64;
   const c = 2 * Math.PI * r;
   /* The 38/100 value is ILLUSTRATIVE DEMO UI, not a real measured score of
-     any site. Sweep the red/coral arc from 0% to the 38% demo value once the
-     section scrolls into view, after the 360° radar scan finishes (the arc
-     transition is delayed by the scan duration on first reveal). */
+     any site. Sweep the arc from 0% to the 38% demo value once the section
+     scrolls into view. */
   const offset = active ? `${c * (1 - 0.38)}` : `${c}`;
   return (
     <div className="relative flex h-40 w-40 items-center justify-center sm:h-44 sm:w-44">
-      {/* Red/coral halo glow: warning-toned because this demo score is low */}
       <div
         aria-hidden="true"
-        className="mr-glow-pulse absolute -inset-2 rounded-full bg-[#EF4444]/25 blur-2xl"
+        className="mr-glow-pulse absolute -inset-2 rounded-full bg-ember/20 blur-2xl"
       />
-      {/* Radar scan sweep: a conic wedge + radiant laser line rotate 360° once
-          on scroll into view, then fade out (reduced-motion disables it). */}
       <div
         aria-hidden="true"
         className={`pointer-events-none absolute inset-[11%] rounded-full ${
@@ -495,32 +384,32 @@ function EngineMintGauge({ active }: { active: boolean }) {
         role="img"
         aria-label="Illustrative overall readiness score: 38 out of 100"
       >
-        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="10" />
+        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(28,25,23,0.08)" strokeWidth="10" />
         <circle
           cx="80"
           cy="80"
           r={r}
           fill="none"
-          stroke="#EF4444"
+          stroke="#B45309"
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={`${c * 0.38} ${c}`}
           strokeDashoffset={offset}
           className="mr-gauge-sweep"
           style={{
-            filter: "drop-shadow(0 0 8px rgba(239,68,68,0.9))",
+            filter: "drop-shadow(0 0 8px rgba(180,83,9,0.5))",
             transitionDelay: active ? "1.2s" : "0ms",
           }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold leading-none tabular-nums text-[#F87171] drop-shadow-[0_2px_12px_rgba(239,68,68,0.5)] sm:text-[2.5rem]">
+        <span className="text-3xl font-extrabold leading-none tabular-nums text-emberdeep drop-shadow-[0_2px_12px_rgba(180,83,9,0.25)] sm:text-[2.5rem]">
           38
         </span>
-        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-fog">
           / 100
         </span>
-        <span className="mt-1.5 font-bold text-xs uppercase tracking-wider text-red-500">
+        <span className="mt-1.5 text-xs font-bold uppercase tracking-wider text-ember">
           High Risk
         </span>
       </div>
@@ -528,20 +417,19 @@ function EngineMintGauge({ active }: { active: boolean }) {
   );
 }
 
-/** Illustrative demo status per pillar (UI only; not a real measured
- * score). Tones map to amber (needs refinement) and rose (critical gap). */
+/** Illustrative demo status per pillar (UI only; not a real measured score). */
 const PILLAR_STATUS: Record<string, { label: string; cls: string }> = {
   "pillar-positioning": {
     label: "CRITICAL GAP",
-    cls: "border-[#EF4444]/40 bg-[#EF4444]/10 text-[#F87171]",
+    cls: "border-ember/40 bg-ambertint text-emberdeep",
   },
   "pillar-messaging": {
     label: "NEEDS REFINEMENT",
-    cls: "border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[#FBBF24]",
+    cls: "border-[#A16207]/40 bg-[#A16207]/10 text-[#A16207]",
   },
   "pillar-gtm": {
     label: "NEEDS REFINEMENT",
-    cls: "border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[#FBBF24]",
+    cls: "border-[#A16207]/40 bg-[#A16207]/10 text-[#A16207]",
   },
 };
 
@@ -568,9 +456,6 @@ function DiagnosticEngine() {
     return () => ob.disconnect();
   }, []);
 
-  /* Reveal classes: stagger IO-based anims. Left text first, gauge second,
-     pillar stack slides in from the right last. Reduced-motion kills these
-     via the CSS media query (simply rendering with no animation). */
   const revealLeft = visible ? "mr-step-reveal" : "opacity-0";
   const revealGauge = visible ? "mr-step-reveal" : "opacity-0";
   const revealStack = visible ? "mr-shift-slide" : "opacity-0";
@@ -580,77 +465,60 @@ function DiagnosticEngine() {
     <section
       ref={sectionRef}
       id="methodology"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-[#111827] py-10"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-sand py-14 sm:py-16"
     >
-      {/* Ambient glow meshes behind the section: indigo top-right, teal
-          bottom-left (build #13 set: /10 opacity, pointer-events-none,
-          heavy blur). */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-24 right-[-12%] h-96 w-96 rounded-full bg-indigo/10 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-[-10%] left-[-12%] h-96 w-96 rounded-full bg-electric/10 blur-3xl"
-      />
       <div className="relative mx-auto w-full max-w-6xl overflow-hidden px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
-          {/* LEFT (lg:col-span-4): title + paragraph + bottom subtext only */}
           <div className={`flex flex-col lg:col-span-4 ${revealLeft}`}>
-            <span className="chip self-start border-electric/40 text-electric">Scoring System</span>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+            <p className="eyebrow">My scoring system</p>
+            <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
               The MarketReady Diagnostic Engine
             </h2>
-            <p className="mt-3 text-lg text-mist">
-              Instant, zero-friction automated URL analysis: nine core dimensions scored in
-              seconds, grouped into three pillars.
+            <p className="mt-3 text-lg leading-relaxed text-mist">
+              This is how I read your site: nine dimensions, scored in seconds,
+              grouped into three pillars.
             </p>
             <p className="mt-4 text-sm leading-relaxed text-mist">
-              The AI audit reads your live site and maps every signal to one of nine scored
-              dimensions, grouped into three pillars: how you position, how you message, and how
-              fast you launch. It pinpoints where each breaks, what it costs you, and what to fix
-              first.
+              I map every signal to one of nine scored dimensions, grouped into
+              three pillars: how you position, how you message, and how fast you
+              launch. You see where each breaks, what it costs you, and what to
+              fix first.
             </p>
-            {/* Bottom subtext */}
-            <p className="mt-6 text-sm text-zinc-500">
-              Every dimension maps to a scored signal in your audit, with rewrites for the gaps
-              that cost you conversion.
+            <p className="mt-6 text-sm text-fog">
+              Every dimension maps to a scored signal in your audit, with rewrites
+              for the gaps that cost you conversion.
             </p>
           </div>
 
-          {/* MIDDLE (lg:col-span-3): glassmorphism gauge score card */}
           <div className={`flex flex-col items-center lg:col-span-3 ${revealGauge}`} style={{ animationDelay: "120ms" }}>
-            <div className="flex flex-col items-center rounded-2xl border border-[#EF4444]/25 bg-[#1E293B]/40 px-5 py-5 shadow-[0_0_44px_rgba(239,68,68,0.14)] backdrop-blur-md">
+            <div className="glass-card flex flex-col items-center px-5 py-5">
               <EngineMintGauge active={visible} />
             </div>
           </div>
 
-          {/* RIGHT (lg:col-span-5): connective node + pillar accordion stack */}
           <div className={`flex items-stretch gap-3 lg:col-span-5 lg:gap-4 ${revealStack}`} style={{ animationDelay: "240ms" }}>
-            {/* Connective node: one segment per pillar, aligned to each accordion
-                card. Active/hovered pillar lights its segment + travels a pulse. */}
             <div aria-hidden="true" className="hidden w-6 shrink-0 flex-col items-center justify-around sm:flex">
               {PILLARS.map((pillar) => {
                 const active = expandedPillar === pillar.id || hoveredPillar === pillar.id;
-                const accent = pillar.accent === "electric" ? "electric" : "indigo";
+                const accent = pillar.accent === "electric" ? "ember" : "navy";
                 return (
                   <div key={pillar.id} className="flex flex-col items-center gap-2">
-                    <div className="relative h-px w-full overflow-visible bg-white/10">
+                    <div className="relative h-px w-full overflow-visible bg-ink/10">
                       <span
                         className={`absolute inset-0 transition-colors duration-300 ${
                           active
-                            ? accent === "electric"
-                              ? "bg-gradient-to-r from-transparent from-10% via-electric to-electric"
-                              : "bg-gradient-to-r from-transparent from-10% via-indigo to-indigo"
+                            ? accent === "ember"
+                              ? "bg-gradient-to-r from-transparent from-10% via-ember to-ember"
+                              : "bg-gradient-to-r from-transparent from-10% via-navy to-navy"
                             : "bg-transparent"
                         }`}
                       />
                       {active && (
                         <span
                           className={`mr-data-pulse absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
-                            accent === "electric"
-                              ? "bg-electric shadow-[0_0_10px_rgba(20,184,166,0.9)]"
-                              : "bg-indigo shadow-[0_0_10px_rgba(99,102,241,0.9)]"
+                            accent === "ember"
+                              ? "bg-ember shadow-[0_0_10px_rgba(180,83,9,0.9)]"
+                              : "bg-navy shadow-[0_0_10px_rgba(30,58,95,0.9)]"
                           }`}
                         />
                       )}
@@ -658,10 +526,10 @@ function DiagnosticEngine() {
                     <span
                       className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
                         active
-                          ? accent === "electric"
-                            ? "bg-electric shadow-[0_0_8px_rgba(20,184,166,0.9)]"
-                            : "bg-indigo shadow-[0_0_8px_rgba(99,102,241,0.9)]"
-                          : "bg-white/25"
+                          ? accent === "ember"
+                            ? "bg-ember shadow-[0_0_8px_rgba(180,83,9,0.9)]"
+                            : "bg-navy shadow-[0_0_10px_rgba(30,58,95,0.9)]"
+                          : "bg-ink/25"
                       }`}
                     />
                   </div>
@@ -669,10 +537,9 @@ function DiagnosticEngine() {
               })}
             </div>
 
-            {/* Pillar accordion stack */}
             <div className="w-full min-w-0 flex-1 space-y-3">
               {PILLARS.map((pillar) => {
-                const isTeal = pillar.accent === "electric";
+                const isEmber = pillar.accent === "electric";
                 const status = PILLAR_STATUS[pillar.id];
                 const open = expandedPillar === pillar.id;
                 const hasActive = expandedPillar !== null;
@@ -681,16 +548,16 @@ function DiagnosticEngine() {
                     key={pillar.id}
                     onMouseEnter={() => setHoveredPillar(pillar.id)}
                     onMouseLeave={() => setHoveredPillar(null)}
-                    className={`overflow-hidden rounded-xl border bg-[#1E293B]/50 backdrop-blur-md transition-all duration-300 ${
+                    className={`glass-card overflow-hidden transition-all duration-300 ${
                       hasActive && !open ? "opacity-55" : "opacity-100"
                     } ${
-                      isTeal
+                      isEmber
                         ? open
-                          ? "border-electric/40 shadow-[0_0_28px_rgba(20,184,166,0.12)]"
-                          : "border-hairline hover:border-electric/40"
+                          ? "border-ember/40 shadow-[0_0_28px_rgba(180,83,9,0.12)]"
+                          : "hover:border-ember/40"
                         : open
-                          ? "border-indigo/40 shadow-[0_0_28px_rgba(99,102,241,0.12)]"
-                          : "border-hairline hover:border-indigo/40"
+                          ? "border-navy/40 shadow-[0_0_28px_rgba(30,58,95,0.12)]"
+                          : "hover:border-navy/40"
                     }`}
                   >
                     <button
@@ -703,19 +570,19 @@ function DiagnosticEngine() {
                     >
                       <span
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                          isTeal ? "bg-electric/15 text-electric" : "bg-indigo/15 text-indigo"
+                          isEmber ? "bg-ambertint text-emberdeep" : "bg-navy/[0.07] text-navy"
                         }`}
                       >
                         {pillar.num}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[9px] font-semibold uppercase tracking-widest text-zinc-500">
+                        <span className="block text-[9px] font-semibold uppercase tracking-widest text-fog">
                           Pillar {pillar.num}
                         </span>
                         <span className="block text-sm font-semibold leading-tight text-ink">
                           {pillar.title}
                         </span>
-                        <span className="hidden text-[11px] text-zinc-500 sm:block">{pillar.summary}</span>
+                        <span className="hidden text-[11px] text-fog sm:block">{pillar.summary}</span>
                       </span>
                       <span
                         className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${status.cls}`}
@@ -723,13 +590,13 @@ function DiagnosticEngine() {
                         {status.label}
                       </span>
                       <ChevronDown
-                        className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${
+                        className={`h-4 w-4 shrink-0 text-fog transition-transform duration-200 ${
                           open ? "rotate-180" : ""
                         }`}
                       />
                     </button>
                     {open && (
-                      <div className="mr-acc-reveal divide-y divide-hairline/60 border-t border-hairline/60">
+                      <div className="mr-acc-reveal divide-y divide-hairline border-t border-hairline">
                         {pillar.params.map((p) => (
                           <EngineCardRow
                             key={p.id}
@@ -748,9 +615,10 @@ function DiagnosticEngine() {
             </div>
           </div>
         </div>
-        <p className={`mt-8 text-center text-sm text-zinc-500 ${revealBottom}`} style={{ animationDelay: "360ms" }}>
-          The 38/100 score and pillar statuses above are illustrative demo UI, not a real
-          measured score. Run the full diagnostic to see your actual readiness.
+        <p className={`mt-8 text-center text-sm text-fog ${revealBottom}`} style={{ animationDelay: "360ms" }}>
+          The 38/100 score and pillar statuses above are a sample for
+          illustration only, not a real measured score. Run the free diagnostic
+          to see your actual readiness.
         </p>
       </div>
     </section>
@@ -758,25 +626,11 @@ function DiagnosticEngine() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Founder story (first-person). The logo marquee below is untouched:  */
+/* the same authentic brand marks, brands the founder's teams worked   */
+/* at, not MarketReady clients.                                        */
+/* ------------------------------------------------------------------ */
 
-/* ---- Build (content pass): Founder credibility section ---- */
-/* Founder section: single-column header (icon + title inline, subhead below,
-   inline value-pill badges) above the monochrome logo marquee and a 3-card
-   offering grid (Diagnostic Audit / Positioning Sprint / Fractional GTM Lead).
-   Full-width section; stacks to 1 col on mobile. No em/en dashes anywhere in
-   the copy (owner spec rendered dash-free). */
-
-/* Founder-experience brands for the logo marquee. Honest framing: these are
-   brands the founder's teams worked at, NOT MarketReady clients, so no "trusted
-   by" label appears. Every brand uses its AUTHENTIC vector logo file (sourced
-   from Wikimedia Commons, rendered as a white silhouette via the .logo-mono /
-   brightness-0 invert filter). No text-wordmark fallbacks remain. */
-/* Ordering reflects the owner-confirmed target sequence. Amazon was sourced
-   (Wikimedia Commons "Amazon logo.svg" - authentic wordmark, no bg). Impact.com
-   and Nativo are NOT in this list: no clean authentic monochrome-rendering vector
-   could be sourced from any legitimate public source (Impact.com only ships raster
-   WebP/JPG/PNG logos; Nativo was acquired/rebranded to Life360 Ads and its site
-   carries no Nativo vector). They are omitted rather than faked. */
 const FOUNDER_CRED_BRANDS: { label: string; src: string }[] = [
   { label: "Amazon", src: "/logos/amazon.svg" },
   { label: "Warner Bros. Discovery", src: "/logos/wbd.svg" },
@@ -788,69 +642,41 @@ const FOUNDER_CRED_BRANDS: { label: string; src: string }[] = [
   { label: "NCAA", src: "/logos/ncaa.svg" },
 ];
 
-/* Network / nodes icon (glowing) beside the headline. */
-function FounderNetworkIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-10 w-10 text-electric drop-shadow-[0_0_14px_rgba(20,184,166,0.55)]"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="5" r="2.2" />
-      <circle cx="5" cy="18" r="2.2" />
-      <circle cx="19" cy="18" r="2.2" />
-      <path d="M12 7.2v3.3M6.2 16.4l5-5M17.8 16.4l-5-5" />
-    </svg>
-  );
-}
-
-/* Three compact proof badges shown as a tight horizontal pill row directly
-   under the founder subhead. Text-only labels (no icons); rendered as small
-   slate pills. */
 const FOUNDER_VALUE_BADGES = [
-  "Executive PMM Expertise",
-  "Strategic Positioning Clarity",
-  "Direct GTM Partnership",
+  "Senior PMM, not an agency",
+  "Positioning that protects price",
+  "Direct 1-on-1 partnership",
 ];
 
-function FounderCredibility() {
+function FounderStory() {
   return (
     <section
       id="founder"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-[#0F172A] py-10 px-6"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream px-6 py-14 sm:py-16"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-24 right-[-10%] h-80 w-80 rounded-full bg-indigo/10 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-24 left-[-10%] h-80 w-80 rounded-full bg-electric/10 blur-3xl"
-      />
       <div className="relative mx-auto max-w-4xl">
-        {/* Centered leadership hero: icon + title inline centered, subhead
-            below, then value-pill badges as a centered horizontal row. */}
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <FounderNetworkIcon />
-            <h2 className="text-3xl lg:text-5xl font-bold text-white">
-              PMM Leadership, Not an Agency.
-            </h2>
-          </div>
-          <p className="text-slate-300 text-lg mt-3 leading-relaxed max-w-2xl mx-auto">
-            Direct, senior-level GTM strategy built for speed and impact: without the agency
-            overhead, junior account reps, or inflated retainers.
+        <div className="mx-auto flex max-w-3xl flex-col items-center space-y-4 text-center">
+          <p className="eyebrow">A note from the founder</p>
+          <h2 className="font-display text-3xl text-ink lg:text-4xl">
+            I've sat in the rooms where launches are won and lost.
+          </h2>
+          <p className="mt-3 text-lg leading-relaxed text-mist">
+            I'm Wasani. For fifteen years I've led product marketing inside
+            brands like Warner Bros. Discovery, Bleacher Report, TNT Sports,
+            TBS, AEW, and the NCAA, with work covered by Variety and Rolling
+            Stone. I've watched great products stall because their story didn't
+            land, and good-enough products win because theirs did.
           </p>
-          <div className="flex flex-wrap justify-center gap-3 mt-6 mb-10">
+          <p className="text-lg leading-relaxed text-mist">
+            MarketReady is my way of giving founders the same senior-level read
+            I'd give my own team: direct, honest, no agency overhead, no junior
+            hand-offs. You work with me on every deliverable.
+          </p>
+          <div className="mb-10 mt-6 flex flex-wrap justify-center gap-3">
             {FOUNDER_VALUE_BADGES.map((label) => (
               <span
                 key={label}
-                className="bg-slate-900/80 border border-slate-800 rounded-full py-1.5 px-4 text-xs font-medium text-slate-300 shadow-sm"
+                className="rounded-full border border-linen bg-sand px-4 py-1.5 text-xs font-medium text-mist shadow-sm"
               >
                 {label}
               </span>
@@ -858,12 +684,7 @@ function FounderCredibility() {
           </div>
         </div>
 
-        {/* Logo marquee: infinite ticker directly below the badges, no label
-            above. A row of AUTHENTIC vector brand logos (white silhouettes
-            via brightness-0 invert), duplicated for a seamless loop, with edge
-            fade masks. Honest framing: brands the founder's teams worked at,
-            not clients. */}
-        <div className="mt-10 mb-4">
+        <div className="mb-4 mt-10">
           <div className="mr-marquee" aria-hidden="true">
             <div className="mr-marquee-track">
               {[0, 1].map((i) => (
@@ -871,13 +692,13 @@ function FounderCredibility() {
                   {FOUNDER_CRED_BRANDS.map((b) => (
                     <div
                       key={`${i}-${b.label}`}
-                      className="flex items-center justify-center h-10 w-auto px-6"
+                      className="flex h-10 w-auto items-center justify-center px-6"
                     >
                       <img
                         src={b.src}
                         alt=""
                         loading="lazy"
-                        className="max-h-7 max-w-[150px] w-auto h-auto object-contain brightness-0 invert opacity-75 transition-opacity hover:opacity-100"
+                        className="h-auto max-h-7 w-auto max-w-[150px] object-contain opacity-75 transition-opacity hover:opacity-100"
                       />
                     </div>
                   ))}
@@ -886,207 +707,126 @@ function FounderCredibility() {
             </div>
           </div>
         </div>
+        <p className="mt-4 text-center text-xs text-fog">
+          Brands my teams have worked with, not MarketReady clients.
+        </p>
       </div>
     </section>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Build (content restructure): compact 3-column pricing grid in the    */
-/* services / engagement-models area. Consolidates the paid offers into */
-/* a tight side-by-side grid: $3,000 Diagnostic Audit (featured) ->     */
-/* $5,000 14-Day Sprint -> Custom Fractional GTM Lead retainer. The     */
-/* free tier was removed because the interactive AI diagnostic already  */
-/* lives at the top of the page. Featured Card 1 carries a teal glow    */
-/* border (#14B8A6) with a teal MOST POPULAR badge floated above it.    */
-/* No em/en dashes anywhere (periods and commas only; pipe in badge).  */
+/* Services: unpriced engagement models. Owner rule: no pricing lives  */
+/* on the homepage. The diagnostic CTA is the amber primary; every     */
+/* other CTA is outline/secondary.                                     */
 /* ------------------------------------------------------------------ */
-/* Stage 01: $3,000 Diagnostic Audit */
-const DIAGNOSTIC_ITEMS = [
-  "9-Parameter Messaging Teardown",
-  "Value Prop & ICP Scorecard",
-  "Executive Strategy Action Plan",
-  "Competitive Gap Analysis",
-  "Funnel Leakage Map",
-  "45-Min Live Strategy Review",
+const SERVICE_CARDS = [
+  {
+    stage: "Start here · Free",
+    name: "MarketReady Diagnostic",
+    body: "The free AI audit and scorecard. I read your live site like a first-time buyer and show you where positioning leaks.",
+    points: ["Instant readiness score", "Surface red-flag callout", "Pillar-by-pillar breakdown"],
+    cta: "Get Your MarketReady Score →",
+    href: "/services/diagnostic",
+    primary: true,
+  },
+  {
+    stage: "Fix it in 14 days",
+    name: "Positioning Sprint",
+    body: "A focused engagement where I rebuild your positioning, messaging, and launch assets directly from the diagnostic.",
+    points: ["Positioning architecture", "Homepage copy rewrite", "Launch deck and GTM plan"],
+    cta: "Explore the Sprint →",
+    href: "/services/sprint",
+    primary: false,
+  },
+  {
+    stage: "Stay sharp",
+    name: "Fractional GTM Lead",
+    body: "Ongoing senior PMM partnership: I stay in the room as you launch, iterate messaging, and enable sales.",
+    points: ["Embedded PMM leadership", "Ongoing message iteration", "Sales enablement support"],
+    cta: "Explore Fractional →",
+    href: "/services/fractional",
+    primary: false,
+  },
 ] as const;
-/* Stage 02: 14-Day Sprint ($5,000) */
-const SPRINT_ITEMS = [
-  "Positioning Architecture",
-  "Full Messaging House",
-  "Homepage Copy Rewrite",
-  "ICP & Persona Map",
-  "Differentiation Matrix",
-  "Core Sales Playbook",
-  "Launch Deck & GTM Plan",
-  "60-Min Handover Session",
-] as const;
-/* Stage 03: Fractional GTM Lead (Custom) */
-const FRACTIONAL_ITEMS = [
-  "Embedded PMM Leadership",
-  "Strategic Launch Planning",
-  "Ongoing Copy & Asset Audits",
-  "Sales Enablement & Training",
-  "Weekly Strategic Syncs",
-] as const;
+
 function ServicesStack() {
   return (
     <section
       id="services"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-slate-950 py-8 px-4"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-navy px-4 py-14 sm:py-16"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-950/30 via-slate-950 to-slate-950"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[size:24px_24px]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(51,65,85,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(51,65,85,0.04) 1px, transparent 1px)",
-        }}
-      />
       <div className="relative mx-auto max-w-[1100px]">
-        <h2 className="text-[26px] lg:text-[28px] font-bold text-[#F9FAFB] text-center leading-tight">
-          Got your score? Here's how we fix the gaps.
+        <p className="eyebrow text-center !text-amber-200">How we can work together</p>
+        <h2 className="mt-3 text-center font-display text-[26px] font-bold leading-tight text-white lg:text-[32px]">
+          Got your score? Here's how I help you fix the gaps.
         </h2>
-        <p className="text-[13px] sm:text-sm text-[#9CA3AF] text-center mb-7 leading-snug">
-          Choose the high-velocity engagement model that fits your product launch timeline.
+        <p className="mb-8 mt-3 text-center text-[13px] leading-snug text-white/70 sm:text-sm">
+          Start free with the diagnostic. When you're ready to move, pick the
+          engagement that fits your timeline.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-          {/* Stage 01: $3,000 Diagnostic Audit (FEATURED CORE OFFER) */}
-          <div className="relative">
-            <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap text-teal-400 font-bold text-[10px] uppercase tracking-wider">
-              MOST POPULAR | CORE ENGAGEMENT
-            </span>
-            <div className="rounded-xl p-5 bg-[#111827] border-[1.5px] border-[#14B8A6] shadow-[0_0_36px_-10px_rgba(20,184,166,0.45)] h-full">
-              <div className="flex items-center justify-center">
-                <span className="bg-teal-400/10 text-teal-300 text-[10px] uppercase font-semibold px-2.5 py-0.5 rounded-full border border-teal-500/30">
-                  Stage 01
-                </span>
-              </div>
-              <h3 className="mt-2.5 text-lg font-bold text-white text-center">Diagnostic Audit</h3>
-              <div className="mt-0.5 text-[28px] font-bold text-white text-center leading-tight">
-                $3,000
-              </div>
-              <p className="mt-1 text-[11px] uppercase tracking-wider text-teal-400/80 font-semibold text-center">
-                3-Business-Day Delivery
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-3">
+          {SERVICE_CARDS.map((s) => (
+            <div
+              key={s.name}
+              className="flex h-full flex-col rounded-xl border border-white/15 bg-white/[0.06] p-5 backdrop-blur-sm"
+            >
+              <p className="text-center text-[11px] font-semibold uppercase tracking-wider text-amber-200/90">
+                {s.stage}
               </p>
-              <p className="mt-2 text-xs text-[#9CA3AF] leading-relaxed mb-3 text-center">
-                Comprehensive human teardown of your positioning, site copy, and GTM funnel.
+              <h3 className="mt-2 text-center font-display text-lg text-white">{s.name}</h3>
+              <p className="mb-3 mt-2 text-center text-xs leading-relaxed text-white/70">
+                {s.body}
               </p>
-              <ul className="space-y-1.5 text-xs text-slate-200">
-                {DIAGNOSTIC_ITEMS.map((item) => (
+              <ul className="space-y-1.5 text-xs text-white/85">
+                {s.points.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <span className="text-[#14B8A6] shrink-0">✓</span>
+                    <span className="shrink-0 text-amber-200">✓</span>
                     <span className="leading-snug">{item}</span>
                   </li>
                 ))}
               </ul>
               <a
-                href="/services/audit"
-                className="mt-4 flex h-[38px] w-full items-center justify-center rounded-lg bg-[#14B8A6] text-[13px] font-bold text-slate-950 hover:brightness-110 transition-all"
+                href={s.href}
+                className={
+                  s.primary
+                    ? "btn-electric mt-4 w-full"
+                    : "mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/30 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:border-amber-200 hover:text-amber-200 active:scale-[0.98]"
+                }
               >
-                Get Diagnostic Audit →
+                {s.cta}
               </a>
             </div>
-          </div>
-
-          {/* Stage 02: 14-Day Sprint ($5,000) */}
-          <div className="rounded-xl p-5 bg-[#111827] border border-white/10 h-full">
-            <div className="flex items-center justify-center">
-              <span className="bg-slate-800/80 text-teal-400 text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase">
-                Stage 02
-              </span>
-            </div>
-            <h3 className="mt-2.5 text-lg font-bold text-white text-center">14-Day Sprint</h3>
-            <div className="mt-0.5 text-[28px] font-bold text-white text-center leading-tight">
-              $5,000
-            </div>
-            <p className="mt-1 text-[11px] uppercase tracking-wider text-slate-400 font-semibold text-center">
-              2-Week Execution Sprint
-            </p>
-            <p className="mt-2 text-xs text-[#9CA3AF] leading-relaxed mb-3 text-center">
-              Full positioning overhaul and launch assets built directly from diagnostic insights.
-            </p>
-            <ul className="space-y-1.5 text-xs text-slate-200">
-              {SPRINT_ITEMS.map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="text-[#14B8A6] shrink-0">✓</span>
-                  <span className="leading-snug">{item}</span>
-                </li>
-              ))}
-            </ul>
-            <a
-              href="/services/sprint"
-              className="mt-4 flex h-[38px] w-full items-center justify-center rounded-lg border border-[#14B8A6] text-[13px] font-bold text-teal-300 hover:bg-teal-500/10 transition-all"
-            >
-              Book 14-Day Sprint →
-            </a>
-          </div>
-
-          {/* Stage 03: Fractional GTM Lead */}
-          <div className="rounded-xl p-5 bg-[#111827] border border-white/10 h-full">
-            <div className="flex items-center justify-center">
-              <span className="bg-slate-800/80 text-teal-400 text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase">
-                Stage 03
-              </span>
-            </div>
-            <h3 className="mt-2.5 text-lg font-bold text-white text-center">Fractional GTM Lead</h3>
-            <div className="mt-0.5 text-[28px] font-bold text-white text-center leading-tight">
-              Custom
-            </div>
-            <p className="mt-1 text-[11px] uppercase tracking-wider text-slate-400 font-semibold text-center">
-              Monthly Retainer
-            </p>
-            <p className="mt-2 text-xs text-[#9CA3AF] leading-relaxed mb-3 text-center">
-              Embedded PMM leadership to guide execution, launch strategy, and team alignment.
-            </p>
-            <ul className="space-y-1.5 text-xs text-slate-200">
-              {FRACTIONAL_ITEMS.map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="text-[#14B8A6] shrink-0">✓</span>
-                  <span className="leading-snug">{item}</span>
-                </li>
-              ))}
-            </ul>
-            <a
-              href="/services/fractional"
-              className="mt-4 flex h-[38px] w-full items-center justify-center rounded-lg border border-white/20 text-[13px] font-bold text-white hover:bg-white/5 transition-all"
-            >
-              Explore Fractional Lead →
-            </a>
-          </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-/* ---- FAQ accordion (one open at a time) ---- */
+/* ---- FAQ accordion (one open at a time; human tone, no pricing) ---- */
 
 const FAQ_ITEMS = [
   {
     q: "Do you work with a team, or is it just you?",
-    a: "MarketReady is a high-touch, single-operator practice led directly by a senior Product Marketing strategist. You work 1-on-1 with the strategist on every deliverable: no account managers, junior hand-offs, or agency bloat.",
+    a: "It's just me, and that's the point. You work 1-on-1 with a senior product marketing strategist on every deliverable. No account managers, no junior hand-offs, no agency bloat.",
   },
   {
-    q: "How much does the MarketReady Sprint cost?",
-    a: "Sprints are a flat $5,000 for a full 14-day engagement. No hourly billing, no hidden fees, and no scope creep. You receive fully finished positioning architecture, website copy rewrites, sales talk tracks, and launch assets.",
+    q: "What does an engagement cost?",
+    a: "The diagnostic is free, always. Sprints are a flat-fee 14-day engagement and fractional work is a monthly retainer. Because scope depends on what your diagnostic reveals, I talk through fit and pricing on a short call before anything is signed.",
   },
   {
-    q: "Do I need to book a call before purchasing?",
-    a: "No. If your Diagnostic scores clearly show what needs fixing and you're ready to move fast, you can select 'Skip the call, buy now' to secure your 14-day window immediately.",
+    q: "Do I need to book a call before we start?",
+    a: "A short conversation comes first either way, because I only take on work I know I can move. If your diagnostic clearly shows the gaps and you're ready, we can get your window scheduled right away.",
   },
   {
     q: "Does the Sprint include live team training?",
-    a: "The Sprint focuses on strategy and finished, ready-to-use assets. Live team training, sales enablement sessions, and ongoing execution are covered under the Fractional GTM Lead retainer.",
+    a: "The Sprint is about strategy and finished, ready-to-use assets. Live team training, sales enablement sessions, and ongoing execution live in the fractional retainer.",
   },
   {
-    q: "I want more than the free score, but I'm not ready for the full Sprint: is there anything in between?",
-    a: "Yes: the MarketReady Audit is a human-led review (3 to 5 days, $3,000) that gives you a written diagnosis and prioritized recommendations without the full Sprint build-out. $3,000 of your Audit fee applies toward the Sprint if booked within 30 days.",
+    q: "I want more than the free score, but I'm not ready for a full Sprint. Is there anything in between?",
+    a: "Yes. The MarketReady Audit is a human-led review delivered in a few days: a written diagnosis with prioritized recommendations, without the full Sprint build-out. And if you move to a Sprint within 30 days, your Audit fee applies toward it.",
   },
 ] as const;
 
@@ -1095,22 +835,16 @@ function FaqAccordion() {
   return (
     <section
       id="faq"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-[#030712] py-10"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-sand py-14 sm:py-16"
     >
-      {/* Deep-band ambient glow behind the FAQ: subtle indigo halo at the
-          bottom so the near-black band settles softly into the footer. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-32 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-indigo/[0.07] blur-3xl"
-      />
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="chip border-electric/40 text-electric">FAQ</span>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          <p className="eyebrow">Questions I get asked</p>
+          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
             Frequently asked questions
           </h2>
         </div>
-        <div className="mx-auto mt-6 max-w-3xl">
+        <div className="mx-auto mt-8 max-w-3xl">
           <div className="flex flex-col gap-3">
             {FAQ_ITEMS.map((item, i) => {
               const isOpen = openIndex === i;
@@ -1120,7 +854,7 @@ function FaqAccordion() {
                 <div
                   key={item.q}
                   className={`glass-card overflow-hidden transition-all duration-300 hover:-translate-y-0.5 ${
-                    isOpen ? "border-electric/40" : "hover:border-zinc-600"
+                    isOpen ? "border-ember/40" : "hover:border-linen"
                   }`}
                 >
                   <h3>
@@ -1137,8 +871,8 @@ function FaqAccordion() {
                         aria-hidden="true"
                         className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors duration-200 ${
                           isOpen
-                            ? "border-electric/50 bg-electric/15 text-electric"
-                            : "border-hairline bg-white/[0.03] text-zinc-500"
+                            ? "border-ember/50 bg-ambertint text-ember"
+                            : "border-hairline bg-ink/[0.03] text-fog"
                         }`}
                       >
                         <ChevronDown
@@ -1158,7 +892,7 @@ function FaqAccordion() {
                     }`}
                   >
                     <div className="overflow-hidden">
-                      <p className="border-t border-hairline/70 px-6 pb-5 pt-4 text-sm leading-relaxed text-mist">
+                      <p className="border-t border-hairline px-6 pb-5 pt-4 text-sm leading-relaxed text-mist">
                         {item.a}
                       </p>
                     </div>
@@ -1174,13 +908,6 @@ function FaqAccordion() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Founder-experience logo bar: shared component (build #22).         */
-/* Rendered directly below the hero (build #28: the calculator/       */
-/* DiagnosticInsights blocks moved into the hero, and the insights    */
-/* grid was removed for the single-grid rule). Honest framing: these  */
-/* are brands the founder's teams worked at, not MarketReady clients. */
-/* ------------------------------------------------------------------ */
-
 /* Route                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -1193,9 +920,6 @@ function Home() {
   const [preselectService, setPreselectService] = useState<string | undefined>(
     undefined,
   );
-  // Build #19: pricing-tier CTAs pass the service to pre-check in the booking
-  // modal; the header/hero/footer CTAs call with no arg, which resets the
-  // preselect so the modal opens with the default empty checklist.
   const openBooking = (service?: string) => {
     setPreselectService(service);
     setBookingOpen(true);
@@ -1203,32 +927,19 @@ function Home() {
   const closeBooking = () => setBookingOpen(false);
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#0F172A] via-[#111827] to-[#030712]">
-      {/* Build #13: dark obsidian page gradient restored (build #12's purple/teal
-          bloom stops removed): deep slate at the top, charcoal mid-page,
-          settling to the #030712 base at the bottom. Mirrors the body gradient
-          in src/styles/app.css. */}
+    <div className="min-h-dvh bg-cream">
       <Header />
       <main>
         <HeroDiagnostic onBookBriefing={openBooking} />
-        {/* Build #NN: Problem Agitation directly below the hero */}
-        <ProblemAgitation />
-        {/* Build #30: FounderLogos ticker + mid-banner strip removed from the
-            homepage (owner direction). Hero now flows directly into Section 2. */}
-        {/* Build #28: Methodology stepper (section 2) */}
+        <Manifesto />
+        <FrictionObservations />
         <HowItWorks />
-        {/* Build #28: Diagnostic Engine: the single 3-card grid on the page */}
         <DiagnosticEngine />
-        {/* Content pass: founder credibility directly below the Diagnostic */}
-        <FounderCredibility />
-        {/* Content restructure: one compact 3-stage service stack */}
+        <FounderStory />
         <ServicesStack />
-        {/* Build #26: FAQ accordion */}
         <FaqAccordion />
       </main>
       <Footer onBook={openBooking} />
-      {/* Mount gate: closing unmounts the modal, which resets its internal
-          state (status back to "form") and runs the scroll/focus cleanup. */}
       {bookingOpen && (
         <BookingModal
           open={bookingOpen}

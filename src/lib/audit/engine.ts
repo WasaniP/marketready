@@ -31,9 +31,9 @@ import { COPY } from "./copy";
 /* ------------------------------------------------------------------ */
 
 export const SCORE_COLORS = {
-  high: "#10B981", // 75 to 100, Emerald
-  mid: "#F59E0B", //  40 to 74, Amber
-  low: "#EF4444", //   0 to 39, Crimson
+  high: "#1F4A42", // 75 to 100, strong / passing (deep pine)
+  mid: "#8A6A1F", //  40 to 74, needs refinement (bronze olive)
+  low: "#A15C2B", //   0 to 39, needs work (warm sienna)
 } as const;
 
 /** Score → hex color, exact thresholds from the rubric status labels. */
