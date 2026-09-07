@@ -2,10 +2,21 @@
  * Knock transactional email: the optional "instant results" email sent to a
  * lead the moment their full diagnostic report is unlocked.
  *
- * Called from POST /api/leads AFTER the Airtable write outcome is known
- * (success OR failure — the email never depends on Airtable). Fire-and-forget:
- * the promise is guarded so an email failure can never block or fail the lead
- * response.
+ * Called from POST /api/leads (src/routes/api/leads.ts). The trigger runs IN
+ * PARALLEL with the Airtable write — independent of its outcome (success OR
+ * failure — the email never depends on Airtable) — and is AWAITED with a
+ * bounded budget BEFORE the lead response returns. On a serverless host the
+ * platform freezes background work once the response is flushed, so the old
+ * fire-and-forget promise started after the write was cut off on cold/slow
+ * requests and the email silently dropped. Awaiting a bounded trigger moves
+ * the send inside the request's lifetime without letting it block the
+ * response indefinitely.
+ *
+ * FAIL-OPEN for the user: `triggerResultsEmail` NEVER throws and its outcome
+ * never alters the lead response. All failures (missing config, network
+ * error, non-2xx, timeout) are surfaced as a returned outcome AND
+ * console.warn'ed with the run id / recipient / lead timestamp so a missed
+ * email is debuggable in logs.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * OWNER-SIDE SETUP (Knock dashboard — this code NEVER creates the workflow or
@@ -58,20 +69,29 @@
  *                                    array when no diagnostic payload sent)
  *
  * FAIL-OPEN CONTRACT (enforced below):
- *   1. No KNOCK_API_KEY -> queueResultsEmail() returns before any work.
- *   2. sendResultsEmail() never throws: every failure (missing config, network
- *      error, non-2xx, timeout) is caught and console.warn'ed only.
- *   3. queueResultsEmail() additionally guards the promise (void + .catch) so
- *      even a programming error in the send path cannot reject into the
- *      request handler.
+ *   1. No KNOCK_API_KEY -> triggerResultsEmail() resolves { ok:false,
+ *      reason:"skipped" } before any network work.
+ *   2. triggerResultsEmail() never throws: missing config, network error,
+ *      non-2xx, and timeout are all caught and surfaced as an outcome (and
+ *      console.warn'ed with the run id / recipient / lead timestamp so a
+ *      missed email is debuggable in logs).
+ *   3. The trigger is bounded: up to 2 attempts, each with a 4s AbortSignal
+ *      timeout, so the total send budget is ~8s (the same bound PR #6 used)
+ *      and a hung Knock call can never pin the request handler.
  *   The lead response is identical whether the email succeeds, fails, or is
  *   skipped.
  */
 
 const KNOCK_API_BASE = "https://api.knock.app/v1";
 const DEFAULT_WORKFLOW_KEY = "marketready-diagnostic-results";
-/** Hard ceiling on the trigger call so a hung request can never pin a timer. */
-const TRIGGER_TIMEOUT_MS = 8_000;
+/** Per-attempt ceiling on the trigger call. Two bounded attempts keep the
+ * total send budget at ~8s (the PR #6 bound) while still surviving a flaky
+ * first attempt on a cold/slow instance. */
+const ATTEMPT_TIMEOUT_MS = 4_000;
+/** Max trigger attempts. A second attempt fires only on a transient network
+ * failure or timeout — a non-2xx rejection from Knock is permanent and never
+ * retried. */
+const MAX_SEND_ATTEMPTS = 2;
 
 /** One diagnostic parameter, as carried in the lead's diagnostic payload. */
 interface KnockParameter {
@@ -147,65 +167,167 @@ export function buildResultsEmailData(
   };
 }
 
-/** Fire the Knock workflow trigger. Resolves on ANY outcome (2xx, non-2xx,
- * network error) — failures are reported via console.warn only, never thrown.
- * Never logs or returns the API key. */
-async function sendResultsEmail(lead: KnockEmailLead, fullBreakdown: string): Promise<void> {
+/** True for transient network/socket/DNS failures worth retrying (mirrors the
+ * lead-write retry policy in src/routes/api/leads.ts): Bun's "socket connection
+ * was closed unexpectedly" / "fetch failed", undici's "sending request failed",
+ * Node errno codes (ECONNRESET, ETIMEDOUT, ENOTFOUND, ECONNREFUSED, EAI_AGAIN,
+ * EPIPE), and closed/aborted streams. Anything else (e.g. a programming error)
+ * is not retried. */
+function isTransientNetworkError(msg: string): boolean {
+  return /socket connection was closed|fetch failed|sending request failed|econnreset|econnrefused|etimedout|enotfound|eai_again|epipe|network error|aborted|terminated|other side closed/i.test(
+    msg,
+  );
+}
+
+/** Outcome of a trigger attempt, consumed only for observability — never for
+ * the lead response. `runId` is Knock's `workflow_run_id` when the trigger was
+ * accepted (2xx); `elapsedMs` is the whole send budget consumed. */
+export type KnockSendOutcome =
+  | { ok: true; runId: string; attempted: number; elapsedMs: number }
+  | {
+      ok: false;
+      reason: "skipped" | "rejected" | "failed" | "timeout";
+      attempted: number;
+      elapsedMs: number;
+      detail?: string;
+      runId?: string;
+    };
+
+/** Optional knobs for tests only — the site always uses the defaults. */
+export interface KnockSendOptions {
+  /** Per-attempt AbortSignal timeout in ms (default ATTEMPT_TIMEOUT_MS). */
+  attemptTimeoutMs?: number;
+}
+
+/** Fire the Knock workflow trigger, AWAITED with a bounded budget so the call
+ * completes before the lead response returns (the platform freezes background
+ * work after a response flushes on serverless hosts — fire-and-forget drops
+ * the email on slow/cold requests). Resolves on ANY outcome (2xx, non-2xx,
+ * network error, timeout) — failures are reported via console.warn with the
+ * run id / recipient / lead timestamp, never thrown. Never logs or returns the
+ * API key. */
+export async function triggerResultsEmail(
+  lead: KnockEmailLead,
+  fullBreakdown: string,
+  opts?: KnockSendOptions,
+): Promise<KnockSendOutcome> {
   const apiKey = process.env.KNOCK_API_KEY;
   const workflowKey = process.env.KNOCK_WORKFLOW?.trim() || DEFAULT_WORKFLOW_KEY;
-  if (!apiKey) return; // Not configured: nothing to do (fail-open).
+  if (!apiKey) {
+    // Not configured: nothing to do (fail-open). Silent — this is the normal
+    // state until the owner wires the Knock secret, not a failure to log.
+    return { ok: false, reason: "skipped", attempted: 0, elapsedMs: 0 };
+  }
+  const startedAt = Date.now();
+  const attemptTimeoutMs = opts?.attemptTimeoutMs ?? ATTEMPT_TIMEOUT_MS;
+  // Lead identity for logs: the recipient email is the unique key; capturedAt
+  // is the same timestamp written to the Airtable "Timestamp" column, so a log
+  // line maps 1:1 to a stored lead row.
+  const leadId = `${lead.workEmail}@${lead.capturedAt}`;
+  const url = `${KNOCK_API_BASE}/workflows/${encodeURIComponent(workflowKey)}/trigger`;
+  let body: string;
   try {
-    const res = await fetch(
-      `${KNOCK_API_BASE}/workflows/${encodeURIComponent(workflowKey)}/trigger`,
-      {
+    body = JSON.stringify({
+      // Inline-identified recipient (Knock creates/updates the user from
+      // these properties during the run — no separate identify call):
+      // stable id = lowercased email, plus name when we have one.
+      recipients: [
+        {
+          id: lead.workEmail.toLowerCase(),
+          email: lead.workEmail,
+          ...(lead.firstName ? { name: lead.firstName } : {}),
+        },
+      ],
+      data: buildResultsEmailData(lead, fullBreakdown),
+    });
+  } catch (err) {
+    // Programming error in payload assembly: fail-open, never throw to the
+    // caller that awaits us.
+    const msg = err instanceof Error ? err.message : "unknown error";
+    console.warn(
+      `[knock][results-email] trigger FAILED reason=failed workflow=${workflowKey} ` +
+        `lead=${leadId} attempt=0/0 elapsedMs=0 detail=payload-construction ${msg}`,
+    );
+    return { ok: false, reason: "failed", attempted: 0, elapsedMs: 0, detail: msg };
+  }
+
+  for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          // Inline-identified recipient (Knock creates/updates the user from
-          // these properties during the run — no separate identify call):
-          // stable id = lowercased email, plus name when we have one.
-          recipients: [
-            {
-              id: lead.workEmail.toLowerCase(),
-              email: lead.workEmail,
-              ...(lead.firstName ? { name: lead.firstName } : {}),
-            },
-          ],
-          data: buildResultsEmailData(lead, fullBreakdown),
-        }),
-        signal: AbortSignal.timeout(TRIGGER_TIMEOUT_MS),
-      },
-    );
-    if (!res.ok) {
+        body,
+        signal: AbortSignal.timeout(attemptTimeoutMs),
+      });
+      if (res.ok) {
+        // 2xx: Knock accepted the run ({ workflow_run_id }) and delivers the
+        // email asynchronously.
+        const payload = (await res.json().catch(() => null)) as {
+          workflow_run_id?: unknown;
+        } | null;
+        const runId =
+          payload && typeof payload.workflow_run_id === "string"
+            ? payload.workflow_run_id
+            : "";
+        const elapsedMs = Date.now() - startedAt;
+        console.info(
+          `[knock][results-email] triggered ok workflow=${workflowKey} ` +
+            `runId=${runId} lead=${leadId} attempt=${attempt}/${MAX_SEND_ATTEMPTS} elapsedMs=${elapsedMs}`,
+        );
+        return { ok: true, runId, attempted: attempt, elapsedMs };
+      }
+      // Non-2xx: Knock rejected the trigger (bad key, unknown workflow,
+      // payload validation). Permanent — retrying cannot help.
       const detail = (await res.text().catch(() => "")).slice(0, 200);
+      const elapsedMs = Date.now() - startedAt;
       console.warn(
-        `[knock] results email workflow rejected (HTTP ${res.status})${detail ? `: ${detail}` : "."}`,
+        `[knock][results-email] trigger FAILED reason=rejected workflow=${workflowKey} ` +
+          `lead=${leadId} attempt=${attempt}/${MAX_SEND_ATTEMPTS} HTTP ${res.status}${detail ? ` detail=${detail}` : ""} elapsedMs=${elapsedMs}`,
       );
-      return;
+      return {
+        ok: false,
+        reason: "rejected",
+        attempted: attempt,
+        elapsedMs,
+        detail: res.statusText,
+      };
+    } catch (err) {
+      // Network/DNS/socket/timeout/abort: message only, never credentials.
+      const msg = err instanceof Error ? err.message : "unknown error";
+      const errName = err instanceof Error ? err.name : "";
+      const isTimeout = errName === "TimeoutError" || errName === "AbortError";
+      const transient = isTimeout || isTransientNetworkError(msg);
+      if (attempt < MAX_SEND_ATTEMPTS && transient) {
+        // Bounded second attempt: cold instances often drop the first socket.
+        // Log the retry — a first-attempt timeout on a cold instance is
+        // exactly the failure mode this fix exists for, and it must be
+        // visible even when the retry succeeds.
+        console.warn(
+          `[knock][results-email] trigger attempt ${attempt}/${MAX_SEND_ATTEMPTS} failed ` +
+            `reason=${isTimeout ? "timeout" : "failed"} workflow=${workflowKey} ` +
+            `lead=${leadId} retrying detail=${msg}`,
+        );
+        continue;
+      }
+      const elapsedMs = Date.now() - startedAt;
+      console.warn(
+        `[knock][results-email] trigger FAILED reason=${isTimeout ? "timeout" : "failed"} ` +
+          `workflow=${workflowKey} lead=${leadId} attempt=${attempt}/${MAX_SEND_ATTEMPTS} ` +
+          `elapsedMs=${elapsedMs} detail=${msg}`,
+      );
+      return {
+        ok: false,
+        reason: isTimeout ? "timeout" : "failed",
+        attempted: attempt,
+        elapsedMs,
+        detail: msg,
+      };
     }
-    // 2xx: Knock accepted the run ({ workflow_run_id }) and delivers the email
-    // asynchronously. Nothing to log — success is silent.
-  } catch (err) {
-    // Network/DNS/timeout/abort: message only, never credentials.
-    const msg = err instanceof Error ? err.message : "unknown error";
-    console.warn(`[knock] results email trigger failed: ${msg}`);
   }
-}
-
-/** Fire-and-forget entry point for POST /api/leads. Skips silently (fail-open)
- * when KNOCK_API_KEY is not configured; otherwise triggers the workflow in the
- * background and GUARDS the promise so no failure can ever reach the caller.
- * `fullBreakdown` is the exact text written to the Airtable "Full Breakdown"
- * column, so the email mirrors the stored record. */
-export function queueResultsEmail(lead: KnockEmailLead, fullBreakdown: string): void {
-  if (!process.env.KNOCK_API_KEY) return; // Fail-open: no credential, no email.
-  void sendResultsEmail(lead, fullBreakdown).catch((err: unknown) => {
-    console.warn(
-      "[knock] results email trigger crashed (guarded):",
-      err instanceof Error ? err.message : err,
-    );
-  });
+  // Unreachable: MAX_SEND_ATTEMPTS >= 1 and every path returns above.
+  const elapsedMs = Date.now() - startedAt;
+  return { ok: false, reason: "failed", attempted: MAX_SEND_ATTEMPTS, elapsedMs };
 }

@@ -42,7 +42,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { mkdir, appendFile } from "node:fs/promises";
 import * as path from "node:path";
-import { queueResultsEmail } from "~/lib/knockEmail";
+import { triggerResultsEmail } from "~/lib/knockEmail";
 
 const AIRTABLE_API = "https://api.airtable.com/v0";
 const AIRTABLE_META_API = "https://api.airtable.com/v0/meta";
@@ -567,13 +567,24 @@ export const Route = createFileRoute("/api/leads")({
         const fields = whitelistFields(toAirtableFields(lead), await fetchTableSchema());
 
         // Layer 1: Airtable when configured. The token is never logged.
-        const result = await writeAirtable(fields);
-        // Instant results email: queued AFTER the Airtable write completes and
-        // INDEPENDENT of its outcome (success or failure) — the email must not
-        // depend on Airtable. Fire-and-forget + guarded, so it can never block
-        // or fail either response path (fail-open, see src/lib/knockEmail.ts).
+        //
+        // Instant results email: triggered IN PARALLEL with the Airtable write
+        // and INDEPENDENT of its outcome (success or failure) — the email must
+        // not depend on Airtable. `triggerResultsEmail` is AWAITED with a
+        // bounded budget (~8s total) BEFORE this handler returns: on a
+        // serverless host the platform freezes background work once the
+        // response is flushed, so a fire-and-forget promise is cut off on
+        // cold/slow requests and the email silently drops (the original bug).
+        // Parallel start means the email send overlaps the Airtable write:
+        // response latency grows to max(write, send), not their sum, and stays
+        // within the ~8s send bound. The trigger NEVER throws and its outcome
+        // never alters the lead response (fail-open, src/lib/knockEmail.ts).
         // `fullBreakdown` mirrors the Airtable "Full Breakdown" column exactly.
-        queueResultsEmail(lead, buildScoreBreakdown(lead));
+        const emailPromise = triggerResultsEmail(lead, buildScoreBreakdown(lead));
+        const result = await writeAirtable(fields);
+        // Wait for the bounded email trigger so it survives the response
+        // (up to ~8s; fail-open with a console.warn on timeout/failure).
+        await emailPromise;
         if (result.ok) {
           return Response.json({ ok: true });
         }
