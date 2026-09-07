@@ -53,6 +53,18 @@ export const Route = createFileRoute("/assessment/")({
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const GATE_STEP = DIMENSIONS.length; // 5: the lead gate after the questions
 
+/** sessionStorage flag read by /assessment/results to show a discreet
+ * "report not saved" banner. Set on final /api/leads failure only; the
+ * redirect stays immediate and non-blocking either way. */
+const LEAD_SYNC_FAILED_KEY = "mr:leadSyncFailed";
+function markLeadSyncFailed() {
+  try {
+    window.sessionStorage.setItem(LEAD_SYNC_FAILED_KEY, "1");
+  } catch {
+    // Storage unavailable (private mode): results still render.
+  }
+}
+
 /** Best-effort prefill from the homepage calculator (ASSESSMENT_STORAGE_KEY). */
 function readHomeAssessment(): {
   url: string;
@@ -228,11 +240,15 @@ function Assessment() {
         .then((data) => {
           if (data && data.ok === false) {
             console.warn("[assessment] Lead sync did not reach Airtable:", data.error);
+            markLeadSyncFailed();
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          markLeadSyncFailed();
+        });
     } catch {
       // fetch itself threw synchronously (offline): results still render.
+      markLeadSyncFailed();
     }
 
     window.location.assign("/assessment/results");

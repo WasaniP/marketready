@@ -55,6 +55,11 @@ const GATE_TERMS_LABEL =
 const GATE_TERMS_NAME = "MarketReady Productized Services Terms & Scope Agreement";
 const [GATE_TERMS_BEFORE = "", GATE_TERMS_AFTER = ""] = GATE_TERMS_LABEL.split(GATE_TERMS_NAME);
 
+/** sessionStorage flag set by /assessment when the /api/leads write finally
+ * failed (see LEAD_SYNC_FAILED_KEY there). Shown once as a discreet banner;
+ * the score below is client-computed and accurate either way. */
+const LEAD_SYNC_FAILED_KEY = "mr:leadSyncFailed";
+
 /* ------------------------------------------------------------------ */
 /* Compact 240° gauge (same visual language as the homepage dashboard) */
 /* ------------------------------------------------------------------ */
@@ -141,6 +146,11 @@ function Results() {
   const [gateChecked, setGateChecked] = useState(false);
   const [gateHint, setGateHint] = useState("");
   const gateCheckboxRef = useRef<HTMLInputElement>(null);
+  // Lead-sync failure flag: read client-side only, after mount (SSR-safe: the
+  // page renders null until hydrated, so sessionStorage is never touched
+  // during SSR and there is no hydration mismatch). Cleared after showing so
+  // the banner appears once.
+  const [leadSyncFailed, setLeadSyncFailed] = useState(false);
 
   // Read after mount only (SSR-safe): render null until hydrated, then either
   // show the result or send cold visitors back to the assessment.
@@ -151,6 +161,14 @@ function Results() {
       return;
     }
     setResult(stored);
+    try {
+      if (window.sessionStorage.getItem(LEAD_SYNC_FAILED_KEY) === "1") {
+        setLeadSyncFailed(true);
+        window.sessionStorage.removeItem(LEAD_SYNC_FAILED_KEY);
+      }
+    } catch {
+      // Storage unavailable: nothing to surface.
+    }
     setHydrated(true);
   }, []);
 
@@ -229,6 +247,24 @@ function Results() {
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
               Your Market Ready Score
             </h1>
+
+            {/* Lead-sync failure notice: discreet, on-brand; the score below
+                is client-computed and still accurate. Shown once per flag. */}
+            {leadSyncFailed && (
+              <div
+                role="status"
+                className="mt-6 rounded-xl border border-electric/40 bg-[#1E293B]/50 px-5 py-4 shadow-[0_0_30px_rgba(20,184,166,0.12)] backdrop-blur-md"
+              >
+                <p className="text-sm leading-relaxed text-mist">
+                  <span className="font-semibold text-electric">
+                    We couldn&apos;t save your diagnostic report to our system.{" "}
+                  </span>
+                  Your score below is still accurate. Re-enter your details via
+                  the booking option below to receive the full breakdown and
+                  prescription.
+                </p>
+              </div>
+            )}
 
             {/* Score + readiness */}
             <div className="glass-card mt-6 flex flex-col items-center p-6 sm:p-8">
