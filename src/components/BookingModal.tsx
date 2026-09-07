@@ -3,9 +3,12 @@
  *
  * Replaces every external Cal.com link on the site with an in-app modal that
  * captures a lead (name, work email, company, website : prefilled from the
- * assessment when present) plus a 3-service interest checklist, and saves it
- * through the same `captureLead` lib the report gate uses. No pricing numbers
- * appear anywhere in this modal.
+ * assessment when present) plus a 3-service interest checklist, then posts it
+ * to POST /api/booking, which writes a row to the owner's Airtable "Bookings"
+ * table. Success is shown ONLY after the server confirms { ok:true }; on a
+ * network failure or { ok:false } the form stays up with an inline retry
+ * error. The localStorage `captureLead` copy is kept as a harmless fallback.
+ * No pricing numbers appear anywhere in this modal.
  *
  * Accessibility: role="dialog" + aria-modal, ESC to close, backdrop click to
  * close, focus moved into the modal on open and restored on close, Tab focus
@@ -16,6 +19,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
+import { apiUrl } from "~/lib/apiOrigin";
 import { scoreAssessment } from "~/lib/audit/engine";
 import type { AssessmentInput } from "~/lib/audit/types";
 import { captureLead } from "~/lib/leads";
@@ -169,7 +173,7 @@ export function BookingModal({
     );
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const cleanName = name.trim();
     const cleanEmail = email.trim();
@@ -209,7 +213,41 @@ export function BookingModal({
       serviceInterest:
         serviceInterest.length > 0 ? serviceInterest.join(", ") : undefined,
     };
+    // localStorage fallback (harmless, keeps a local copy even offline).
     void captureLead(payload);
+
+    // Server round-trip: the booking must reach the owner's Airtable
+    // "Bookings" table (via POST /api/booking) before we show success —
+    // posting through apiUrl() so the apex→www 308 can never drop the body.
+    // Only a resolved { ok:true } flips to the success state; a network
+    // failure or { ok:false } restores the form with an inline retry error.
+    let saved = false;
+    try {
+      const res = await fetch(apiUrl("/api/booking"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: cleanName,
+          workEmail: cleanEmail,
+          company: cleanCompany,
+          websiteUrl: cleanWebsite,
+          serviceInterest: serviceInterest.join(", "),
+          source: "booking_modal",
+          capturedAt: new Date().toISOString(),
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+      saved = res.ok && data?.ok === true;
+    } catch {
+      saved = false;
+    }
+
+    if (!saved) {
+      setStatus("form");
+      setError("Something went wrong saving your request — please try again.");
+      return;
+    }
+
     // Mark the booking locally so /onboarding/success knows this visitor
     // completed a Sprint booking (gentle guard : never a block). Also mint a
     // stable client id the intake form sends with the vault payload.
