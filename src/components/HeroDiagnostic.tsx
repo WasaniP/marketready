@@ -456,7 +456,7 @@ function HomepageUnlock({
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -512,6 +512,8 @@ function HomepageUnlock({
     };
 
     // Non-blocking: the teaser score above stays visible no matter what.
+    // On failure the unlock form stays and the error is shown inline; the
+    // success "unlocked" message only appears on data.ok === true.
     fetch("/api/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -519,13 +521,17 @@ function HomepageUnlock({
     })
       .then((res) => res.json().catch(() => null))
       .then((data) => {
-        if (data && data.ok === false) {
-          console.warn("[homepage] Lead sync did not reach Airtable:", data.error);
+        if (data && data.ok === true) {
+          setStatus("done");
+        } else {
+          console.warn("[homepage] Lead sync did not reach Airtable:", data?.error);
+          setError("We couldn't save your report — please try again.");
+          setStatus("error");
         }
       })
-      .catch(() => null)
-      .finally(() => {
-        setStatus("done");
+      .catch(() => {
+        setError("We couldn't save your report — please try again.");
+        setStatus("error");
       });
   };
 
