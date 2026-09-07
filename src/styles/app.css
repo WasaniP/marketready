@@ -1,19 +1,38 @@
+@import "@fontsource-variable/fraunces";
 @import "tailwindcss";
 
 @theme {
-  /* MarketReady design tokens */
-  --color-obsidian: #080a0f; /* page background (fallback) */
-  --color-night: #030712; /* deepest gradient stop */
-  --color-panel: #0b1018; /* deep panel fill */
-  --color-hairline: #1e293b; /* zinc borders */
-  --color-electric: #14b8a6; /* Electric Teal primary accent */
-  --color-indigo: #6366f1; /* Soft Indigo secondary accent */
-  --color-ink: #fafafa; /* headlines */
-  --color-mist: #a1a1aa; /* body/subtext */
+  /* MarketReady humanized palette (owner spec): warm off-white base,
+     burnt amber primary, deep navy secondary. The legacy semantic names
+     (ink / mist / electric / indigo / hairline / obsidian / night / panel)
+     are remapped here so the whole site re-themes consistently. */
+  --color-cream: #faf8f5; /* page bg, warm off-white */
+  --color-sand: #f2ede6; /* alt section bg, card fills */
+  --color-linen: #e3dcd2; /* borders / dividers / strokes */
+  --color-ink: #1c1917; /* primary headings + body */
+  --color-mist: #57534e; /* secondary / subheads */
+  --color-fog: #8c8681; /* captions / eyebrows / meta */
+  --color-ember: #b45309; /* burnt amber: CTAs / links / active */
+  --color-emberdeep: #92400e; /* hover / pressed */
+  --color-ambertint: #fef3e2; /* light amber tint: badges / highlights */
+  --color-navy: #1e3a5f; /* deep navy: section headers, widget frame, footer */
+  --color-scorework: #b45309; /* diagnostic: needs work */
+  --color-scorerefine: #a16207; /* diagnostic: needs refinement */
+  --color-scorepass: #4d7c0f; /* diagnostic: strong / passing */
+
+  /* Legacy semantic aliases (kept so existing classes re-theme, not break) */
+  --color-obsidian: #faf8f5;
+  --color-night: #f2ede6;
+  --color-panel: #f2ede6;
+  --color-hairline: #e3dcd2;
+  --color-electric: #b45309;
+  --color-indigo: #1e3a5f;
 
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
+  --font-display:
+    "Fraunces Variable", "Fraunces", Georgia, "Times New Roman", serif;
 }
 
 @layer base {
@@ -32,47 +51,35 @@
   }
 
   body {
-    @apply text-mist antialiased;
-    /* Build #13: dark obsidian page gradient restored (build #12's purple/teal
-       bloom stops removed): deep slate at the top, charcoal mid-page,
-       settling to the #030712 base at the bottom. Mirrors the app-shell
-       gradient in src/routes/index.tsx. background-color stays #030712 as
-       the base underneath. */
-    background-color: #030712;
-    background-image: linear-gradient(
-      to bottom,
-      #0f172a 0%,
-      #111827 50%,
-      #030712 100%
-    );
+    @apply bg-cream font-sans text-ink antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   ::selection {
-    background: rgb(20 184 166 / 0.35);
-    color: #fafafa;
+    background: rgb(180 83 9 / 0.22);
+    color: #1c1917;
   }
 
-  /* Dark-native dropdown options */
   select option {
-    background-color: #0b1018;
-    color: #fafafa;
+    background-color: #faf8f5;
+    color: #1c1917;
   }
 }
 
 @layer components {
-  /* Translucent dark-slate glass panel: ~50% #1E293B fill, hairline zinc
-     border, subtle teal glow. The shared card surface for the whole app. */
+  /* Warm light card: white fill, linen border, soft warm shadow. */
   .glass-card {
-    @apply rounded-xl border border-hairline bg-[#1E293B]/50 backdrop-blur-md shadow-[0_0_24px_rgba(20,184,166,0.12)];
+    @apply rounded-xl border border-hairline bg-white shadow-[0_1px_2px_rgba(28,25,23,0.05),0_10px_28px_rgba(28,25,23,0.07)];
   }
 
+  /* Primary CTA: burnt amber fill, white text, deeper amber on hover. */
   .btn-electric {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-electric px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_24px_rgba(20,184,166,0.45)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-ember px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-emberdeep hover:shadow-[0_8px_24px_rgba(180,83,9,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
   }
 
+  /* Secondary CTA: outline on light. */
   .btn-ghost {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-hairline bg-white/[0.02] px-5 py-2.5 text-sm font-medium text-ink transition-colors duration-200 hover:border-zinc-600 hover:bg-white/[0.06] active:scale-[0.98];
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-linen bg-transparent px-5 py-2.5 text-sm font-medium text-ink transition-colors duration-200 hover:border-ember hover:text-ember active:scale-[0.98];
   }
 
   .field-label {
@@ -80,15 +87,20 @@
   }
 
   .field-input {
-    @apply w-full rounded-lg border border-hairline bg-white/[0.04] px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-zinc-600 focus:border-electric focus:ring-2 focus:ring-electric/30;
+    @apply w-full rounded-lg border border-linen bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-fog focus:border-ember focus:ring-2 focus:ring-ember/25;
   }
 
   .nav-link {
-    @apply text-sm font-medium text-mist transition-colors hover:text-ink;
+    @apply text-sm font-medium text-mist transition-colors hover:text-ember;
   }
 
   .chip {
-    @apply rounded-full border border-hairline bg-white/[0.03] px-3 py-1 text-xs font-medium text-mist;
+    @apply rounded-full border border-linen bg-ambertint/60 px-3 py-1 text-xs font-medium text-emberdeep;
+  }
+
+  /* Small-caps kicker above serif headlines. */
+  .eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.18em] text-ember;
   }
 }
 
@@ -160,7 +172,7 @@
   animation: mr-glow-pulse 4s ease-in-out infinite;
 }
 
-/* Build #26: pulsing teal glow on the Venn's central "MarketReady Diagnostic
+/* Build #26: pulsing glow on the Venn's central "MarketReady Diagnostic
    Engine" node (shared 4s glow pulse, matching the readiness-gauge halo). */
 @keyframes mr-venn-pulse {
   0%,
@@ -293,7 +305,7 @@
 }
 
 /* ---- Build #NN: Diagnostic Engine gauge radar scan + accordion reveal ----
-   The gauge is illustrative demo UI (38/100, warning red/coral). On scroll
+   The gauge is illustrative demo UI (38/100, warning amber). On scroll
    into view a conic wedge + radiant line rotate 360° once (the scan), then
    the gauge arc sweeps to 38%. Accordion expansion content fades/slides in. */
 @keyframes mr-radar-scan {
@@ -316,11 +328,11 @@
   border-radius: 9999px;
   background: conic-gradient(
     from 0deg,
-    rgba(239, 68, 68, 0) 0deg,
-    rgba(239, 68, 68, 0) 278deg,
-    rgba(239, 68, 68, 0.28) 335deg,
-    rgba(239, 68, 68, 0.7) 358deg,
-    rgba(239, 68, 68, 0) 360deg
+    rgba(180, 83, 9, 0) 0deg,
+    rgba(180, 83, 9, 0) 278deg,
+    rgba(180, 83, 9, 0.22) 335deg,
+    rgba(180, 83, 9, 0.55) 358deg,
+    rgba(180, 83, 9, 0) 360deg
   );
 }
 .mr-radar-line {
@@ -332,10 +344,10 @@
   transform: translateY(-50%);
   background: linear-gradient(
     to right,
-    rgba(239, 68, 68, 0.35),
-    rgba(239, 68, 68, 0.95)
+    rgba(180, 83, 9, 0.3),
+    rgba(180, 83, 9, 0.9)
   );
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 8px rgba(180, 83, 9, 0.7);
 }
 .mr-radar-scan.active-scan {
   animation: mr-radar-scan 1.2s cubic-bezier(0.45, 0, 0.25, 1) both;
@@ -378,9 +390,9 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Founder logo marquee: infinite ticker with authentic brand logos    */
-/* (rendered as clean white silhouettes via brightness-0 invert) plus  */
-/* styled text-wordmark fallbacks for any brand without a clean asset. */
+/* Founder logo marquee: infinite ticker with authentic brand logos.   */
+/* On the warm light theme the authentic vector marks render in their  */
+/* own colors (no silhouette filter) with edge fade masks.             */
 /* ------------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
   .mr-marquee-track {
@@ -412,7 +424,7 @@
     transform: translateX(-50%);
   }
 }
-/* Render any source-colored authentic SVG logo as a clean white mark */
+/* Legacy dark-theme silhouette treatment (kept for any dark surface reuse) */
 .logo-mono {
   filter: brightness(0) invert(1);
 }
