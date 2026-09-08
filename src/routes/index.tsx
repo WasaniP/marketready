@@ -55,6 +55,24 @@ const METHODOLOGY_COPY: Record<string, { measures: string; why: string }> = {
 
 type PillarAccent = "electric" | "indigo";
 
+/* Illustrative demo pillar state (UI only). "critical" = rust #C4603A gap,
+   "refine" = amber #C9992F needs refinement, "strong" = green #6E9464. */
+type PillarState = "critical" | "refine" | "strong";
+
+/* ILLUSTRATIVE DEMO UI values, not real measured scores. score is out of 10
+   (average ≈ 3.7/10, consistent with the demo 38/100 gauge value). */
+const PILLAR_STATE: Record<string, { score: number; state: PillarState }> = {
+  "pillar-positioning": { score: 3, state: "critical" },
+  "pillar-messaging": { score: 4, state: "refine" },
+  "pillar-gtm": { score: 4, state: "refine" },
+};
+
+const PILLAR_STATE_COLOR: Record<PillarState, string> = {
+  critical: "#C4603A",
+  refine: "#C9992F",
+  strong: "#6E9464",
+};
+
 type Pillar = {
   id: string;
   num: string;
@@ -302,60 +320,35 @@ function HowItWorks() {
 
 function EngineCardRow({
   paramId,
-  tag,
-  accent,
+  num,
   expanded,
   onToggle,
 }: {
   paramId: string;
-  tag: string;
-  accent: PillarAccent;
+  num: string;
   expanded: boolean;
   onToggle: () => void;
 }) {
   const meta = METHODOLOGY_COPY[paramId];
-  const isEmber = accent === "electric";
   return (
-    <div
-      className={`border-l-2 transition-colors duration-200 ${
-        expanded
-          ? isEmber
-            ? "border-ember/60 bg-ember/[0.05]"
-            : "border-pinetint/40 bg-ink/[0.03]"
-          : "border-transparent hover:bg-ink/[0.02]"
-      }`}
-    >
+    <div className="engine-row-wrap">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={expanded}
-        className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left"
+        className={`engine-row${expanded ? " is-open" : ""}`}
       >
-        <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <h4 className="text-sm font-semibold text-ink">{PARAMETER_NAMES[paramId]}</h4>
-          <span
-            className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
-              isEmber
-                ? "border-ember/30 bg-ambertint text-emberdeep"
-                : "border-pinetint/30 bg-ink/[0.04] text-pinetint"
-            }`}
-          >
-            {tag}
-          </span>
-        </span>
+        <span className="engine-row-num">{num}</span>
+        <span className="engine-row-name">{PARAMETER_NAMES[paramId]}</span>
         <ChevronDown
-          className={`h-3.5 w-3.5 shrink-0 text-fog transition-transform duration-200 ${
-            expanded ? "rotate-180" : ""
-          }`}
+          className={`engine-row-chevron${expanded ? " is-open" : ""}`}
         />
       </button>
       {expanded && (
-        <div className="px-5 pb-4">
-          <p className="text-xs leading-relaxed text-mist">{CELL_LINES[paramId]}</p>
-          <p className="mt-2.5 border-t border-hairline pt-2.5 text-xs leading-relaxed text-mist">
-            <span className={`font-medium ${isEmber ? "text-ember" : "text-pinetint"}`}>
-              Why it matters:{" "}
-            </span>
+        <div className="engine-detail">
+          <p className="engine-detail-def">{CELL_LINES[paramId]}</p>
+          <p className="engine-detail-why">
+            <span className="engine-why-label">WHY IT MATTERS: </span>
             {meta.why}
           </p>
         </div>
@@ -364,90 +357,91 @@ function EngineCardRow({
   );
 }
 
+/* Ten-segment pillar meter. score/10 segments lit in the pillar's state
+   color, the rest unlit. Rendered in every pillar header. */
+function EngineMeter({ score, state }: { score: number; state: PillarState }) {
+  const color = PILLAR_STATE_COLOR[state];
+  return (
+    <span className="engine-meter" aria-hidden="true">
+      {Array.from({ length: 10 }, (_, i) => (
+        <span
+          key={i}
+          className="engine-meter-seg"
+          style={{ backgroundColor: i < score ? color : "#2A2320" }}
+        />
+      ))}
+    </span>
+  );
+}
+
 /* ------------------------------------------------------------------ */
-/* Diagnostic Engine (owner 2-column spec: pillar stack + gauge).      */
-/* The 38/100 gauge and pillar status pills are ILLUSTRATIVE DEMO UI   */
-/* only, not a real measured score of any site.                        */
+/* Diagnostic Engine (owner restyle spec: pillar panels + gauge panel). */
+/* The 38/100 gauge, pillar scores, and pillar status flags are         */
+/* ILLUSTRATIVE DEMO UI only, not a real measured score of any site.    */
 /* ------------------------------------------------------------------ */
 function EngineMintGauge({ active }: { active: boolean }) {
-  const r = 64;
-  const c = 2 * Math.PI * r;
+  const trackR = 50;
+  const ringR = 58;
+  const c = 2 * Math.PI * trackR;
   /* The 38/100 value is ILLUSTRATIVE DEMO UI, not a real measured score of
      any site. Sweep the arc from 0% to the 38% demo value once the section
      scrolls into view. */
   const offset = active ? `${c * (1 - 0.38)}` : `${c}`;
   return (
-    <div className="relative flex h-40 w-40 items-center justify-center sm:h-44 sm:w-44">
-      <div
-        aria-hidden="true"
-        className="mr-glow-pulse absolute -inset-2 rounded-full bg-ember/20 blur-2xl"
-      />
-      <div
-        aria-hidden="true"
-        className={`pointer-events-none absolute inset-[11%] rounded-full ${
-          active ? "mr-radar-scan active-scan" : ""
-        }`}
-      >
-        <div className="absolute inset-0 mr-radar-wedge" />
-        <div className="mr-radar-line" />
-      </div>
+    <div className="engine-gauge-wrap">
       <svg
-        viewBox="0 0 160 160"
-        className="relative h-full w-full -rotate-90"
+        viewBox="0 0 140 140"
+        className="engine-gauge-svg"
         role="img"
         aria-label="Illustrative overall readiness score: 38 out of 100"
       >
-        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(245,240,232,0.16)" strokeWidth="10" />
         <circle
-          cx="80"
-          cy="80"
-          r={r}
+          cx="70"
+          cy="70"
+          r={ringR}
+          fill="none"
+          stroke="#2A2320"
+          strokeWidth="3"
+        />
+        <circle
+          cx="70"
+          cy="70"
+          r={trackR}
+          fill="none"
+          stroke="#2A2320"
+          strokeWidth="9"
+        />
+        <circle
+          cx="70"
+          cy="70"
+          r={trackR}
           fill="none"
           stroke="#C4603A"
-          strokeWidth="10"
-          strokeLinecap="round"
+          strokeWidth="9"
+          strokeLinecap="butt"
           strokeDasharray={`${c * 0.38} ${c}`}
           strokeDashoffset={offset}
           className="mr-gauge-sweep"
-          style={{
-            transitionDelay: active ? "1.2s" : "0ms",
-          }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold leading-none tabular-nums text-scorerefine sm:text-[2.5rem]">
-          38
-        </span>
-        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-pinetint">
-          / 100
-        </span>
-        <span className="mt-1.5 text-xs font-bold uppercase tracking-wider text-ember">
-          High Risk
-        </span>
+      <div className="engine-gauge-center">
+        <span className="engine-gauge-numeral">38</span>
+        <span className="engine-gauge-denom">/ 100</span>
+        <span className="engine-gauge-status">◆ HIGH RISK</span>
       </div>
     </div>
   );
 }
 
 /** Illustrative demo status per pillar (UI only; not a real measured score). */
-const PILLAR_STATUS: Record<string, { label: string; cls: string }> = {
-  "pillar-positioning": {
-    label: "CRITICAL GAP",
-    cls: "border-ember/40 bg-ambertint text-emberdeep",
-  },
-  "pillar-messaging": {
-    label: "NEEDS REFINEMENT",
-    cls: "border-scorerefine/40 bg-scorerefine/10 text-scorerefine",
-  },
-  "pillar-gtm": {
-    label: "NEEDS REFINEMENT",
-    cls: "border-scorerefine/40 bg-scorerefine/10 text-scorerefine",
-  },
+const PILLAR_STATUS: Record<string, { label: string }> = {
+  "pillar-positioning": { label: "◆ CRITICAL GAP" },
+  "pillar-messaging": { label: "◆ NEEDS REFINEMENT" },
+  "pillar-gtm": { label: "◆ NEEDS REFINEMENT" },
 };
 
 function DiagnosticEngine() {
   const [expandedPillar, setExpandedPillar] = useState<string | null>("pillar-positioning");
-  const [hoveredPillar, setHoveredPillar] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
@@ -469,111 +463,49 @@ function DiagnosticEngine() {
   }, []);
 
   const revealLeft = visible ? "mr-step-reveal" : "opacity-0";
-  const revealGauge = visible ? "mr-step-reveal" : "opacity-0";
-  const revealStack = visible ? "mr-shift-slide" : "opacity-0";
-  const revealBottom = visible ? "mr-step-reveal" : "opacity-0";
+  const revealRight = visible ? "mr-step-reveal" : "opacity-0";
 
   return (
     <section
       ref={sectionRef}
       id="methodology"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-navy py-16 sm:py-[4.5rem]"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-navy"
     >
-      <div className="relative mx-auto w-full max-w-[1200px] overflow-hidden px-6 sm:px-12">
-        <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
-          <div className={`flex flex-col lg:col-span-4 ${revealLeft}`}>
-            <p className="eyebrow text-pinetint">My scoring system</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
-              The MarketReady Diagnostic Engine
-            </h2>
-            <p className="mt-3 text-lg leading-relaxed text-mist">
-              This is how I read your site: nine dimensions, scored in seconds,
-              grouped into three pillars.
-            </p>
-            <p className="mt-3 text-base leading-relaxed text-mist/90">
-              After years running product marketing at Amazon, Warner Bros. Discovery, and Bleacher Report, I built this scorecard around the same 9 things I check on every positioning teardown.
-            </p>
-            <p className="mt-4 text-sm leading-relaxed text-mist/85">
-              I map every signal to one of nine scored dimensions, grouped into
-              three pillars: how you position, how you message, and how fast you
-              launch. You see where each breaks, what it costs you, and what to
-              fix first.
-            </p>
-            <p className="mt-6 text-sm text-mist/70">
-              Every dimension maps to a scored signal in your audit, with rewrites
-              for the gaps that cost you conversion.
-            </p>
-          </div>
-
-          <div className={`flex flex-col items-center lg:col-span-3 ${revealGauge}`} style={{ animationDelay: "120ms" }}>
-            <div className="pine-card flex flex-col items-center px-7 py-7">
-              <EngineMintGauge active={visible} />
-            </div>
-          </div>
-
-          <div className={`flex items-stretch gap-3 lg:col-span-5 lg:gap-4 ${revealStack}`} style={{ animationDelay: "240ms" }}>
-            <div aria-hidden="true" className="hidden w-6 shrink-0 flex-col items-center justify-around sm:flex">
-              {PILLARS.map((pillar) => {
-                const active = expandedPillar === pillar.id || hoveredPillar === pillar.id;
-                const accent = pillar.accent === "electric" ? "ember" : "pinetint";
-                return (
-                  <div key={pillar.id} className="flex flex-col items-center gap-2">
-                    <div className="relative h-px w-full overflow-visible bg-ink/10">
-                      <span
-                        className={`absolute inset-0 transition-colors duration-300 ${
-                          active
-                            ? accent === "ember"
-                              ? "bg-gradient-to-r from-transparent from-10% via-ember to-ember"
-                              : "bg-gradient-to-r from-transparent from-10% via-pinetint to-pinetint"
-                            : "bg-transparent"
-                        }`}
-                      />
-                      {active && (
-                        <span
-                          className={`mr-data-pulse absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
-                            accent === "ember"
-                              ? "bg-ember"
-                              : "bg-pinetint"
-                          }`}
-                        />
-                      )}
-                    </div>
+      <svg
+        aria-hidden="true"
+        className="engine-grid"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern id="engine-grid-pattern" width="28" height="28" patternUnits="userSpaceOnUse">
+            <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#241E1A" strokeWidth="1" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#engine-grid-pattern)" />
+      </svg>
+      <div className="engine-content relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
+        <div className={`engine-layout`}>
+          <div className={`engine-pillars ${revealLeft}`} style={{ animationDelay: "240ms" }}>
+            {PILLARS.map((pillar) => {
+              const status = PILLAR_STATUS[pillar.id];
+              const demo = PILLAR_STATE[pillar.id];
+              const open = expandedPillar === pillar.id;
+              return (
+                <div key={pillar.id} className="engine-pillar-unit">
+                  <div className="engine-meta">
+                    <span className="engine-counter">
+                      PILLAR {pillar.num} / 03
+                    </span>
                     <span
-                      className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
-                        active
-                          ? accent === "ember"
-                            ? "bg-ember"
-                            : "bg-pinetint"
-                          : "bg-ink/25"
-                      }`}
-                    />
+                      className="engine-flag"
+                      style={{ color: PILLAR_STATE_COLOR[demo.state] }}
+                    >
+                      {status.label}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-
-            <div className="w-full min-w-0 flex-1 space-y-3">
-              {PILLARS.map((pillar) => {
-                const isEmber = pillar.accent === "electric";
-                const status = PILLAR_STATUS[pillar.id];
-                const open = expandedPillar === pillar.id;
-                const hasActive = expandedPillar !== null;
-                return (
                   <div
-                    key={pillar.id}
-                    onMouseEnter={() => setHoveredPillar(pillar.id)}
-                    onMouseLeave={() => setHoveredPillar(null)}
-                    className={`glass-card overflow-hidden transition-all duration-300 ${
-                      hasActive && !open ? "opacity-55" : "opacity-100"
-                    } ${
-                      isEmber
-                        ? open
-                          ? "border-ember/40"
-                          : "hover:border-ember/40"
-                        : open
-                          ? "border-pinetint/40"
-                          : "hover:border-pinetint/40"
-                    }`}
+                    className={`engine-panel${open ? " is-open" : ""}`}
+                    style={{ borderLeftColor: PILLAR_STATE_COLOR[demo.state] }}
                   >
                     <button
                       type="button"
@@ -581,43 +513,18 @@ function DiagnosticEngine() {
                         setExpandedPillar((cur) => (cur === pillar.id ? null : pillar.id))
                       }
                       aria-expanded={open}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                      className="engine-panel-head"
                     >
-                      <span
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                          isEmber ? "bg-ambertint text-emberdeep" : "bg-ink/[0.04] text-pinetint"
-                        }`}
-                      >
-                        {pillar.num}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[9px] font-semibold uppercase tracking-widest text-fog">
-                          Pillar {pillar.num}
-                        </span>
-                        <span className="block text-sm font-semibold leading-tight text-ink">
-                          {pillar.title}
-                        </span>
-                        <span className="hidden text-[11px] text-fog sm:block">{pillar.summary}</span>
-                      </span>
-                      <span
-                        className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${status.cls}`}
-                      >
-                        {status.label}
-                      </span>
-                      <ChevronDown
-                        className={`h-4 w-4 shrink-0 text-fog transition-transform duration-200 ${
-                          open ? "rotate-180" : ""
-                        }`}
-                      />
+                      <span className="engine-panel-title">{pillar.title}</span>
+                      <EngineMeter score={demo.score} state={demo.state} />
                     </button>
                     {open && (
-                      <div className="mr-acc-reveal divide-y divide-hairline border-t border-hairline">
-                        {pillar.params.map((p) => (
+                      <div className="engine-rows">
+                        {pillar.params.map((p, i) => (
                           <EngineCardRow
                             key={p.id}
                             paramId={p.id}
-                            tag={p.tag}
-                            accent={pillar.accent}
+                            num={`0${i + 1}`}
                             expanded={expanded === p.id}
                             onToggle={() => setExpanded((cur) => (cur === p.id ? null : p.id))}
                           />
@@ -625,16 +532,29 @@ function DiagnosticEngine() {
                       </div>
                     )}
                   </div>
-                );
-              })}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className={`engine-side ${revealRight}`} style={{ animationDelay: "120ms" }}>
+            <p className="engine-eyebrow">My scoring system</p>
+            <h2 className="engine-headline">
+              The MarketReady Diagnostic Engine
+            </h2>
+            <p className="engine-intro">
+              Nine dimensions, scored in seconds, grouped into three pillars: how you position, how you message, and how fast you launch.
+            </p>
+            <div className="engine-gauge">
+              <p className="engine-gauge-label">READINESS SCORE</p>
+              <EngineMintGauge active={visible} />
+              <div className="engine-gauge-rule" aria-hidden="true" />
+              <p className="engine-disclaimer">
+                The 38/100 score and pillar statuses above are a sample for illustration only, not a real measured score. Run the free diagnostic to see your actual readiness.
+              </p>
             </div>
           </div>
         </div>
-        <p className={`mt-8 text-left text-sm text-fog ${revealBottom}`} style={{ animationDelay: "360ms" }}>
-          The 38/100 score and pillar statuses above are a sample for
-          illustration only, not a real measured score. Run the free diagnostic
-          to see your actual readiness.
-        </p>
       </div>
     </section>
   );
