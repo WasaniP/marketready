@@ -143,7 +143,8 @@ const HOW_IT_WORKS_STEPS = [
 function Manifesto() {
   return (
     <section id="manifesto" className="scroll-mt-24 border-t border-hairline bg-cream py-14 sm:py-[4.5rem]">
-      <div className="mx-auto max-w-2xl px-5 text-center sm:px-8">
+      <div className="mx-auto w-full max-w-[1200px] px-6 sm:px-12">
+        <div className="mx-auto max-w-2xl text-center">
         <p className="eyebrow text-navy">Why I built this</p>
         <blockquote className="mt-5 font-display text-xl leading-snug text-ink sm:text-[22px]">
           Most startups don't have a product problem. They have a language
@@ -152,6 +153,7 @@ function Manifesto() {
           them the launch.
         </blockquote>
         <p className="mt-5 text-sm font-semibold text-ember">Wasani, Founder</p>
+        </div>
       </div>
     </section>
   );
@@ -179,7 +181,7 @@ function FrictionObservations() {
   ];
   return (
     <section id="friction" className="scroll-mt-24 border-t border-hairline bg-sand py-14 sm:py-[4.5rem]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+      <div className="mx-auto w-full max-w-[1200px] px-6 sm:px-12">
         <div className="grid items-start gap-6 md:grid-cols-12 md:gap-8">
           <div className="md:col-span-4">
             <p className="eyebrow text-navy">What I keep seeing</p>
@@ -237,22 +239,29 @@ function HowItWorks() {
       id="how-it-works"
       className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-16 sm:py-[4.5rem]"
     >
-      <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="max-w-2xl">
-          <p className="eyebrow text-navy">How I work</p>
-          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
-            Diagnose. Prescribe. Activate.
-          </h2>
-          <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
-            One readiness score, three moves. I diagnose where your positioning
-            breaks, prescribe the highest-impact fixes, and activate them with you.
-          </p>
-          <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
-            I built this in this exact order because most founders try to activate before they've diagnosed the actual problem. That's how budget gets wasted on the wrong fix.
-          </p>
+      <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
+        <div className="grid items-end gap-10 md:grid-cols-12 md:gap-12">
+          <div className="md:col-span-8">
+            <p className="eyebrow text-navy">How I work</p>
+            <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
+              Diagnose. Prescribe. Activate.
+            </h2>
+            <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
+              One readiness score, three moves. I diagnose where your positioning
+              breaks, prescribe the highest-impact fixes, and activate them with you.
+            </p>
+            <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
+              I built this in this exact order because most founders try to activate before they've diagnosed the actual problem. That's how budget gets wasted on the wrong fix.
+            </p>
+          </div>
+          <div className="md:col-span-4 md:justify-self-end md:pb-1">
+            <a href="/services/diagnostic" className="btn-electric">
+              Get Your MarketReady Score →
+            </a>
+          </div>
         </div>
 
-        <div className="relative mt-6">
+        <div className="relative mt-10">
           <div
             aria-hidden="true"
             className={`absolute left-[16%] right-[16%] top-[13px] hidden h-px bg-hairline md:block ${line}`}
@@ -261,23 +270,17 @@ function HowItWorks() {
             {HOW_IT_WORKS_STEPS.map((step, i) => (
               <li
                 key={step.n}
-                className={`relative flex flex-col items-center text-center ${reveal}`}
+                className={`relative flex flex-col items-start text-left ${reveal}`}
                 style={{ animationDelay: `${220 + i * 180}ms` }}
               >
                 <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-hairline bg-cream text-[10px] font-bold text-mist">
                   <span className="relative">{step.n}</span>
                 </span>
                 <h3 className="mt-4 font-display text-xl text-ink">{step.name}</h3>
-                <p className="mt-2 max-w-xs text-sm leading-relaxed text-mist">{step.body}</p>
+                <p className="mt-2 text-sm leading-relaxed text-mist">{step.body}</p>
               </li>
             ))}
           </ol>
-        </div>
-
-        <div className="mt-8">
-          <a href="/services/diagnostic" className="btn-electric">
-            Get Your MarketReady Score →
-          </a>
         </div>
       </div>
     </section>
@@ -463,7 +466,7 @@ function DiagnosticEngine() {
       id="methodology"
       className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-navy py-16 sm:py-[4.5rem]"
     >
-      <div className="relative mx-auto w-full max-w-6xl overflow-hidden px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto w-full max-w-[1200px] overflow-hidden px-6 sm:px-12">
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
           <div className={`flex flex-col lg:col-span-4 ${revealLeft}`}>
             <p className="eyebrow text-pinetint">My scoring system</p>
@@ -614,7 +617,7 @@ function DiagnosticEngine() {
             </div>
           </div>
         </div>
-        <p className={`mt-8 text-center text-sm text-fog ${revealBottom}`} style={{ animationDelay: "360ms" }}>
+        <p className={`mt-8 text-left text-sm text-fog ${revealBottom}`} style={{ animationDelay: "360ms" }}>
           The 38/100 score and pillar statuses above are a sample for
           illustration only, not a real measured score. Run the free diagnostic
           to see your actual readiness.
@@ -649,45 +652,49 @@ function FounderStory() {
   return (
     <section
       id="founder"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream px-6 py-14 sm:py-[4.5rem]"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-14 sm:py-[4.5rem]"
     >
-      <div className="relative mx-auto max-w-4xl">
-        <div className="flex max-w-3xl flex-col space-y-4">
-          <p className="eyebrow">A note from the founder</p>
-          <h2 className="font-display text-3xl text-ink lg:text-[32px]">
-            I've sat in the rooms where launches are won and lost.
-          </h2>
-          <p className="mt-1 max-w-[42rem] text-lg leading-relaxed text-mist">
-            Hi, I'm Wasani. I've spent 8+ years leading product marketing at Amazon, Warner Bros. Discovery (Bleacher Report), and other high-growth companies. I started MarketReady because I kept seeing the same thing: founders and growth teams scaling spend before their positioning could support it. This isn't an agency. It's me, working directly with you.
-          </p>
-        </div>
+      <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
+        <div className="grid items-start gap-10 md:grid-cols-12 md:gap-12">
+          <div className="md:col-span-4">
+            <p className="eyebrow">A note from the founder</p>
+            <h2 className="font-display text-3xl text-ink lg:text-[32px]">
+              I've sat in the rooms where launches are won and lost.
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-mist">
+              Hi, I'm Wasani. I've spent years leading product marketing at Amazon, Warner Bros. Discovery (Bleacher Report), and other high-growth companies. I started MarketReady because I kept seeing the same thing: founders and growth teams scaling spend before their positioning could support it. This isn't an agency. It's me, working directly with you.
+            </p>
+          </div>
 
-        <div className="mb-4 mt-10">
-          <div className="mr-marquee" aria-hidden="true">
-            <div className="mr-marquee-track">
-              {[0, 1].map((i) => (
-                <div key={i} className="mr-logo-group">
-                  {FOUNDER_CRED_BRANDS.map((b) => (
-                    <div
-                      key={`${i}-${b.label}`}
-                      className="flex h-10 w-auto items-center justify-center px-6"
-                    >
-                      <img
-                        src={b.src}
-                        alt=""
-                        loading="lazy"
-                        className="h-auto max-h-7 w-auto max-w-[150px] object-contain opacity-75 transition-opacity hover:opacity-100"
-                      />
+          <div className="md:col-span-8">
+            <div className="mb-4 mt-2 md:mt-10">
+              <div className="mr-marquee" aria-hidden="true">
+                <div className="mr-marquee-track">
+                  {[0, 1].map((i) => (
+                    <div key={i} className="mr-logo-group">
+                      {FOUNDER_CRED_BRANDS.map((b) => (
+                        <div
+                          key={`${i}-${b.label}`}
+                          className="flex h-10 w-auto items-center justify-start px-6"
+                        >
+                          <img
+                            src={b.src}
+                            alt=""
+                            loading="lazy"
+                            className="h-auto max-h-7 w-auto max-w-[150px] object-contain opacity-75 transition-opacity hover:opacity-100"
+                          />
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
-              ))}
+              </div>
             </div>
+            <p className="mt-4 text-left text-xs text-fog">
+              Brands my teams have worked with, not MarketReady clients.
+            </p>
           </div>
         </div>
-        <p className="mt-4 text-center text-xs text-fog">
-          Brands my teams have worked with, not MarketReady clients.
-        </p>
       </div>
     </section>
   );
@@ -732,20 +739,21 @@ function ServicesStack() {
   return (
     <section
       id="services"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream px-4 py-14 sm:py-[4.5rem]"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-14 sm:py-[4.5rem]"
     >
-      <div className="relative mx-auto max-w-[1100px]">
-        <div className="max-w-2xl">
-          <p className="eyebrow text-navy">How we can work together</p>
-          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
-            Got your score? Here's how I help you fix the gaps.
-          </h2>
-          <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
-            Pick the option that fits where you are right now. You work directly with me on every deliverable. No account managers, no junior hand-offs.
-          </p>
-        </div>
+      <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
+        <div className="grid items-start gap-10 md:grid-cols-12 md:gap-12">
+          <div className="md:col-span-4">
+            <p className="eyebrow text-navy">How we can work together</p>
+            <h2 className="mt-3 max-w-[22ch] text-balance font-display text-3xl tracking-tight text-ink sm:text-[32px]">
+              Got your score? Here's how I help you fix the gaps.
+            </h2>
+            <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
+              Pick the option that fits where you are right now. You work directly with me on every deliverable. No account managers, no junior hand-offs.
+            </p>
+          </div>
 
-        <div className="mt-8 grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 items-stretch gap-4 md:col-span-8 md:grid-cols-3">
           {SERVICE_CARDS.map((s) => (
             <div
               key={s.name}
@@ -777,7 +785,8 @@ function ServicesStack() {
                 {s.cta}
               </a>
             </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -816,14 +825,14 @@ function FaqAccordion() {
       id="faq"
       className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-sand py-14 sm:py-[4.5rem]"
     >
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+      <div className="mx-auto w-full max-w-[1200px] px-6 sm:px-12">
         <div className="max-w-2xl">
           <p className="eyebrow">Questions I get asked</p>
           <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
             Frequently asked questions
           </h2>
         </div>
-        <div className="mt-8 max-w-3xl">
+        <div className="mt-8 w-full">
           <div className="flex flex-col gap-3">
             {FAQ_ITEMS.map((item, i) => {
               const isOpen = openIndex === i;
