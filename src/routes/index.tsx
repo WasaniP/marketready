@@ -136,30 +136,6 @@ const HOW_IT_WORKS_STEPS = [
   },
 ] as const;
 
-/* ------------------------------------------------------------------ */
-/* Manifesto: first-person statement of why MarketReady exists.        */
-/* No stats, no proof points, just the founder's belief.               */
-/* ------------------------------------------------------------------ */
-function Manifesto() {
-  return (
-    <section id="manifesto" className="scroll-mt-24 border-t border-hairline bg-cream py-14 sm:py-[4.5rem]">
-      <div className="mx-auto w-full max-w-[1200px] px-6 sm:px-12">
-        <div className="mx-auto max-w-2xl text-center">
-        <p className="eyebrow text-navy">Why I built this</p>
-        <blockquote className="mt-5 font-display text-xl leading-snug text-ink sm:text-[22px]">
-          Most startups don't have a product problem. They have a language
-          problem. I started MarketReady so founders could hear, plainly, how
-          their GTM sounds to a first-time buyer, and fix it before it costs
-          them the launch.
-        </blockquote>
-        <p className="mt-5 text-sm font-semibold text-ember">Wasani, Founder</p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /* Friction observations: first-person, stat-free. Per owner spec §12:  */
 /* no framework-style titles, no headline stats, no invented citations; */
 /* each observation stands alone as the card's lead line.               */
@@ -655,86 +631,58 @@ function FounderStory() {
       className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-14 sm:py-[4.5rem]"
     >
       <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
-        <div className="grid items-start gap-10 md:grid-cols-12 md:gap-12">
-          <div className="md:col-span-4">
-            <p className="eyebrow">A note from the founder</p>
-            <h2 className="font-display text-3xl text-ink lg:text-[32px]">
-              I've sat in the rooms where launches are won and lost.
-            </h2>
-            <p className="mt-4 text-lg leading-relaxed text-mist">
-              Hi, I'm Wasani. I've spent years leading product marketing at Amazon, Warner Bros. Discovery (Bleacher Report), and other high-growth companies. I started MarketReady because I kept seeing the same thing: founders and growth teams scaling spend before their positioning could support it. This isn't an agency. It's me, working directly with you.
-            </p>
-          </div>
-
-          <div className="md:col-span-8">
-            <div className="mb-4 mt-2 md:mt-10">
-              <div className="mr-marquee" aria-hidden="true">
-                <div className="mr-marquee-track">
-                  {[0, 1].map((i) => (
-                    <div key={i} className="mr-logo-group">
-                      {FOUNDER_CRED_BRANDS.map((b) => (
-                        <div
-                          key={`${i}-${b.label}`}
-                          className="flex h-10 w-auto items-center justify-start px-6"
-                        >
-                          <img
-                            src={b.src}
-                            alt=""
-                            loading="lazy"
-                            className="h-auto max-h-7 w-auto max-w-[150px] object-contain opacity-75 transition-opacity hover:opacity-100"
-                          />
-                        </div>
-                      ))}
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="eyebrow">A note from the founder</p>
+          <h2 className="mt-4 font-display text-3xl text-ink lg:text-[32px]">
+            Your product&rsquo;s new GTM advantage.
+          </h2>
+          <p className="mt-5 text-lg leading-relaxed text-mist">
+            MarketReady is a product marketing consultancy for B2B SaaS,
+            consumer tech, and growing startups that are ready to turn a good
+            product into a growth story that actually works. We bring senior
+            product marketing thinking across positioning, messaging, GTM
+            strategy, launches, and sales enablement to help companies get
+            clearer, move faster, and scale smarter.
+          </p>
+          <p className="mt-4 text-lg leading-relaxed text-mist">
+            Because when your story is clear, your customers understand the
+            value, your sales team knows how to sell it, and your business has
+            a stronger foundation for growth.
+          </p>
+          <p className="mt-6 font-display text-xl leading-snug text-ember">
+            Clearer story. Stronger sales. Smarter growth.
+          </p>
+        </div>
+        <div className="mx-auto mt-10 max-w-4xl">
+          <div className="mr-marquee" aria-hidden="true">
+            <div className="mr-marquee-track">
+              {[0, 1].map((i) => (
+                <div key={i} className="mr-logo-group">
+                  {FOUNDER_CRED_BRANDS.map((b) => (
+                    <div
+                      key={`${i}-${b.label}`}
+                      className="flex h-10 w-auto items-center justify-start px-6"
+                    >
+                      <img
+                        src={b.src}
+                        alt=""
+                        loading="lazy"
+                        className="h-auto max-h-7 w-auto max-w-[150px] object-contain opacity-75 transition-opacity hover:opacity-100"
+                      />
                     </div>
                   ))}
                 </div>
-              </div>
+              ))}
             </div>
-            <p className="mt-4 text-left text-xs text-fog">
-              Brands my teams have worked with, not MarketReady clients.
-            </p>
           </div>
+          <p className="mt-4 text-center text-xs text-fog">
+            Brands my teams have worked with, not MarketReady clients.
+          </p>
         </div>
       </div>
     </section>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Services: unpriced engagement models. Owner rule: no pricing lives  */
-/* on the homepage. The diagnostic CTA is the amber primary; every     */
-/* other CTA is outline/secondary.                                     */
-/* ------------------------------------------------------------------ */
-const SERVICE_CARDS = [
-  {
-    stage: "Start here · Free",
-    name: "MarketReady Diagnostic",
-    body: "The free AI audit and scorecard. I read your live site like a first-time buyer and show you where positioning leaks.",
-    points: ["Instant readiness score", "Surface red-flag callout", "Pillar-by-pillar breakdown"],
-    cta: "Get Your MarketReady Score →",
-    href: "/services/diagnostic",
-    primary: true,
-  },
-  {
-    stage: "Fix it in 14 days",
-    name: "Positioning Sprint",
-    body: "A focused engagement where I rebuild your positioning, messaging, and launch assets directly from the diagnostic.",
-    points: ["Positioning architecture", "Homepage copy rewrite", "Launch deck and GTM plan"],
-    cta: "Explore the Sprint →",
-    href: "/services/sprint",
-    primary: false,
-  },
-  {
-    stage: "Stay sharp",
-    name: "Fractional GTM Lead",
-    body: "Ongoing senior PMM partnership: I stay in the room as you launch, iterate messaging, and enable sales.",
-    points: ["Embedded PMM leadership", "Ongoing message iteration", "Sales enablement support"],
-    cta: "Explore Fractional →",
-    href: "/services/fractional",
-    primary: false,
-  },
-] as const;
-
 function ServicesStack() {
   return (
     <section
@@ -919,11 +867,10 @@ function Home() {
       <Header />
       <main>
         <HeroDiagnostic onBookBriefing={openBooking} />
-        <Manifesto />
+        <FounderStory />
         <FrictionObservations />
         <HowItWorks />
         <DiagnosticEngine />
-        <FounderStory />
         <ServicesStack />
         <FaqAccordion />
       </main>
