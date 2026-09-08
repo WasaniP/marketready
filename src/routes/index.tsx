@@ -122,17 +122,17 @@ const HOW_IT_WORKS_STEPS = [
   {
     n: "01",
     name: "Diagnose",
-    body: "I run your site through the free diagnostic and show you exactly where your positioning is leaking trust.",
+    body: "I assess your positioning, messaging, and market presence to identify where you're losing clarity, trust, and conversion.",
   },
   {
     n: "02",
     name: "Prescribe",
-    body: "I turn the flagged gaps into a fix plan: positioning, messaging, and the assets that carry them.",
+    body: "I turn those gaps into a focused action plan: what to fix, what to say, and which assets actually need to change.",
   },
   {
     n: "03",
     name: "Activate",
-    body: "We ship the fixes together in a focused sprint, then keep your launch momentum compounding.",
+    body: "We put the fixes into market through a focused sprint, turning strategy into work that gets shipped.",
   },
 ] as const;
 
@@ -232,73 +232,68 @@ function FrictionObservations() {
 /* Methodology stepper: Diagnose → Prescribe → Activate                */
 /* ------------------------------------------------------------------ */
 function HowItWorks() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const ob = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setVisible(true);
-          ob.disconnect();
-        }
-      },
-      { threshold: 0.3 },
-    );
-    ob.observe(el);
-    return () => ob.disconnect();
-  }, []);
-  const reveal = visible ? "mr-step-reveal" : "opacity-0";
-  const line = visible ? "mr-line-draw" : "opacity-0";
   return (
     <section
-      ref={sectionRef}
       id="how-it-works"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-16 sm:py-[4.5rem]"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-12 sm:py-16"
     >
+      {/* Paper grain overlay (above the bg, below everything else). */}
+      <div className="hiw-grain" aria-hidden="true">
+        <svg width="100%" height="100%" aria-hidden="true">
+          <filter id="hiw-grain-filter">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.75"
+              numOctaves="4"
+              stitchTiles="stitch"
+            />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#hiw-grain-filter)" />
+        </svg>
+      </div>
       <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
-        <div className="grid items-end gap-10 md:grid-cols-12 md:gap-12">
-          <div className="md:col-span-8">
-            <p className="eyebrow text-navy">How I work</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
-              Diagnose. Prescribe. Activate.
-            </h2>
-            <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
-              One readiness score, three moves. I diagnose where your positioning
-              breaks, prescribe the highest-impact fixes, and activate them with you.
-            </p>
-            <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
-              I built this in this exact order because most founders try to activate before they've diagnosed the actual problem. That's how budget gets wasted on the wrong fix.
-            </p>
-          </div>
-          <div className="md:col-span-4 md:justify-self-end md:pb-1">
-            <a href="/services/diagnostic" className="btn-electric">
-              Get Your MarketReady Score →
-            </a>
-          </div>
+        <div className="text-center">
+          <p className="hiw-eyebrow">The MarketReady Method</p>
+          <h2 className="hiw-headline font-display">
+            Diagnose. Prescribe. Activate.
+          </h2>
+          <p className="hiw-intro-1">
+            One readiness score. Three focused moves. I identify where your
+            positioning is breaking down, map the highest-impact fixes, and
+            help you put them into market.
+          </p>
+          <p className="hiw-intro-2">
+            Most teams jump straight to execution. We start by finding the
+            problem worth fixing.
+          </p>
         </div>
 
-        <div className="relative mt-10">
-          <div
-            aria-hidden="true"
-            className={`absolute left-[16%] right-[16%] top-[13px] hidden h-px bg-hairline md:block ${line}`}
-          />
-          <ol className="grid gap-8 md:grid-cols-3 md:gap-6">
-            {HOW_IT_WORKS_STEPS.map((step, i) => (
-              <li
-                key={step.n}
-                className={`relative flex flex-col items-start text-left ${reveal}`}
-                style={{ animationDelay: `${220 + i * 180}ms` }}
-              >
-                <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-hairline bg-cream text-[10px] font-bold text-mist">
-                  <span className="relative">{step.n}</span>
-                </span>
-                <h3 className="mt-4 font-display text-xl text-ink">{step.name}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-mist">{step.body}</p>
-              </li>
-            ))}
-          </ol>
+        <ol className="hiw-steps">
+          {HOW_IT_WORKS_STEPS.flatMap((step, i) => [
+            ...(i > 0
+              ? [
+                  <span
+                    key={`hiw-arrow-${step.n}`}
+                    className="hiw-arrow"
+                    aria-hidden="true"
+                  >
+                    →
+                  </span>,
+                ]
+              : []),
+            <li key={step.n} className={`hiw-step hiw-step-${step.n}`}>
+              <div className="hiw-step-head">
+                <span className="hiw-numeral">{step.n}</span>
+                <h3 className="hiw-title">{step.name}</h3>
+              </div>
+              <p className="hiw-body">{step.body}</p>
+            </li>,
+          ])}
+        </ol>
+        <div className="text-center">
+          <a href="/services/diagnostic" className="hiw-cta">
+            Get Your MarketReady Score →
+          </a>
         </div>
       </div>
     </section>
