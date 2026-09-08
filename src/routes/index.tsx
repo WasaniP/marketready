@@ -478,7 +478,7 @@ function DiagnosticEngine() {
       >
         <defs>
           <pattern id="engine-grid-pattern" width="28" height="28" patternUnits="userSpaceOnUse">
-            <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#241E1A" strokeWidth="1" />
+            <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#2A2320" strokeWidth="1" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#engine-grid-pattern)" />
@@ -517,6 +517,7 @@ function DiagnosticEngine() {
                     >
                       <span className="engine-panel-title">{pillar.title}</span>
                       <EngineMeter score={demo.score} state={demo.state} />
+                      <ChevronDown className={`engine-panel-chevron${open ? " is-open" : ""}`} />
                     </button>
                     {open && (
                       <div className="engine-rows">
@@ -550,7 +551,7 @@ function DiagnosticEngine() {
               <EngineMintGauge active={visible} />
               <div className="engine-gauge-rule" aria-hidden="true" />
               <p className="engine-disclaimer">
-                The 38/100 score and pillar statuses above are a sample for illustration only, not a real measured score. Run the free diagnostic to see your actual readiness.
+                Sample score for illustration. Run your URL for a real one.
               </p>
             </div>
           </div>
