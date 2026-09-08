@@ -138,47 +138,90 @@ const HOW_IT_WORKS_STEPS = [
 
 /* Friction observations: first-person, stat-free. Per owner spec §12:  */
 /* no framework-style titles, no headline stats, no invented citations; */
-/* each observation stands alone as the card's lead line.               */
+/* each observation stands alone as the row's lead line. Stacked-row    */
+/* layout: ghosted serif numerals, sand headers, consequence tags.      */
 /* ------------------------------------------------------------------ */
 function FrictionObservations() {
-  const cards = [
+  const rows = [
     {
+      n: "01",
       header: "Explaining, not selling",
       body: "I've sat on demo calls where the first 30 minutes go to explaining the category, not selling the product. That's not a sales problem. That's a positioning problem.",
+      tag: "Costs you \u2192 Longer sales cycles",
     },
     {
+      n: "02",
       header: "The ads were never the problem",
       body: "I've watched founders pour six figures into paid traffic before fixing copy that bounces visitors in under 8 seconds. The ads were never the problem.",
+      tag: "Costs you \u2192 Wasted paid spend",
     },
     {
+      n: "03",
       header: "Discounting to close",
       body: "When buyers can't tell you apart from a cheaper option, your reps discount to close. I've seen this kill margins on otherwise strong products.",
+      tag: "Costs you \u2192 Margin on every deal",
     },
   ];
   return (
-    <section id="friction" className="scroll-mt-24 border-t border-hairline bg-sand py-14 sm:py-[4.5rem]">
-      <div className="mx-auto w-full max-w-[1200px] px-6 sm:px-12">
-        <div className="grid items-start gap-6 md:grid-cols-12 md:gap-8">
-          <div className="md:col-span-4">
-            <p className="eyebrow text-navy">What I keep seeing</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
+    <section id="friction" className="scroll-mt-24 border-t border-hairline bg-sand">
+      {/* Paper grain overlay (above the bg, below everything else). */}
+      <div className="friction-grain" aria-hidden="true">
+        <svg width="100%" height="100%" aria-hidden="true">
+          <filter id="friction-grain-filter">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.75"
+              numOctaves="4"
+              stitchTiles="stitch"
+            />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#friction-grain-filter)" />
+        </svg>
+      </div>
+      <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
+        <div className="friction-grid">
+          <div>
+            <p className="friction-eyebrow">What I keep seeing</p>
+            <h2 className="friction-headline">
               The patterns I see holding back growth
             </h2>
-            <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
-              After years inside media and tech brands, I notice the same three
-              failure modes. If any of these sound familiar, your positioning is
-              doing it, not your product.
+            <p className="friction-intro">
+              After years inside media and tech brands, I notice the same three failure modes. If any of these sound familiar, your positioning is doing it, not your product.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-5 md:col-span-8 md:grid-cols-3">
-            {cards.map((card) => (
-              <article key={card.header} className="glass-card-sand flex h-full flex-col p-6">
-                <h3 className="font-display text-lg font-semibold leading-snug text-navy">
-                  {card.header}
-                </h3>
-                <p className="mt-3 flex-1 text-[15px] leading-relaxed text-mist">{card.body}</p>
+          <div>
+            {rows.map((row) => (
+              <article key={row.n} className="friction-row">
+                <span className="friction-numeral" aria-hidden="true">
+                  {row.n}
+                </span>
+                <div className="friction-row-content">
+                  <h3 className="friction-row-header">{row.header}</h3>
+                  <p className="friction-row-body">{row.body}</p>
+                  <p className="friction-tag">{row.tag}</p>
+                </div>
               </article>
             ))}
+            <div className="friction-closing-rule" aria-hidden="true" />
+            <p className="friction-closing">
+              All three show up in the diagnostic.{" "}
+              <a
+                href="#calculator"
+                className="friction-closing-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const anchor =
+                    document.getElementById("calculator") ??
+                    document.getElementById("calc-url");
+                  anchor?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  window.setTimeout(() => {
+                    document.getElementById("calc-url")?.focus({ preventScroll: true });
+                  }, 650);
+                }}
+              >
+                Run your URL →
+              </a>
+            </p>
           </div>
         </div>
       </div>

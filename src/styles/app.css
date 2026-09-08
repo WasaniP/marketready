@@ -645,3 +645,139 @@
     max-width: 22%;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Friction observations (stacked rows, warm-dark). Owner spec 2026-09-08: */
+/* smoky section, ghosted serif numerals, sand headers, rust tags,     */
+/* paper grain overlay (founder-section precedent, overlay @ ~28%).    */
+/* ------------------------------------------------------------------ */
+#friction {
+  position: relative;
+  overflow: hidden;
+  padding-top: 96px;
+  padding-bottom: 96px;
+}
+#friction .friction-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  mix-blend-mode: overlay;
+  z-index: 0;
+}
+#friction .friction-grain svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#friction .friction-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 48px;
+  align-items: start;
+}
+#friction .friction-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #e8c9a0;
+}
+#friction .friction-headline {
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #f5f0e8;
+  text-wrap: balance;
+}
+#friction .friction-intro {
+  margin-top: 16px;
+  max-width: 40rem;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #b8aea3;
+}
+#friction .friction-row {
+  display: flex;
+  gap: 18px;
+  padding-top: 22px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid #3a312b;
+}
+#friction .friction-row:first-child {
+  padding-top: 0;
+}
+#friction .friction-row:last-of-type {
+  border-bottom: none;
+}
+#friction .friction-numeral {
+  flex-shrink: 0;
+  width: 56px;
+  font-family: var(--font-display);
+  font-size: 52px;
+  line-height: 0.85;
+  color: #2a2320;
+  user-select: none;
+}
+#friction .friction-row-content {
+  min-width: 0;
+}
+#friction .friction-row-header {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #e8c9a0;
+  margin-bottom: 8px;
+}
+#friction .friction-row-body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #b8aea3;
+  margin-bottom: 10px;
+}
+#friction .friction-tag {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #c96a42;
+}
+#friction .friction-closing-rule {
+  height: 1px;
+  background-color: #3a312b;
+  margin-top: 26px;
+  margin-bottom: 20px;
+}
+#friction .friction-closing {
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.5;
+  color: #f5f0e8;
+}
+#friction .friction-closing-link {
+  color: #c96a42;
+  text-decoration: none;
+  white-space: nowrap;
+}
+#friction .friction-closing-link:hover {
+  text-decoration: underline;
+}
+@media (max-width: 900px) {
+  #friction .friction-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  #friction {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+  #friction .friction-numeral {
+    font-size: 40px;
+  }
+}
