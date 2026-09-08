@@ -27,63 +27,81 @@ import { apiUrl } from "~/lib/apiOrigin";
 /* ------------------------------------------------------------------ */
 export function HeroMockup() {
   const rows = [
-    { label: "Category Positioning", score: "29/100", cls: "text-scorework" },
-    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-scorework" },
-    { label: "GTM Path & Offer", score: "27/100", cls: "text-scorework" },
-    { label: "Differentiation Anchor", score: "21/100", cls: "text-scorework" },
+    { label: "Category Positioning", score: "29/100", cls: "text-scorebright" },
+    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-scorebright" },
+    { label: "GTM Path & Offer", score: "27/100", cls: "text-scorebright" },
+    { label: "Differentiation Anchor", score: "21/100", cls: "text-scorebright" },
   ];
   const rowCls =
-    "flex items-center justify-between gap-3 rounded-lg border border-hairline bg-sand px-3.5 py-2.5";
+    "flex items-center justify-between gap-3 rounded-lg border border-[#4a3528] bg-[#241c18] px-3.5 py-2.5";
   return (
     <div className="relative mx-auto w-full max-w-[380px]">
+      {/* Cool-tinted aura behind the card (owner high-contrast spec) */}
       <div
-        className="relative overflow-hidden rounded-2xl bg-linen"
-        style={{ border: "1px solid #3A312B", borderRadius: "16px" }}
+        aria-hidden="true"
+        className="absolute -inset-6 rounded-[28px]"
+        style={{
+          background:
+            "radial-gradient(ellipse 62% 60% at 52% 42%, rgba(117,140,180,0.20), rgba(117,140,180,0.05) 60%, transparent 78%)",
+          filter: "blur(2px)",
+        }}
+      />
+      {/* Razor-thin border with gradient highlight along top & left edges */}
+      <div
+        className="relative overflow-hidden rounded-2xl"
+        style={{
+          borderRadius: "16px",
+          padding: 1,
+          background:
+            "linear-gradient(135deg, rgba(245,240,232,0.34), rgba(245,240,232,0.07) 34%, rgba(245,240,232,0.015) 60%, transparent 78%)",
+        }}
       >
-        {/* Top header bar: browser chrome #1F1A16 */}
-        <div className="flex items-center gap-3 border-b border-hairline bg-sand px-4 py-2.5">
-          <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
-            <span className="h-2.5 w-2.5 rounded-full bg-fog/40" />
-            <span className="h-2.5 w-2.5 rounded-full bg-fog/40" />
-            <span className="h-2.5 w-2.5 rounded-full bg-fog/40" />
-          </span>
-          <span className="min-w-0 flex-1 truncate rounded-md bg-linen px-2 py-0.5 text-center text-[12px] text-mist">
-            https://yourproduct.com
-          </span>
-          <span
-            aria-hidden="true"
-            className="flex shrink-0 items-center gap-1 rounded-full border border-ember/40 bg-ambertint px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emberdeep"
-          >
-            <span className="text-[9px]">●</span>Sample report
-          </span>
-        </div>
-        {/* 4 metric rows; the last is partially faded like a real report */}
-        <div className="flex flex-col gap-2 bg-linen p-4 sm:p-5">
-          {rows.slice(0, 3).map((r) => (
-            <div key={r.label} className={rowCls}>
-              <span className="min-w-0 text-[13px] font-medium text-mist">{r.label}</span>
-              <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${r.cls}`}>
-                {r.score}
-              </span>
-            </div>
-          ))}
-          <div className="relative h-[42px] overflow-hidden" aria-hidden="true">
-            <div className={rowCls}>
-              <span className="min-w-0 text-[13px] font-medium text-mist">{rows[3].label}</span>
-              <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${rows[3].cls}`}>
-                {rows[3].score}
-              </span>
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-linen" />
+        <div className="relative overflow-hidden rounded-[15px] bg-[#1b1713]">
+          {/* Top header bar: browser chrome */}
+          <div className="flex items-center gap-3 border-b border-[#322a24] bg-[#1f1a16] px-4 py-2.5">
+            <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#6b5b4e]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#6b5b4e]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#6b5b4e]" />
+            </span>
+            <span className="min-w-0 flex-1 truncate rounded-md bg-[#241c18] px-2 py-0.5 text-center text-[12px] text-[#c9beb2]">
+              https://yourproduct.com
+            </span>
+            <span
+              aria-hidden="true"
+              className="flex shrink-0 items-center gap-1 rounded-full border border-[#e8c9a0]/55 bg-[#e8c9a0]/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#f0d9b0]"
+            >
+              <span className="text-[9px]">●</span>Sample report
+            </span>
           </div>
-          {/* Sample finding inline beneath the lowest-scoring row */}
-          <p className="text-[11px] leading-relaxed text-ember">
-            Sample finding: category naming is too broad for high-intent buyers.
-          </p>
-          {/* Single merged disclaimer line */}
-          <p className="rounded-md bg-hairline px-3 py-1.5 text-center text-[11px] font-bold uppercase leading-relaxed tracking-wide text-pinetint">
-            Sample score for illustration, run your URL to get your real score.
-          </p>
+          {/* 4 metric rows; the last is partially faded like a real report */}
+          <div className="flex flex-col gap-2 bg-[#1b1713] p-4 sm:p-5">
+            {rows.slice(0, 3).map((r) => (
+              <div key={r.label} className={rowCls}>
+                <span className="min-w-0 text-[13px] font-medium text-[#e8e2d8]">{r.label}</span>
+                <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${r.cls}`}>
+                  {r.score}
+                </span>
+              </div>
+            ))}
+            <div className="relative h-[42px] overflow-hidden" aria-hidden="true">
+              <div className={rowCls}>
+                <span className="min-w-0 text-[13px] font-medium text-[#e8e2d8]">{rows[3].label}</span>
+                <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${rows[3].cls}`}>
+                  {rows[3].score}
+                </span>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#1b1713]" />
+            </div>
+            {/* Sample finding inline beneath the lowest-scoring row */}
+            <p className="text-[11px] leading-relaxed text-[#f08a4b]">
+              Sample finding: category naming is too broad for high-intent buyers.
+            </p>
+            {/* Single merged disclaimer line */}
+            <p className="rounded-md bg-[#322a24] px-3 py-1.5 text-center text-[11px] font-bold uppercase leading-relaxed tracking-wide text-[#f0d9b0]">
+              Sample score for illustration, run your URL to get your real score.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -827,7 +845,17 @@ export function HeroDiagnostic({
        the old value (fixed header is h-16 + pt-6/pb-4, so pt-24 clears it).
        Spec §8: no gradient/glow wash in the hero — flat surface. §7: the
        only section boundary here is the hairline above the Manifesto. */
-    <section id="top" className="relative bg-cream pt-24 pb-12 sm:pb-16">
+    <section id="top" className="relative bg-[#121110] pt-24 pb-12 sm:pb-16">
+      <div
+        aria-hidden="true"
+        className="hero-glow-left"
+        style={{ zIndex: 0 }}
+      />
+      <div
+        aria-hidden="true"
+        className="hero-glow-right"
+        style={{ zIndex: 0 }}
+      />
       <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
         {showResult ? (
           <div
@@ -921,9 +949,10 @@ export function HeroDiagnostic({
               <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-white sm:text-[30px]">
                 Your product isn't the problem.
                 <br />
-                Your <span className="hero-highlight">market story</span> might be.
+                Your <span className="hero-highlight">market story</span>{" "}
+                <span className="text-[#e8c9a0]">might be.</span>
               </h1>
-              <p className="mx-auto mt-3 max-w-[480px] text-[13px] leading-[1.6] text-stone-300 lg:mx-0">
+              <p className="mx-auto mt-3 max-w-[480px] text-[13px] leading-[1.6] text-[#f5f0e8] lg:mx-0">
                 I help B2B SaaS, consumer tech, and growing startups turn good
                 products into products people understand, remember, and buy. I
                 step in when you need experienced product marketing leadership to
@@ -931,7 +960,7 @@ export function HeroDiagnostic({
                 strategy, and turn it into the tools, resources, and execution
                 your sales team needs to win.
               </p>
-              <p className="mx-auto mt-2 max-w-[480px] text-[13px] leading-[1.6] text-stone-300 lg:mx-0">
+              <p className="mx-auto mt-2 max-w-[480px] text-[13px] leading-[1.6] text-[#f5f0e8] lg:mx-0">
                 <strong>The goal is simple:</strong> a story that sells, a sales team equipped to
                 win, and a GTM engine built to help your business scale.
               </p>
@@ -951,7 +980,7 @@ export function HeroDiagnostic({
                     className="field-input h-[48px] text-[15px]"
                     aria-describedby={error ? "calc-error" : undefined}
                   />
-                  <p className="mt-2 text-[12px] leading-relaxed text-stone-400">
+                  <p className="mt-2 text-[12px] leading-relaxed text-[#f5f0e8]">
                     Run your URL through MarketReady and see your GTM through a buyer's eyes.
                   </p>
                 </div>
