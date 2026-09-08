@@ -478,7 +478,7 @@ function DiagnosticEngine() {
               grouped into three pillars.
             </p>
             <p className="mt-3 text-base leading-relaxed text-mist/90">
-              After 8+ years running product marketing at Amazon, Warner Bros. Discovery, and Bleacher Report, I built this scorecard around the same 9 things I check on every positioning teardown.
+              After years running product marketing at Amazon, Warner Bros. Discovery, and Bleacher Report, I built this scorecard around the same 9 things I check on every positioning teardown.
             </p>
             <p className="mt-4 text-sm leading-relaxed text-mist/85">
               I map every signal to one of nine scored dimensions, grouped into
