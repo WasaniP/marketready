@@ -849,6 +849,7 @@
 }
 #how-it-works .hiw-arrow {
   display: flex;
+  list-style: none;
   justify-content: center;
   padding-top: 38px;
   color: #3a312b;

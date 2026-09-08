@@ -272,13 +272,13 @@ function HowItWorks() {
           {HOW_IT_WORKS_STEPS.flatMap((step, i) => [
             ...(i > 0
               ? [
-                  <span
+                  <li
                     key={`hiw-arrow-${step.n}`}
                     className="hiw-arrow"
                     aria-hidden="true"
                   >
                     →
-                  </span>,
+                  </li>,
                 ]
               : []),
             <li key={step.n} className={`hiw-step hiw-step-${step.n}`}>
