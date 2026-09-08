@@ -659,7 +659,7 @@ function FounderStory() {
         <div className="founder-grid">
           {/* Left column: eyebrow, headline, body, signature. */}
           <div className="founder-left">
-            <p className="founder-eyebrow">A note from the founder</p>
+            <p className="founder-eyebrow">BUILT FROM EXPERIENCE</p>
             <h2 className="founder-headline">
               Good products deserve a better story.
             </h2>
@@ -699,7 +699,7 @@ function FounderStory() {
           <div className="founder-right">
             <div className="founder-tag-rule" aria-hidden="true" />
             <p className="founder-tagline">
-              That&rsquo;s the problem I built MarketReady to solve.
+              Hands-on execution. No agency layers.
             </p>
           </div>
         </div>
