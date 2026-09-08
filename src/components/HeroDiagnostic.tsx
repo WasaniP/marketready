@@ -915,7 +915,7 @@ export function HeroDiagnostic({
               serif headline at ~80% of the old size (two balanced lines),
               subhead tightened to the URL input. No founder photo anywhere
               in the hero; the sample-report card anchors the right column. */}
-          <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
             <div className="text-center lg:text-left">
               <p className="eyebrow">ARE YOU MARKETREADY?</p>
               <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-white sm:text-[30px]">
@@ -923,7 +923,7 @@ export function HeroDiagnostic({
                 <br />
                 <span className="hero-highlight">Your market story might be.</span>
               </h1>
-              <p className="mx-auto mt-3 max-w-[520px] text-[17px] font-medium leading-[1.6] text-stone-300 lg:mx-0">
+              <p className="mx-auto mt-3 max-w-[480px] text-[14px] leading-[1.55] text-stone-300 lg:mx-0">
                 I help B2B SaaS, consumer tech, and growing startups turn good
                 products into products people understand, remember, and buy.
                 From positioning and messaging to GTM strategy and launches, I
@@ -969,7 +969,7 @@ export function HeroDiagnostic({
             </div>
             {/* Spec §3: sample-report card is the sole hero visual, anchored
                 high in the right column. Stacks below the text on mobile. */}
-            <div className="lg:-mt-2 lg:pt-1">
+            <div>
               <HeroMockup />
             </div>
           </div>
