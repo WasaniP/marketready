@@ -949,8 +949,7 @@ export function HeroDiagnostic({
               <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-white sm:text-[30px]">
                 Your product isn't the problem.
                 <br />
-                Your <span className="hero-highlight">market story</span>{" "}
-                <span className="text-[#e8c9a0]">might be.</span>
+                Your <span className="hero-highlight">market story</span> might be.
               </h1>
               <p className="mx-auto mt-3 max-w-[480px] text-[13px] leading-[1.6] text-[#f5f0e8] lg:mx-0">
                 I help B2B SaaS, consumer tech, and growing startups turn good

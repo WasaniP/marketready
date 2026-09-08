@@ -123,17 +123,17 @@
   .eyebrow {
     @apply text-[12px] font-bold uppercase tracking-[0.14em] text-pinetint;
   }
-  /* Hero headline phrase highlight — soft cream pill with dark text
-     (owner high-contrast spec 2026-09-08: cream-colored badge, dark text,
-     cream glow; supersedes the earlier rust highlight). */
+  /* Hero headline phrase highlight — rust orange, same as the CTA
+     (--color-ember #C96A42), dark text on the fill. Owner preference:
+     orange, not cream (2026-09-08). */
   .hero-highlight {
     display: inline-block;
     border-radius: 0.4em;
-    background-color: #e8c9a0;
-    color: #16120f;
+    background-color: var(--color-ember);
+    color: var(--color-cream);
     padding: 0.06em 0.28em 0.1em;
     line-height: 1.3;
-    box-shadow: 0 2px 16px rgba(232, 201, 160, 0.35);
+    box-shadow: 0 2px 14px rgba(201, 106, 66, 0.35);
   }
   /* Hero ambient glows (owner high-contrast spec 2026-09-08): a soft
      diffused cream radial glow behind the left content column, and a faint
