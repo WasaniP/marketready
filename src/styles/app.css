@@ -711,6 +711,9 @@
 #friction .friction-row:first-child {
   padding-top: 0;
 }
+#friction .friction-row:last-of-type {
+  border-bottom: none;
+}
 #friction .friction-numeral {
   flex-shrink: 0;
   width: 56px;
