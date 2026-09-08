@@ -15,7 +15,7 @@ import { riskLabel, scoreColor } from "~/lib/audit/engine";
 const INK = "#FAFAFA";
 const MIST = "#A1A1AA";
 const HAIRLINE = "#1E293B";
-const INDIGO = "#6366F1";
+const INDIGO = "#6E9464";
 
 /** Hex → rgba() with alpha, for tinted fills/strokes. */
 export function withAlpha(hex: string, alpha: number): string {
@@ -154,7 +154,7 @@ export function Radar({ parameters }: { parameters: ParamResult[] }) {
         <polygon
           key={frac}
           points={polygon(frac)}
-          fill={frac === 1 ? "rgba(99,102,241,0.03)" : "none"}
+          fill={frac === 1 ? "rgba(201,106,66,0.25)" : "none"}
           stroke={HAIRLINE}
           strokeWidth={1}
         />

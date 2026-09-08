@@ -255,7 +255,7 @@ function HowItWorks() {
         <div className="relative mt-6">
           <div
             aria-hidden="true"
-            className={`absolute left-[16%] right-[16%] top-[13px] hidden h-px bg-navy/60 md:block ${line}`}
+            className={`absolute left-[16%] right-[16%] top-[13px] hidden h-px bg-hairline md:block ${line}`}
           />
           <ol className="grid gap-8 md:grid-cols-3 md:gap-6">
             {HOW_IT_WORKS_STEPS.map((step, i) => (
@@ -264,7 +264,7 @@ function HowItWorks() {
                 className={`relative flex flex-col items-center text-center ${reveal}`}
                 style={{ animationDelay: `${220 + i * 180}ms` }}
               >
-                <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-navy/40 bg-cream text-[10px] font-bold text-navy">
+                <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-hairline bg-cream text-[10px] font-bold text-mist">
                   <span className="relative">{step.n}</span>
                 </span>
                 <h3 className="mt-4 font-display text-xl text-ink">{step.name}</h3>
@@ -305,7 +305,7 @@ function EngineCardRow({
         expanded
           ? isEmber
             ? "border-ember/60 bg-ember/[0.05]"
-            : "border-navy/50 bg-navy/[0.04]"
+            : "border-pinetint/40 bg-ink/[0.03]"
           : "border-transparent hover:bg-ink/[0.02]"
       }`}
     >
@@ -321,7 +321,7 @@ function EngineCardRow({
             className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
               isEmber
                 ? "border-ember/30 bg-ambertint text-emberdeep"
-                : "border-navy/25 bg-navy/[0.06] text-navy"
+                : "border-pinetint/30 bg-ink/[0.04] text-pinetint"
             }`}
           >
             {tag}
@@ -337,7 +337,7 @@ function EngineCardRow({
         <div className="px-5 pb-4">
           <p className="text-xs leading-relaxed text-mist">{CELL_LINES[paramId]}</p>
           <p className="mt-2.5 border-t border-hairline pt-2.5 text-xs leading-relaxed text-mist">
-            <span className={`font-medium ${isEmber ? "text-ember" : "text-navy"}`}>
+            <span className={`font-medium ${isEmber ? "text-ember" : "text-pinetint"}`}>
               Why it matters:{" "}
             </span>
             {meta.why}
@@ -381,32 +381,31 @@ function EngineMintGauge({ active }: { active: boolean }) {
         role="img"
         aria-label="Illustrative overall readiness score: 38 out of 100"
       >
-        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(228,237,234,0.18)" strokeWidth="10" />
+        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(245,240,232,0.16)" strokeWidth="10" />
         <circle
           cx="80"
           cy="80"
           r={r}
           fill="none"
-          stroke="#B85C38"
+          stroke="#C4603A"
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={`${c * 0.38} ${c}`}
           strokeDashoffset={offset}
           className="mr-gauge-sweep"
           style={{
-            filter: "drop-shadow(0 0 8px rgba(180,83,9,0.5))",
             transitionDelay: active ? "1.2s" : "0ms",
           }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold leading-none tabular-nums text-sand drop-shadow-[0_2px_12px_rgba(180,83,9,0.25)] sm:text-[2.5rem]">
+        <span className="text-3xl font-extrabold leading-none tabular-nums text-scorerefine sm:text-[2.5rem]">
           38
         </span>
         <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-pinetint">
           / 100
         </span>
-        <span className="mt-1.5 text-xs font-bold uppercase tracking-wider text-ambertint">
+        <span className="mt-1.5 text-xs font-bold uppercase tracking-wider text-ember">
           High Risk
         </span>
       </div>
@@ -422,11 +421,11 @@ const PILLAR_STATUS: Record<string, { label: string; cls: string }> = {
   },
   "pillar-messaging": {
     label: "NEEDS REFINEMENT",
-    cls: "border-[#A16207]/40 bg-[#A16207]/10 text-[#A16207]",
+    cls: "border-scorerefine/40 bg-scorerefine/10 text-scorerefine",
   },
   "pillar-gtm": {
     label: "NEEDS REFINEMENT",
-    cls: "border-[#A16207]/40 bg-[#A16207]/10 text-[#A16207]",
+    cls: "border-scorerefine/40 bg-scorerefine/10 text-scorerefine",
   },
 };
 
@@ -462,29 +461,29 @@ function DiagnosticEngine() {
     <section
       ref={sectionRef}
       id="methodology"
-      className="relative scroll-mt-24 overflow-hidden bg-navy py-16 sm:py-[4.5rem]"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-navy py-16 sm:py-[4.5rem]"
     >
       <div className="relative mx-auto w-full max-w-6xl overflow-hidden px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
           <div className={`flex flex-col lg:col-span-4 ${revealLeft}`}>
             <p className="eyebrow text-pinetint">My scoring system</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight text-sand sm:text-4xl">
+            <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
               The MarketReady Diagnostic Engine
             </h2>
-            <p className="mt-3 text-lg leading-relaxed text-sand">
+            <p className="mt-3 text-lg leading-relaxed text-mist">
               This is how I read your site: nine dimensions, scored in seconds,
               grouped into three pillars.
             </p>
-            <p className="mt-3 text-base leading-relaxed text-sand/90">
+            <p className="mt-3 text-base leading-relaxed text-mist/90">
               After 8+ years running product marketing at Amazon, Warner Bros. Discovery, and Bleacher Report, I built this scorecard around the same 9 things I check on every positioning teardown.
             </p>
-            <p className="mt-4 text-sm leading-relaxed text-sand/85">
+            <p className="mt-4 text-sm leading-relaxed text-mist/85">
               I map every signal to one of nine scored dimensions, grouped into
               three pillars: how you position, how you message, and how fast you
               launch. You see where each breaks, what it costs you, and what to
               fix first.
             </p>
-            <p className="mt-6 text-sm text-sand/70">
+            <p className="mt-6 text-sm text-mist/70">
               Every dimension maps to a scored signal in your audit, with rewrites
               for the gaps that cost you conversion.
             </p>
@@ -500,7 +499,7 @@ function DiagnosticEngine() {
             <div aria-hidden="true" className="hidden w-6 shrink-0 flex-col items-center justify-around sm:flex">
               {PILLARS.map((pillar) => {
                 const active = expandedPillar === pillar.id || hoveredPillar === pillar.id;
-                const accent = pillar.accent === "electric" ? "ember" : "navy";
+                const accent = pillar.accent === "electric" ? "ember" : "pinetint";
                 return (
                   <div key={pillar.id} className="flex flex-col items-center gap-2">
                     <div className="relative h-px w-full overflow-visible bg-ink/10">
@@ -509,7 +508,7 @@ function DiagnosticEngine() {
                           active
                             ? accent === "ember"
                               ? "bg-gradient-to-r from-transparent from-10% via-ember to-ember"
-                              : "bg-gradient-to-r from-transparent from-10% via-navy to-navy"
+                              : "bg-gradient-to-r from-transparent from-10% via-pinetint to-pinetint"
                             : "bg-transparent"
                         }`}
                       />
@@ -517,8 +516,8 @@ function DiagnosticEngine() {
                         <span
                           className={`mr-data-pulse absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
                             accent === "ember"
-                              ? "bg-ember shadow-[0_0_10px_rgba(180,83,9,0.9)]"
-                              : "bg-navy shadow-[0_0_10px_rgba(30,58,95,0.9)]"
+                              ? "bg-ember"
+                              : "bg-pinetint"
                           }`}
                         />
                       )}
@@ -527,8 +526,8 @@ function DiagnosticEngine() {
                       className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
                         active
                           ? accent === "ember"
-                            ? "bg-ember shadow-[0_0_8px_rgba(180,83,9,0.9)]"
-                            : "bg-navy shadow-[0_0_10px_rgba(30,58,95,0.9)]"
+                            ? "bg-ember"
+                            : "bg-pinetint"
                           : "bg-ink/25"
                       }`}
                     />
@@ -553,11 +552,11 @@ function DiagnosticEngine() {
                     } ${
                       isEmber
                         ? open
-                          ? "border-ember/40 shadow-[0_0_28px_rgba(180,83,9,0.12)]"
+                          ? "border-ember/40"
                           : "hover:border-ember/40"
                         : open
-                          ? "border-navy/40 shadow-[0_0_28px_rgba(30,58,95,0.12)]"
-                          : "hover:border-navy/40"
+                          ? "border-pinetint/40"
+                          : "hover:border-pinetint/40"
                     }`}
                   >
                     <button
@@ -570,7 +569,7 @@ function DiagnosticEngine() {
                     >
                       <span
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                          isEmber ? "bg-ambertint text-emberdeep" : "bg-navy/[0.07] text-navy"
+                          isEmber ? "bg-ambertint text-emberdeep" : "bg-ink/[0.04] text-pinetint"
                         }`}
                       >
                         {pillar.num}
@@ -834,7 +833,7 @@ function FaqAccordion() {
                 <div
                   key={item.q}
                   className={`glass-card overflow-hidden transition-all duration-300 hover:-translate-y-0.5 ${
-                    isOpen ? "border-ember/40" : "hover:border-linen"
+                    isOpen ? "border-ember/40" : "hover:border-hairline"
                   }`}
                 >
                   <h3>

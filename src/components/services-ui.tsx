@@ -126,7 +126,7 @@ export function SubPageHero({
 }) {
   return (
     <section
-      className={`relative overflow-hidden border-b border-hairline bg-[#0F172A] px-5 pb-14 ${topPadding} sm:px-8 sm:pb-16`}
+      className={`relative overflow-hidden border-b border-hairline bg-[#16120F] px-5 pb-14 ${topPadding} sm:px-8 sm:pb-16`}
     >
       <div
         aria-hidden="true"

@@ -39,7 +39,7 @@ function PrivacySection({
   return (
     <section className="mt-8">
       <h2 className="text-lg font-bold tracking-tight text-ink">
-        <span className="mr-2 text-electric">{n}.</span>
+        <span className="mr-2 text-ember">{n}.</span>
         {title}
       </h2>
       <div className="mt-2 flex flex-col gap-3 text-sm leading-relaxed text-mist sm:text-base">
@@ -54,22 +54,22 @@ function PrivacyPage() {
   const closeBooking = () => setBookingOpen(false);
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#0F172A] via-[#111827] to-[#030712]">
+    <div className="min-h-dvh bg-gradient-to-b from-[#16120F] via-[#1F1A16] to-[#16120F]">
       <Header />
       <main>
-        <section className="relative overflow-hidden border-b border-hairline bg-[#0F172A] px-5 pb-12 pt-32 sm:px-8 sm:pt-40">
+        <section className="relative overflow-hidden border-b border-hairline bg-[#16120F] px-5 pb-12 pt-32 sm:px-8 sm:pt-40">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[40rem] -translate-x-1/2 rounded-full bg-electric/[0.07] blur-3xl"
+            className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[40rem] -translate-x-1/2 rounded-full bg-ember/[0.07] blur-3xl"
           />
           <div className="relative mx-auto max-w-[720px]">
-            <span className="chip border-electric/40 text-electric">
+            <span className="chip border-ember/40 text-ember">
               Privacy Policy
             </span>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
               Privacy Policy: MarketReady
             </h1>
-            <p className="mt-3 text-sm text-zinc-500">
+            <p className="mt-3 text-sm text-fog">
               Last updated August 2026. A plain-language summary of how we
               handle the data you share with us.
             </p>
@@ -137,7 +137,7 @@ function PrivacyPage() {
                 Questions about this policy or your data? Email us at{" "}
                 <a
                   href="mailto:hello@getmarketready.co"
-                  className="font-semibold text-electric underline decoration-electric/40 underline-offset-2 transition-colors hover:text-ink hover:decoration-ink/40"
+                  className="font-semibold text-ember underline decoration-electric/40 underline-offset-2 transition-colors hover:text-ink hover:decoration-ink/40"
                 >
                   hello@getmarketready.co
                 </a>
@@ -150,21 +150,21 @@ function PrivacyPage() {
                 Return to the{" "}
                 <a
                   href="/"
-                  className="font-semibold text-electric transition-colors hover:text-ink"
+                  className="font-semibold text-ember transition-colors hover:text-ink"
                 >
                   homepage
                 </a>
                 ,{" "}
                 <a
                   href="/contact"
-                  className="font-semibold text-electric transition-colors hover:text-ink"
+                  className="font-semibold text-ember transition-colors hover:text-ink"
                 >
                   contact us
                 </a>
                 , or{" "}
                 <a
                   href="/services/diagnostic"
-                  className="font-semibold text-electric transition-colors hover:text-ink"
+                  className="font-semibold text-ember transition-colors hover:text-ink"
                 >
                   run your MarketReady score →
                 </a>

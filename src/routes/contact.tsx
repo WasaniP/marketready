@@ -127,16 +127,16 @@ function ContactPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#0F172A] via-[#111827] to-[#030712]">
+    <div className="min-h-dvh bg-gradient-to-b from-[#16120F] via-[#1F1A16] to-[#16120F]">
       <Header />
       <main>
-        <section className="relative overflow-hidden border-b border-hairline bg-[#0F172A] px-5 pb-12 pt-32 sm:px-8 sm:pt-40">
+        <section className="relative overflow-hidden border-b border-hairline bg-[#16120F] px-5 pb-12 pt-32 sm:px-8 sm:pt-40">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[40rem] -translate-x-1/2 rounded-full bg-electric/[0.07] blur-3xl"
+            className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[40rem] -translate-x-1/2 rounded-full bg-ember/[0.07] blur-3xl"
           />
           <div className="relative mx-auto max-w-2xl text-center">
-            <span className="chip border-electric/40 text-electric">Contact</span>
+            <span className="chip border-ember/40 text-ember">Contact</span>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
               Talk to the MarketReady team
             </h1>
@@ -180,7 +180,7 @@ function ContactPage() {
               <form onSubmit={handleSubmit} noValidate className="glass-card flex flex-col gap-4 p-6 sm:p-8">
                 <div>
                   <label htmlFor="contact-name" className="field-label">
-                    Name <span className="text-electric">*</span>
+                    Name <span className="text-ember">*</span>
                   </label>
                   <input
                     id="contact-name"
@@ -195,7 +195,7 @@ function ContactPage() {
                 </div>
                 <div>
                   <label htmlFor="contact-email" className="field-label">
-                    Work Email <span className="text-electric">*</span>
+                    Work Email <span className="text-ember">*</span>
                   </label>
                   <input
                     id="contact-email"
@@ -211,7 +211,7 @@ function ContactPage() {
                 </div>
                 <div>
                   <label htmlFor="contact-company" className="field-label">
-                    Company <span className="text-zinc-500">(optional)</span>
+                    Company <span className="text-fog">(optional)</span>
                   </label>
                   <input
                     id="contact-company"
@@ -227,7 +227,7 @@ function ContactPage() {
                 <div>
                   <label htmlFor="contact-interest" className="field-label">
                     What are you interested in?{" "}
-                    <span className="text-zinc-500">(optional)</span>
+                    <span className="text-fog">(optional)</span>
                   </label>
                   <select
                     id="contact-interest"
@@ -246,7 +246,7 @@ function ContactPage() {
                 </div>
                 <div>
                   <label htmlFor="contact-message" className="field-label">
-                    How can we help? <span className="text-electric">*</span>
+                    How can we help? <span className="text-ember">*</span>
                   </label>
                   <textarea
                     id="contact-message"
@@ -263,7 +263,7 @@ function ContactPage() {
                   <p
                     id="contact-error"
                     role="alert"
-                    className="rounded-lg border border-electric/40 bg-electric/10 px-3 py-2 text-sm text-electric"
+                    className="rounded-lg border border-ember/40 bg-ember/10 px-3 py-2 text-sm text-ember"
                   >
                     {error}
                   </p>
@@ -276,7 +276,7 @@ function ContactPage() {
                 >
                   {status === "submitting" ? "Sending…" : "Send Message"}
                 </button>
-                <p className="text-center text-xs text-zinc-500">
+                <p className="text-center text-xs text-fog">
                   We reply to every message, usually within one business day.
                 </p>
               </form>

@@ -20,7 +20,7 @@ const FOUNDER_BRANDS: string[] = [
 
 export function FounderLogos() {
   return (
-    <div className="mx-auto max-w-7xl bg-[#0F172A] px-5 py-12 sm:px-8">
+    <div className="mx-auto max-w-7xl bg-[#16120F] px-5 py-12 sm:px-8">
       <p className="text-center text-xs text-zinc-500">
         Positioning &amp; GTM playbook applied at
       </p>

@@ -182,11 +182,11 @@ function OnboardingSuccess() {
   };
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#0F172A] via-[#111827] to-[#030712]">
+    <div className="min-h-dvh bg-gradient-to-b from-[#16120F] via-[#1F1A16] to-[#16120F]">
       <Header />
       <main>
         {/* Welcome banner */}
-        <section className="relative overflow-hidden border-b border-hairline bg-[#0F172A] px-5 pb-14 pt-32 sm:px-8 sm:pt-40">
+        <section className="relative overflow-hidden border-b border-hairline bg-[#16120F] px-5 pb-14 pt-32 sm:px-8 sm:pt-40">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[40rem] -translate-x-1/2 rounded-full bg-electric/[0.07] blur-3xl"

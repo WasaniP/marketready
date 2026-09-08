@@ -2,33 +2,33 @@
 @import "tailwindcss";
 
 @theme {
-  /* MarketReady humanized palette (owner spec): warm off-white base,
-     rust primary, deep pine secondary. The legacy semantic names
-     (ink / mist / electric / indigo / hairline / obsidian / night / panel)
-     are remapped here so the whole site re-themes consistently. */
-  --color-cream: #faf8f5; /* page bg, warm off-white */
-  --color-sand: #ebe4da; /* alt section bg, card fills (owner pass: darkened from #F2EDE6) */
-  --color-linen: #e3dcd2; /* borders / dividers / strokes */
-  --color-hairline: #ddd4c8; /* section-boundary hairline (owner pass: from #E3DCD2) */
-  --color-ink: #1c1917; /* primary headings + body */
-  --color-mist: #57534e; /* secondary / subheads */
-  --color-fog: #8c8681; /* captions / eyebrows / meta */
-  --color-ember: #B85C38; /* rust: CTAs / links / active */
-  --color-emberdeep: #93472A; /* rust hover / pressed */
-  --color-ambertint: #FBEDE6; /* rust tint: badges / highlights */
-  --color-navy: #1F4A42; /* deep pine: section headers, widget frame, footer */
-  --color-pinetint: #E4EDEA; /* pine tint: labels on the pine section */
-  --color-scorework: #A15C2B; /* diagnostic: needs work */
-  --color-scorerefine: #8A6A1F; /* diagnostic: needs refinement */
-  --color-scorepass: #1F4A42; /* diagnostic: strong / passing (pine) */
+  /* MarketReady Warm Dark palette (owner spec 2026-09-08): warm dark
+     surfaces, rust primary, sand accents. Legacy semantic names are
+     remapped so the whole site re-themes consistently — palette only,
+     layout/type/copy unchanged. */
+  --color-cream: #16120f; /* page bg, default sections */
+  --color-sand: #1f1a16; /* alternate sections */
+  --color-linen: #2a2320; /* card + panel fills */
+  --color-hairline: #3a312b; /* borders / dividers / hairline rules */
+  --color-ink: #f5f0e8; /* primary text, headlines + body */
+  --color-mist: #b8aea3; /* secondary text, intros, card body */
+  --color-fog: #7d736a; /* captions, disclaimers, meta */
+  --color-ember: #c96a42; /* rust: CTAs / links / active */
+  --color-emberdeep: #a8502f; /* rust hover / pressed */
+  --color-ambertint: #3a312b; /* rust tint: badges / highlights (border-ish) */
+  --color-navy: #1f1a16; /* alternate-section surface (was pine) */
+  --color-pinetint: #e8c9a0; /* sand: eyebrow labels + highlight accents */
+  --color-scorework: #c4603a; /* diagnostic: needs work */
+  --color-scorerefine: #c9992f; /* diagnostic: needs refinement */
+  --color-scorepass: #6e9464; /* diagnostic: strong / passing */
 
   /* Legacy semantic aliases (kept so existing classes re-theme, not break) */
-  --color-obsidian: #faf8f5;
-  --color-night: #f2ede6;
-  --color-panel: #f2ede6;
-  --color-hairline: #e3dcd2;
-  --color-electric: #B85C38;
-  --color-indigo: #1F4A42;
+  --color-obsidian: #16120f;
+  --color-night: #16120f;
+  --color-panel: #1f1a16;
+  --color-hairline: #3a312b;
+  --color-electric: #c96a42;
+  --color-indigo: #6e9464;
 
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
@@ -59,41 +59,41 @@
 
   ::selection {
     background: rgb(184 92 56 / 0.22);
-    color: #1c1917;
+    color: #f5f0e8;
   }
 
   select option {
-    background-color: #faf8f5;
-    color: #1c1917;
+    background-color: #2a2320;
+    color: #f5f0e8;
   }
 }
 
 @layer components {
-  /* Warm light card: white fill, linen border, soft warm shadow. */
+  /* Warm dark card: linen fill, hairline border, NO shadow (depth via
+     lightness steps, per owner warm-dark spec). */
   .glass-card {
-    @apply rounded-xl border border-hairline bg-white shadow-[0_1px_2px_rgba(28,25,23,0.05),0_10px_28px_rgba(28,25,23,0.07)];
+    @apply rounded-xl border border-hairline bg-linen;
   }
 
-  /* Owner revision spec §8: cards on sand (#F2EDE6) sections use cream fill
-     with the same linen border + soft shadow as .glass-card. */
+  /* Same card on alternate-section surfaces (sand #1F1A16). */
   .glass-card-sand {
-    @apply rounded-xl border border-hairline bg-cream shadow-[0_1px_2px_rgba(28,25,23,0.05),0_10px_28px_rgba(28,25,23,0.07)];
+    @apply rounded-xl border border-hairline bg-linen;
   }
 
-  /* Owner revision spec §8: cards on the pine (#1F4A42) section use
-     #14332D fill with a #2E5C53 border and NO shadow. */
+  /* Pine-card becomes the panel fill on alternate sections — linen fill
+     with hairline border, NO shadow. */
   .pine-card {
-    @apply rounded-xl border border-[#2E5C53] bg-[#14332D];
+    @apply rounded-xl border border-hairline bg-linen;
   }
 
-  /* Primary CTA: rust fill, white text, deeper rust on hover. */
+  /* Primary CTA: rust fill, warm-dark text, deeper rust on hover. */
   .btn-electric {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-ember px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-emberdeep hover:shadow-[0_8px_24px_rgba(184,92,56,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-ember px-5 py-2.5 text-sm font-semibold text-[#16120f] transition-colors duration-200 hover:bg-emberdeep active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
   }
 
-  /* Secondary CTA: outline on light. */
+  /* Secondary CTA: outline on dark — transparent fill, rust border/text. */
   .btn-ghost {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-linen bg-transparent px-5 py-2.5 text-sm font-medium text-ink transition-colors duration-200 hover:border-ember hover:text-ember active:scale-[0.98];
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-ember bg-transparent px-5 py-2.5 text-sm font-medium text-ember transition-colors duration-200 hover:bg-ember/10 active:scale-[0.98];
   }
 
   .field-label {
@@ -101,7 +101,7 @@
   }
 
   .field-input {
-    @apply w-full rounded-lg border border-linen bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-fog focus:border-ember focus:ring-2 focus:ring-ember/25;
+    @apply w-full rounded-lg border border-hairline bg-linen px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-fog focus:border-ember focus:ring-2 focus:ring-ember/25;
   }
 
   .nav-link {
@@ -109,13 +109,13 @@
   }
 
   .chip {
-    @apply rounded-full border border-linen bg-ambertint/60 px-3 py-1 text-xs font-medium text-emberdeep;
+    @apply rounded-full border border-hairline bg-ambertint/60 px-3 py-1 text-xs font-medium text-emberdeep;
   }
 
-  /* Small-caps kicker above serif headlines. Owner pass: ~12px, tighter
-     letterspacing so it reads as a label, not compete with headlines. */
+  /* Small-caps kicker above serif headlines. Owner warm-dark spec: sand
+     (#E8C9A0) eyebrows — rust reserved for CTAs/links/active only. */
   .eyebrow {
-    @apply text-[12px] font-bold uppercase tracking-[0.14em] text-ember;
+    @apply text-[12px] font-bold uppercase tracking-[0.14em] text-pinetint;
   }
 }
 
