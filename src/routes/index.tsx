@@ -633,24 +633,38 @@ function FounderStory() {
       <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
         <div className="mx-auto max-w-3xl text-center">
           <p className="eyebrow">A note from the founder</p>
-          <h2 className="mt-4 font-display text-3xl text-ink lg:text-[32px]">
-            Your product&rsquo;s new GTM advantage.
+          <h2 className="mt-4 font-display text-[28px] leading-[1.15] text-balance text-ink sm:text-[32px]">
+            Good products deserve a better story.
           </h2>
-          <p className="mt-5 text-lg leading-relaxed text-mist">
-            MarketReady is a product marketing consultancy for B2B SaaS,
-            consumer tech, and growing startups that are ready to turn a good
-            product into a growth story that actually works. We bring senior
-            product marketing thinking across positioning, messaging, GTM
-            strategy, launches, and sales enablement to help companies get
-            clearer, move faster, and scale smarter.
+          <p className="mx-auto mt-4 max-w-[620px] text-[13px] leading-relaxed text-mist">
+            I&rsquo;ve spent my career helping companies bring products to
+            market, and I&rsquo;ve seen what happens when the product is ready
+            but the story isn&rsquo;t.
           </p>
-          <p className="mt-4 text-lg leading-relaxed text-mist">
-            Because when your story is clear, your customers understand the
-            value, your sales team knows how to sell it, and your business has
-            a stronger foundation for growth.
+          <p className="mx-auto mt-3 max-w-[620px] text-[13px] leading-relaxed text-mist">
+            The positioning is fuzzy. The sales team is asking for better
+            materials. Marketing is saying one thing while the product says
+            another. And suddenly you&rsquo;re spending more money trying to
+            scale a story that was never clear to begin with.
           </p>
-          <p className="mt-6 font-display text-xl leading-snug text-ember">
-            Clearer story. Stronger sales. Smarter growth.
+          <p className="mt-4 text-[13px] font-semibold text-ember">
+            That&rsquo;s the problem I built MarketReady to solve.
+          </p>
+          <p className="mx-auto mt-4 max-w-[620px] text-[13px] leading-relaxed text-mist">
+            I bring the product marketing leadership, strategic thinking, and
+            hands-on execution to help you get the story right, give your team
+            what they need to sell it, and build a GTM foundation that can
+            support the next stage of growth.
+          </p>
+          <p className="mx-auto mt-3 max-w-[620px] text-[13px] leading-relaxed text-mist">
+            I&rsquo;m not here to hand you a strategy deck. I&rsquo;m here to
+            help you put it to work.
+          </p>
+          <p className="mt-6 text-[13px] font-semibold text-ink">
+            Wasani Probasco
+          </p>
+          <p className="-mt-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">
+            Founder, MarketReady
           </p>
         </div>
         <div className="mx-auto mt-10 max-w-4xl">
