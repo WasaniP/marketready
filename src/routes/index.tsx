@@ -146,20 +146,20 @@ function FrictionObservations() {
     {
       n: "01",
       header: "Explaining, not selling",
-      body: "I've sat on demo calls where the first 30 minutes go to explaining the category, not selling the product. That's not a sales problem. That's a positioning problem.",
-      tag: "Costs you \u2192 Longer sales cycles",
+      body: "If the first 30 minutes of a demo are spent explaining the category instead of selling the product, your positioning isn't doing enough work.",
+      tag: "The cost \u2192 Longer sales cycles",
     },
     {
       n: "02",
       header: "The ads were never the problem",
-      body: "I've watched founders pour six figures into paid traffic before fixing copy that bounces visitors in under 8 seconds. The ads were never the problem.",
-      tag: "Costs you \u2192 Wasted paid spend",
+      body: "If visitors are bouncing before they understand your value, more paid traffic won't fix it. You're just paying to send more people to the wrong message.",
+      tag: "The cost \u2192 Wasted paid spend",
     },
     {
       n: "03",
       header: "Discounting to close",
-      body: "When buyers can't tell you apart from a cheaper option, your reps discount to close. I've seen this kill margins on otherwise strong products.",
-      tag: "Costs you \u2192 Margin on every deal",
+      body: "When buyers can't clearly see why you're different, price becomes the easiest lever to pull.",
+      tag: "The cost \u2192 Lower margins",
     },
   ];
   return (
@@ -180,13 +180,13 @@ function FrictionObservations() {
       </div>
       <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
         <div className="friction-grid">
-          <div>
-            <p className="friction-eyebrow">What I keep seeing</p>
+          <div className="friction-left">
+            <p className="friction-eyebrow">Where growth gets stuck</p>
             <h2 className="friction-headline">
-              The patterns I see holding back growth
+              Three patterns that quietly hold back growth
             </h2>
             <p className="friction-intro">
-              After years inside media and tech brands, I notice the same three failure modes. If any of these sound familiar, your positioning is doing it, not your product.
+              After years inside media and tech brands, I notice the same three failure modes. If any of these sound familiar, your positioning may be the problem, not your product.
             </p>
           </div>
           <div>
@@ -202,9 +202,8 @@ function FrictionObservations() {
                 </div>
               </article>
             ))}
-            <div className="friction-closing-rule" aria-hidden="true" />
             <p className="friction-closing">
-              All three show up in the diagnostic.{" "}
+              These are the patterns the diagnostic is built to uncover.{" "}
               <a
                 href="#calculator"
                 className="friction-closing-link"

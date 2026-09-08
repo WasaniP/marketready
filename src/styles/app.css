@@ -678,6 +678,10 @@
   gap: 48px;
   align-items: start;
 }
+#friction .friction-left {
+  position: sticky;
+  top: 96px;
+}
 #friction .friction-eyebrow {
   font-size: 11px;
   font-weight: 600;
@@ -703,6 +707,7 @@
 }
 #friction .friction-row {
   display: flex;
+  align-items: baseline;
   gap: 18px;
   padding-top: 22px;
   padding-bottom: 22px;
@@ -711,16 +716,13 @@
 #friction .friction-row:first-child {
   padding-top: 0;
 }
-#friction .friction-row:last-of-type {
-  border-bottom: none;
-}
 #friction .friction-numeral {
   flex-shrink: 0;
   width: 56px;
   font-family: var(--font-display);
   font-size: 52px;
   line-height: 0.85;
-  color: #2a2320;
+  color: #332b26;
   user-select: none;
 }
 #friction .friction-row-content {
@@ -742,18 +744,12 @@
 }
 #friction .friction-tag {
   font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   color: #c96a42;
 }
-#friction .friction-closing-rule {
-  height: 1px;
-  background-color: #3a312b;
-  margin-top: 26px;
-  margin-bottom: 20px;
-}
 #friction .friction-closing {
+  margin-top: 20px;
   font-family: var(--font-display);
   font-size: 16px;
   line-height: 1.5;
@@ -770,6 +766,9 @@
 @media (max-width: 900px) {
   #friction .friction-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  #friction .friction-left {
+    position: static;
   }
 }
 @media (max-width: 768px) {
