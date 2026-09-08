@@ -917,15 +917,19 @@ export function HeroDiagnostic({
               in the hero; the sample-report card anchors the right column. */}
           <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
             <div className="text-center lg:text-left">
-              <p className="eyebrow">Are you MarketReady?</p>
+              <p className="eyebrow">ARE YOU MARKETREADY?</p>
               <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-ink sm:text-[30px]">
-                Clear Positioning. Higher Conversion. Zero Wasted Burn.
+                Your product isn't the problem.
+                <br />
+                Your market story might be.
               </h1>
               <p className="mx-auto mt-3 max-w-[520px] text-[17px] font-medium leading-[1.6] text-mist lg:mx-0">
-                After years inside media and tech brands, I've watched
-                great products lose on language, not the product. Run your
-                URL and I'll show you how your GTM reads to a first-time
-                buyer.
+                I help B2B SaaS, consumer tech, and growing startups turn good
+                products into products people understand, remember, and buy.
+                From positioning and messaging to GTM strategy and launches, I
+                help you figure out what's not working, what needs to change,
+                and how to take your product to market with a story that actually
+                lands.
               </p>
               <form onSubmit={handleSubmit} noValidate className="mx-auto mt-5 flex max-w-md flex-col gap-3 lg:mx-0">
                 <div className="text-left">
@@ -944,7 +948,7 @@ export function HeroDiagnostic({
                     aria-describedby={error ? "calc-error" : undefined}
                   />
                   <p className="mt-2 text-[12px] leading-relaxed text-fog">
-                    Free, instant, no email needed. I read your public site like a buyer would.
+                    Run your URL through MarketReady and see your GTM through a buyer's eyes.
                   </p>
                 </div>
                 {error && (
@@ -959,7 +963,7 @@ export function HeroDiagnostic({
                   Get Your MarketReady Score →
                 </button>
                 <p className="text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-fog">
-                  My 60-second read · Built for B2B SaaS and consumer tech
+                  MY 60-SECOND READ - BUILT FOR B2B SAAS AND CONSUMER TECH
                 </p>
               </form>
             </div>
