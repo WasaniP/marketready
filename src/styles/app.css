@@ -637,11 +637,11 @@
   }
   #founder .founder-logos {
     flex-wrap: wrap;
-    justify-content: space-evenly;
-    row-gap: 16px;
+    justify-content: space-between;
+    row-gap: 14px;
   }
   #founder .founder-logo {
-    flex: 0 1 40%;
-    max-width: 40%;
+    flex: 0 1 22%;
+    max-width: 22%;
   }
 }
