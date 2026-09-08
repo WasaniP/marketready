@@ -35,7 +35,7 @@ export function HeroMockup() {
   const rowCls =
     "flex items-center justify-between gap-3 rounded-lg border border-hairline bg-sand px-3.5 py-2.5";
   return (
-    <div className="relative mx-auto w-full max-w-[480px]">
+    <div className="relative mx-auto w-full max-w-[380px]">
       <div
         className="relative overflow-hidden rounded-2xl bg-linen"
         style={{ border: "1px solid #3A312B", borderRadius: "16px" }}
@@ -973,7 +973,7 @@ export function HeroDiagnostic({
             </div>
             {/* Spec §3: sample-report card is the sole hero visual, anchored
                 high in the right column. Stacks below the text on mobile. */}
-            <div>
+            <div className="flex justify-center">
               <HeroMockup />
             </div>
           </div>
