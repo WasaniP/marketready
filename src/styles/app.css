@@ -638,7 +638,7 @@
   #founder .founder-logos {
     flex-wrap: wrap;
     justify-content: space-between;
-    row-gap: 14px;
+    gap: 12px 12px;
   }
   #founder .founder-logo {
     flex: 0 1 22%;
