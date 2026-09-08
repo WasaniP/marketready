@@ -275,7 +275,8 @@
   animation: mr-ai-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Methodology strip: staggered pop-in reveal for each dot (build #36). */
+/* Methodology strip keyframes (build #36). mr-step-up still drives the
+   Engine section reveals; mr-line-draw keyframes retained for reference. */
 @keyframes mr-step-up {
   from {
     opacity: 0;
@@ -286,10 +287,6 @@
     transform: translateY(0) scale(1);
   }
 }
-.mr-step-reveal {
-  animation: mr-step-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-/* Methodology strip: connector line draws left-to-right (build #36). */
 @keyframes mr-line-draw {
   from {
     transform: scaleX(0);
@@ -298,9 +295,8 @@
     transform: scaleX(1);
   }
 }
-.mr-line-draw {
-  transform-origin: left center;
-  animation: mr-line-draw 0.9s 0.15s cubic-bezier(0.65, 0, 0.35, 1) both;
+.mr-step-reveal {
+  animation: mr-step-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Build #NN: Diagnostic Engine 3-col re-layout animations. The gauge
@@ -440,7 +436,6 @@
   .venn-core,
   .ai-enter,
   .mr-step-reveal,
-  .mr-line-draw,
   .mr-shift-slide,
   .mr-data-pulse,
   .mr-radar-scan,
@@ -778,5 +773,140 @@
   }
   #friction .friction-numeral {
     font-size: 40px;
+  }
+}
+/* ------------------------------------------------------------------ */
+/* HowItWorks redesign (owner spec): centered header, 3-col steps with */
+/* colored top borders + arrow gutters, grain overlay @ ~28%.          */
+/* ------------------------------------------------------------------ */
+#how-it-works .hiw-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  mix-blend-mode: overlay;
+  z-index: 0;
+}
+#how-it-works .hiw-grain svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#how-it-works .hiw-eyebrow {
+  color: #e8c9a0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+#how-it-works .hiw-headline {
+  margin-top: 10px;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: #f5f0e8;
+}
+#how-it-works .hiw-intro-1 {
+  margin-top: 14px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #b8aea3;
+}
+#how-it-works .hiw-intro-2 {
+  margin-top: 12px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #b8aea3;
+}
+#how-it-works .hiw-steps {
+  margin-top: 30px;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr) 20px minmax(0, 1fr);
+  gap: 0;
+  text-align: left;
+}
+#how-it-works .hiw-step {
+  border-top: 3px solid;
+  padding-top: 16px;
+  min-width: 0;
+}
+#how-it-works .hiw-step-01 {
+  border-top-color: #c96a42;
+}
+#how-it-works .hiw-step-02 {
+  border-top-color: #a8502f;
+}
+#how-it-works .hiw-step-03 {
+  border-top-color: #6e5a3f;
+}
+#how-it-works .hiw-arrow {
+  display: flex;
+  list-style: none;
+  justify-content: center;
+  padding-top: 38px;
+  color: #3a312b;
+  font-size: 14px;
+  line-height: 1;
+  user-select: none;
+}
+#how-it-works .hiw-step-head {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+#how-it-works .hiw-numeral {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: #c96a42;
+}
+#how-it-works .hiw-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #f5f0e8;
+  margin: 0;
+}
+#how-it-works .hiw-body {
+  margin-top: 8px;
+  margin-bottom: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #b8aea3;
+}
+#how-it-works .hiw-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 28px;
+  margin-left: auto;
+  margin-right: auto;
+  background: #c96a42;
+  color: #16120f;
+  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+#how-it-works .hiw-cta:hover {
+  background: #a8502f;
+}
+@media (max-width: 900px) {
+  #how-it-works .hiw-steps {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  #how-it-works .hiw-arrow {
+    display: none;
   }
 }
