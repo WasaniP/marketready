@@ -117,6 +117,18 @@
   .eyebrow {
     @apply text-[12px] font-bold uppercase tracking-[0.14em] text-pinetint;
   }
+  /* Hero headline phrase highlight — same rust orange as the CTA button
+     (--color-ember #C96A42). Inline, rounded, wraps tightly around the
+     highlighted words only; dark text on the fill like the CTA. */
+  .hero-highlight {
+    display: inline-block;
+    border-radius: 0.4em;
+    background-color: var(--color-ember);
+    color: var(--color-cream);
+    padding: 0.06em 0.28em 0.1em;
+    line-height: 1.3;
+    box-shadow: 0 2px 14px rgba(201, 106, 66, 0.35);
+  }
 }
 
 /* ------------------------------------------------------------------ */

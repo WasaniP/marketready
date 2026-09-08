@@ -918,12 +918,12 @@ export function HeroDiagnostic({
           <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
             <div className="text-center lg:text-left">
               <p className="eyebrow">ARE YOU MARKETREADY?</p>
-              <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-ink sm:text-[30px]">
+              <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-white sm:text-[30px]">
                 Your product isn't the problem.
                 <br />
-                Your market story might be.
+                <span className="hero-highlight">Your market story might be.</span>
               </h1>
-              <p className="mx-auto mt-3 max-w-[520px] text-[17px] font-medium leading-[1.6] text-mist lg:mx-0">
+              <p className="mx-auto mt-3 max-w-[520px] text-[17px] font-medium leading-[1.6] text-stone-300 lg:mx-0">
                 I help B2B SaaS, consumer tech, and growing startups turn good
                 products into products people understand, remember, and buy.
                 From positioning and messaging to GTM strategy and launches, I
@@ -947,7 +947,7 @@ export function HeroDiagnostic({
                     className="field-input h-[48px] text-[15px]"
                     aria-describedby={error ? "calc-error" : undefined}
                   />
-                  <p className="mt-2 text-[12px] leading-relaxed text-fog">
+                  <p className="mt-2 text-[12px] leading-relaxed text-stone-400">
                     Run your URL through MarketReady and see your GTM through a buyer's eyes.
                   </p>
                 </div>
