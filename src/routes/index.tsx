@@ -609,15 +609,21 @@ function DiagnosticEngine() {
 /* at, not MarketReady clients.                                        */
 /* ------------------------------------------------------------------ */
 
-const FOUNDER_CRED_BRANDS: { label: string; src: string }[] = [
-  { label: "Amazon", src: "/logos/amazon.svg" },
-  { label: "Warner Bros. Discovery", src: "/logos/wbd.svg" },
-  { label: "TNT Sports", src: "/logos/tntsports.svg" },
-  { label: "TBS", src: "/logos/tbs.svg" },
-  { label: "Bleacher Report", src: "/logos/bleacherreport.svg" },
-  { label: "Variety", src: "/logos/variety.svg" },
-  { label: "AEW", src: "/logos/aew.svg" },
-  { label: "NCAA", src: "/logos/ncaa.svg" },
+/* Founder light panel (owner spec 2026-09-08): the single cream section on
+   the homepage — warm cream bg, paper grain, ghosted MR monogram, two-column
+   editorial layout, static full-color logo bar. Copy is unchanged; only the
+   layout, color, and texture were reworked. Hard-coded LIGHT values are used
+   throughout (the remapped cream/ink/mist/fog tokens resolve to dark). */
+
+const FOUNDER_CRED_BRANDS: { label: string; src: string; h: number }[] = [
+  { label: "Amazon", src: "/logos/amazon.svg", h: 12 },
+  { label: "Warner Bros. Discovery", src: "/logos/wbd.svg", h: 13 },
+  { label: "TNT Sports", src: "/logos/tntsports.svg", h: 13 },
+  { label: "TBS", src: "/logos/tbs.svg", h: 14 },
+  { label: "Bleacher Report", src: "/logos/bleacherreport.svg", h: 12 },
+  { label: "Variety", src: "/logos/variety.svg", h: 13 },
+  { label: "AEW", src: "/logos/aew.svg", h: 14 },
+  { label: "NCAA", src: "/logos/ncaa.svg", h: 15 },
 ];
 
 /* Founder bio (owner spec §12): first-person founder copy replaces the   */
@@ -628,68 +634,91 @@ function FounderStory() {
   return (
     <section
       id="founder"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-14 sm:py-[4.5rem]"
+      className="founder-light relative scroll-mt-24 overflow-hidden bg-[#F2ECE2]"
+      style={{ borderTop: "1px solid #3A312B", borderBottom: "1px solid #3A312B" }}
     >
-      <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="eyebrow">A note from the founder</p>
-          <h2 className="mt-4 font-display text-[28px] leading-[1.15] text-balance text-ink sm:text-[32px]">
-            Good products deserve a better story.
-          </h2>
-          <p className="mx-auto mt-4 max-w-[620px] text-[13px] leading-relaxed text-mist">
-            I&rsquo;ve spent my career helping companies bring products to
-            market, and I&rsquo;ve seen what happens when the product is ready
-            but the story isn&rsquo;t.
-          </p>
-          <p className="mx-auto mt-3 max-w-[620px] text-[13px] leading-relaxed text-mist">
-            The positioning is fuzzy. The sales team is asking for better
-            materials. Marketing is saying one thing while the product says
-            another. And suddenly you&rsquo;re spending more money trying to
-            scale a story that was never clear to begin with.
-          </p>
-          <p className="mt-4 text-[13px] font-semibold text-ember">
-            That&rsquo;s the problem I built MarketReady to solve.
-          </p>
-          <p className="mx-auto mt-4 max-w-[620px] text-[13px] leading-relaxed text-mist">
-            I bring the product marketing leadership, strategic thinking, and
-            hands-on execution to help you get the story right, give your team
-            what they need to sell it, and build a GTM foundation that can
-            support the next stage of growth.
-          </p>
-          <p className="mx-auto mt-3 max-w-[620px] text-[13px] leading-relaxed text-mist">
-            I&rsquo;m not here to hand you a strategy deck. I&rsquo;m here to
-            help you put it to work.
-          </p>
-          <p className="mt-6 text-[13px] font-semibold text-ink">
-            Wasani Probasco
-          </p>
-          <p className="-mt-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">
-            Founder, MarketReady
-          </p>
-        </div>
-        <div className="mx-auto mt-10 max-w-4xl">
-          <div className="mr-marquee" aria-hidden="true">
-            <div className="mr-marquee-track">
-              {[0, 1].map((i) => (
-                <div key={i} className="mr-logo-group">
-                  {FOUNDER_CRED_BRANDS.map((b) => (
-                    <div
-                      key={`${i}-${b.label}`}
-                      className="flex h-10 w-auto items-center justify-start px-6"
-                    >
-                      <img
-                        src={b.src}
-                        alt=""
-                        loading="lazy"
-                        className="h-auto max-h-7 w-auto max-w-[150px] object-contain opacity-75 transition-opacity hover:opacity-100"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+      {/* Paper grain overlay (above the bg, below everything else). */}
+      <div className="founder-grain" aria-hidden="true">
+        <svg width="100%" height="100%" aria-hidden="true">
+          <filter id="founder-grain-filter">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.75"
+              numOctaves="4"
+              stitchTiles="stitch"
+            />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#founder-grain-filter)" />
+        </svg>
+      </div>
+      {/* Ghosted MR monogram: bleeds off the top edge, hidden < 768px. */}
+      <div className="founder-mono" aria-hidden="true">
+        MR
+      </div>
+      <div className="relative mx-auto w-full max-w-[1200px] px-6 py-8 sm:px-12 sm:py-12">
+        <div className="founder-grid">
+          {/* Left column: eyebrow, headline, body, signature. */}
+          <div className="founder-left">
+            <p className="founder-eyebrow">A note from the founder</p>
+            <h2 className="founder-headline">
+              Good products deserve a better story.
+            </h2>
+            <div className="founder-body">
+              <p>
+                I&rsquo;ve spent my career helping companies bring products to
+                market, and I&rsquo;ve seen what happens when the product is ready
+                but the story isn&rsquo;t.
+              </p>
+              <p>
+                The positioning is fuzzy. The sales team is asking for better
+                materials. Marketing is saying one thing while the product says
+                another. And suddenly you&rsquo;re spending more money trying to
+                scale a story that was never clear to begin with.
+              </p>
+              <p>
+                I bring the product marketing leadership, strategic thinking, and
+                hands-on execution to help you get the story right, give your team
+                what they need to sell it, and build a GTM foundation that can
+                support the next stage of growth.
+              </p>
+              <p>
+                I&rsquo;m not here to hand you a strategy deck. I&rsquo;m here to
+                help you put it to work.
+              </p>
+            </div>
+            <div className="founder-sig">
+              <p className="founder-sig-name">
+                Wasani Probasco
+              </p>
+              <p className="founder-sig-title">
+                Founder, MarketReady
+              </p>
             </div>
           </div>
-          <p className="mt-4 text-center text-xs text-fog">
+          {/* Right column: closing tagline, vertically centered. */}
+          <div className="founder-right">
+            <div className="founder-tag-rule" aria-hidden="true" />
+            <p className="founder-tagline">
+              That&rsquo;s the problem I built MarketReady to solve.
+            </p>
+          </div>
+        </div>
+        {/* Static full-color logo bar, full container width. */}
+        <div className="founder-logobar">
+          <div className="founder-logos">
+            {FOUNDER_CRED_BRANDS.map((b) => (
+              <img
+                key={b.label}
+                src={b.src}
+                alt={b.label}
+                title={b.label}
+                loading="lazy"
+                className="founder-logo"
+                style={{ height: `${b.h}px` }}
+              />
+            ))}
+          </div>
+          <p className="founder-caption">
             Brands my teams have worked with, not MarketReady clients.
           </p>
         </div>
