@@ -941,14 +941,14 @@
   pointer-events: none;
 }
 #methodology .engine-panel.is-open::before {
-  top: -1px;
-  right: -1px;
+  top: 1px;
+  right: 1px;
   border-top: 1px solid #c96a42;
   border-right: 1px solid #c96a42;
 }
 #methodology .engine-panel.is-open::after {
-  bottom: -1px;
-  right: -1px;
+  bottom: 1px;
+  right: 1px;
   border-bottom: 1px solid #c96a42;
   border-right: 1px solid #c96a42;
 }
@@ -956,7 +956,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
   padding: 14px 16px;
   text-align: left;
@@ -969,6 +969,19 @@
   font-size: 18px;
   line-height: 1.25;
   color: #f5f0e8;
+  margin-right: auto;
+  min-width: 0;
+}
+#methodology .engine-panel-chevron {
+  height: 14px;
+  width: 14px;
+  flex-shrink: 0;
+  color: #7d736a;
+  transition: transform 0.2s ease;
+}
+#methodology .engine-panel-chevron.is-open {
+  transform: rotate(180deg);
+  color: #c96a42;
 }
 #methodology .engine-meter {
   display: inline-flex;
@@ -1094,14 +1107,14 @@
   pointer-events: none;
 }
 #methodology .engine-gauge::before {
-  top: -1px;
-  left: -1px;
+  top: 1px;
+  left: 1px;
   border-top: 1px solid #c96a42;
   border-left: 1px solid #c96a42;
 }
 #methodology .engine-gauge::after {
-  bottom: -1px;
-  right: -1px;
+  bottom: 1px;
+  right: 1px;
   border-bottom: 1px solid #c96a42;
   border-right: 1px solid #c96a42;
 }
@@ -1110,7 +1123,7 @@
   font-size: 9px;
   letter-spacing: 0.14em;
   color: #7d736a;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 #methodology .engine-gauge-wrap {
   position: relative;
@@ -1152,14 +1165,14 @@
   color: #c4603a;
 }
 #methodology .engine-gauge-rule {
-  margin-top: 14px;
+  margin-top: 10px;
   border-top: 1px solid #3a312b;
 }
 #methodology .engine-disclaimer {
-  margin-top: 12px;
+  margin-top: 8px;
   font-family: var(--font-mono);
   font-size: 9px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: #7d736a;
 }
 #methodology .engine-panel-head:focus-visible,
