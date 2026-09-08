@@ -27,27 +27,27 @@ import { apiUrl } from "~/lib/apiOrigin";
 /* ------------------------------------------------------------------ */
 export function HeroMockup() {
   const rows = [
-    { label: "Category Positioning", score: "29/100", cls: "text-[#A15C2B]" },
-    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-[#A15C2B]" },
-    { label: "GTM Path & Offer", score: "27/100", cls: "text-[#A15C2B]" },
-    { label: "Differentiation Anchor", score: "21/100", cls: "text-[#93472A]" },
+    { label: "Category Positioning", score: "29/100", cls: "text-scorerefine" },
+    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-scorerefine" },
+    { label: "GTM Path & Offer", score: "27/100", cls: "text-scorerefine" },
+    { label: "Differentiation Anchor", score: "21/100", cls: "text-scorework" },
   ];
   const rowCls =
-    "flex items-center justify-between gap-3 rounded-lg border border-hairline bg-cream px-3.5 py-2.5";
+    "flex items-center justify-between gap-3 rounded-lg border border-linen/80 bg-white/[0.05] px-3.5 py-2.5";
   return (
     <div className="relative mx-auto w-full max-w-[480px]">
       <div
-        className="relative overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(28,25,23,0.06),0_16px_40px_rgba(28,25,23,0.12)]"
-        style={{ border: "1px solid #E3DCD2", borderRadius: "16px" }}
+        className="relative overflow-hidden rounded-2xl border border-linen bg-white/[0.04] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-sm"
+        style={{ borderRadius: "16px" }}
       >
         {/* Top header bar: window dots + URL pill + sample badge */}
         <div className="flex items-center gap-3 border-b border-hairline bg-sand px-4 py-2.5">
           <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-fog/40" />
+            <span className="h-2.5 w-2.5 rounded-full bg-fog/40" />
+            <span className="h-2.5 w-2.5 rounded-full bg-fog/40" />
           </span>
-          <span className="min-w-0 flex-1 truncate rounded-md bg-white px-2 py-0.5 text-center text-[12px] text-fog">
+          <span className="min-w-0 flex-1 truncate rounded-md bg-white/[0.06] px-2 py-0.5 text-center text-[12px] text-fog">
             https://yourproduct.com
           </span>
           <span
@@ -58,10 +58,10 @@ export function HeroMockup() {
           </span>
         </div>
         {/* 4 metric rows; the last is partially faded like a real report */}
-        <div className="flex flex-col gap-2 bg-white p-4 sm:p-5">
+        <div className="flex flex-col gap-2 bg-white/[0.04] p-4 sm:p-5">
           {rows.slice(0, 3).map((r) => (
             <div key={r.label} className={rowCls}>
-              <span className="min-w-0 text-[13px] font-medium text-navy">{r.label}</span>
+              <span className="min-w-0 text-[13px] font-medium text-mist">{r.label}</span>
               <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${r.cls}`}>
                 {r.score}
               </span>
@@ -69,12 +69,12 @@ export function HeroMockup() {
           ))}
           <div className="relative h-[42px] overflow-hidden" aria-hidden="true">
             <div className={rowCls}>
-              <span className="min-w-0 text-[13px] font-medium text-navy">{rows[3].label}</span>
+              <span className="min-w-0 text-[13px] font-medium text-mist">{rows[3].label}</span>
               <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${rows[3].cls}`}>
                 {rows[3].score}
               </span>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/70 to-white" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-white/10" />
           </div>
           {/* Sample finding inline beneath the lowest-scoring row */}
           <p className="text-[11px] leading-relaxed text-emberdeep">
@@ -336,9 +336,9 @@ function CrawlScanner({ mode = "demo", url }: { mode?: "demo" | "loading"; url?:
       <div className="glass-card relative overflow-hidden">
         <div className="flex items-center gap-3 border-b border-hairline bg-sand px-4 py-3">
           <span aria-hidden="true" className="flex shrink-0 gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#D6CFC5]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-fog/40" />
+            <span className="h-2.5 w-2.5 rounded-full bg-fog/40" />
+            <span className="h-2.5 w-2.5 rounded-full bg-fog/40" />
           </span>
           <span className="min-w-0 flex-1 truncate text-xs text-fog">{shownUrl}</span>
           <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-ember/40 bg-ambertint px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emberdeep">
@@ -350,7 +350,7 @@ function CrawlScanner({ mode = "demo", url }: { mode?: "demo" | "loading"; url?:
           </span>
         </div>
         {mode === "loading" ? (
-          <div className="flex flex-col items-center gap-4 bg-white p-8" role="status" aria-live="polite">
+          <div className="flex flex-col items-center gap-4 bg-white/[0.04] p-8" role="status" aria-live="polite">
             <div className="relative flex h-16 w-16 items-center justify-center">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ember/25" />
               <span className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-ember bg-ambertint">
@@ -368,9 +368,9 @@ function CrawlScanner({ mode = "demo", url }: { mode?: "demo" | "loading"; url?:
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-2.5 bg-white p-5">
+          <div className="flex flex-col gap-2.5 bg-white/[0.04] p-5">
             {rows.map((s) => (
-              <div key={s.label} className={`flex items-center justify-between gap-3 rounded-lg border bg-cream px-4 py-3 ${s.border}`}>
+              <div key={s.label} className={`flex items-center justify-between gap-3 rounded-lg border bg-white/[0.05] px-4 py-3 ${s.border}`}>
                 <span className="min-w-0 text-xs font-medium text-mist sm:text-sm">{s.label}</span>
                 <span className={`shrink-0 font-mono text-sm font-bold tabular-nums ${s.scoreClass}`}>{s.score}</span>
               </div>
@@ -829,7 +829,7 @@ export function HeroDiagnostic({
        Spec §8: no gradient/glow wash in the hero — flat surface. §7: the
        only section boundary here is the hairline above the Manifesto. */
     <section id="top" className="relative bg-cream pt-24 pb-12 sm:pb-16">
-      <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
+      <div className="mr-container">
         {showResult ? (
           <div
             id="calculator"
@@ -904,10 +904,10 @@ export function HeroDiagnostic({
             </p>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-              <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">Nine scored dimensions</span>
-              <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">0 to 100 readiness score</span>
-              <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">First red flag, free</span>
-              <span className="rounded-full border border-linen bg-white px-3 py-1 text-xs font-medium text-mist">Full breakdown in your inbox</span>
+              <span className="rounded-full border border-linen bg-white/[0.05] px-3 py-1 text-xs font-medium text-mist">Nine scored dimensions</span>
+              <span className="rounded-full border border-linen bg-white/[0.05] px-3 py-1 text-xs font-medium text-mist">0 to 100 readiness score</span>
+              <span className="rounded-full border border-linen bg-white/[0.05] px-3 py-1 text-xs font-medium text-mist">First red flag, free</span>
+              <span className="rounded-full border border-linen bg-white/[0.05] px-3 py-1 text-xs font-medium text-mist">Full breakdown in your inbox</span>
             </div>
           </div>
         ) : (

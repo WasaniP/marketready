@@ -143,7 +143,8 @@ const HOW_IT_WORKS_STEPS = [
 function Manifesto() {
   return (
     <section id="manifesto" className="scroll-mt-24 border-t border-hairline bg-cream py-14 sm:py-[4.5rem]">
-      <div className="mx-auto max-w-2xl px-5 text-center sm:px-8">
+      <div className="mr-container">
+        <div className="mx-auto max-w-2xl text-center">
         <p className="eyebrow text-navy">Why I built this</p>
         <blockquote className="mt-5 font-display text-xl leading-snug text-ink sm:text-[22px]">
           Most startups don't have a product problem. They have a language
@@ -152,6 +153,7 @@ function Manifesto() {
           them the launch.
         </blockquote>
         <p className="mt-5 text-sm font-semibold text-ember">Wasani, Founder</p>
+        </div>
       </div>
     </section>
   );
@@ -179,7 +181,7 @@ function FrictionObservations() {
   ];
   return (
     <section id="friction" className="scroll-mt-24 border-t border-hairline bg-sand py-14 sm:py-[4.5rem]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+      <div className="mr-container">
         <div className="grid items-start gap-6 md:grid-cols-12 md:gap-8">
           <div className="md:col-span-4">
             <p className="eyebrow text-navy">What I keep seeing</p>
@@ -237,8 +239,8 @@ function HowItWorks() {
       id="how-it-works"
       className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-16 sm:py-[4.5rem]"
     >
-      <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="max-w-2xl">
+      <div className="mr-container">
+        <div className="max-w-3xl">
           <p className="eyebrow text-navy">How I work</p>
           <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
             Diagnose. Prescribe. Activate.
@@ -261,14 +263,14 @@ function HowItWorks() {
             {HOW_IT_WORKS_STEPS.map((step, i) => (
               <li
                 key={step.n}
-                className={`relative flex flex-col items-center text-center ${reveal}`}
+                className={`relative flex flex-col items-start text-left ${reveal}`}
                 style={{ animationDelay: `${220 + i * 180}ms` }}
               >
                 <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-navy/40 bg-cream text-[10px] font-bold text-navy">
                   <span className="relative">{step.n}</span>
                 </span>
                 <h3 className="mt-4 font-display text-xl text-ink">{step.name}</h3>
-                <p className="mt-2 max-w-xs text-sm leading-relaxed text-mist">{step.body}</p>
+                <p className="mt-2 text-sm leading-relaxed text-mist">{step.body}</p>
               </li>
             ))}
           </ol>
@@ -381,32 +383,32 @@ function EngineMintGauge({ active }: { active: boolean }) {
         role="img"
         aria-label="Illustrative overall readiness score: 38 out of 100"
       >
-        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(228,237,234,0.18)" strokeWidth="10" />
+        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(236,242,247,0.18)" strokeWidth="10" />
         <circle
           cx="80"
           cy="80"
           r={r}
           fill="none"
-          stroke="#B85C38"
+          stroke="#14b8a6"
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={`${c * 0.38} ${c}`}
           strokeDashoffset={offset}
           className="mr-gauge-sweep"
           style={{
-            filter: "drop-shadow(0 0 8px rgba(180,83,9,0.5))",
+            filter: "drop-shadow(0 0 8px rgba(20,184,166,0.5))",
             transitionDelay: active ? "1.2s" : "0ms",
           }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold leading-none tabular-nums text-sand drop-shadow-[0_2px_12px_rgba(180,83,9,0.25)] sm:text-[2.5rem]">
+        <span className="mr-gauge-score text-3xl font-extrabold leading-none tabular-nums sm:text-[2.5rem]">
           38
         </span>
         <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-pinetint">
           / 100
         </span>
-        <span className="mt-1.5 text-xs font-bold uppercase tracking-wider text-ambertint">
+        <span className="mt-1.5 rounded-full bg-ember/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-ember">
           High Risk
         </span>
       </div>
@@ -422,11 +424,11 @@ const PILLAR_STATUS: Record<string, { label: string; cls: string }> = {
   },
   "pillar-messaging": {
     label: "NEEDS REFINEMENT",
-    cls: "border-[#A16207]/40 bg-[#A16207]/10 text-[#A16207]",
+    cls: "border-scorerefine/40 bg-scorerefine/10 text-scorerefine",
   },
   "pillar-gtm": {
     label: "NEEDS REFINEMENT",
-    cls: "border-[#A16207]/40 bg-[#A16207]/10 text-[#A16207]",
+    cls: "border-scorerefine/40 bg-scorerefine/10 text-scorerefine",
   },
 };
 
@@ -462,29 +464,29 @@ function DiagnosticEngine() {
     <section
       ref={sectionRef}
       id="methodology"
-      className="relative scroll-mt-24 overflow-hidden bg-navy py-16 sm:py-[4.5rem]"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-indigo-950/60 py-16 sm:py-[4.5rem]"
     >
-      <div className="relative mx-auto w-full max-w-6xl overflow-hidden px-4 sm:px-6 lg:px-8">
+      <div className="mr-container">
         <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12 lg:gap-8">
           <div className={`flex flex-col lg:col-span-4 ${revealLeft}`}>
             <p className="eyebrow text-pinetint">My scoring system</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight text-sand sm:text-4xl">
+            <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-4xl">
               The MarketReady Diagnostic Engine
             </h2>
-            <p className="mt-3 text-lg leading-relaxed text-sand">
+            <p className="mt-3 text-lg leading-relaxed text-mist">
               This is how I read your site: nine dimensions, scored in seconds,
               grouped into three pillars.
             </p>
-            <p className="mt-3 text-base leading-relaxed text-sand/90">
-              After 8+ years running product marketing at Amazon, Warner Bros. Discovery, and Bleacher Report, I built this scorecard around the same 9 things I check on every positioning teardown.
+            <p className="mt-3 text-base leading-relaxed text-mist/90">
+              Running product marketing at Amazon, Warner Bros. Discovery, and Bleacher Report, I built this scorecard around the same 9 things I check on every positioning teardown.
             </p>
-            <p className="mt-4 text-sm leading-relaxed text-sand/85">
+            <p className="mt-4 text-sm leading-relaxed text-mist/85">
               I map every signal to one of nine scored dimensions, grouped into
               three pillars: how you position, how you message, and how fast you
               launch. You see where each breaks, what it costs you, and what to
               fix first.
             </p>
-            <p className="mt-6 text-sm text-sand/70">
+            <p className="mt-6 text-sm text-mist/70">
               Every dimension maps to a scored signal in your audit, with rewrites
               for the gaps that cost you conversion.
             </p>
@@ -517,8 +519,8 @@ function DiagnosticEngine() {
                         <span
                           className={`mr-data-pulse absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
                             accent === "ember"
-                              ? "bg-ember shadow-[0_0_10px_rgba(180,83,9,0.9)]"
-                              : "bg-navy shadow-[0_0_10px_rgba(30,58,95,0.9)]"
+                              ? "bg-ember shadow-[0_0_10px_rgba(20,184,166,0.9)]"
+                              : "bg-navy shadow-[0_0_10px_rgba(99,102,241,0.9)]"
                           }`}
                         />
                       )}
@@ -527,8 +529,8 @@ function DiagnosticEngine() {
                       className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
                         active
                           ? accent === "ember"
-                            ? "bg-ember shadow-[0_0_8px_rgba(180,83,9,0.9)]"
-                            : "bg-navy shadow-[0_0_10px_rgba(30,58,95,0.9)]"
+                            ? "bg-ember shadow-[0_0_8px_rgba(20,184,166,0.9)]"
+                            : "bg-navy shadow-[0_0_10px_rgba(99,102,241,0.9)]"
                           : "bg-ink/25"
                       }`}
                     />
@@ -553,10 +555,10 @@ function DiagnosticEngine() {
                     } ${
                       isEmber
                         ? open
-                          ? "border-ember/40 shadow-[0_0_28px_rgba(180,83,9,0.12)]"
+                          ? "border-ember/40 shadow-[0_0_28px_rgba(20,184,166,0.12)]"
                           : "hover:border-ember/40"
                         : open
-                          ? "border-navy/40 shadow-[0_0_28px_rgba(30,58,95,0.12)]"
+                          ? "border-navy/40 shadow-[0_0_28px_rgba(99,102,241,0.12)]"
                           : "hover:border-navy/40"
                     }`}
                   >
@@ -652,43 +654,50 @@ function FounderStory() {
       id="founder"
       className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream px-6 py-14 sm:py-[4.5rem]"
     >
-      <div className="relative mx-auto max-w-4xl">
-        <div className="flex max-w-3xl flex-col space-y-4">
-          <p className="eyebrow">A note from the founder</p>
-          <h2 className="font-display text-3xl text-ink lg:text-[32px]">
-            I've sat in the rooms where launches are won and lost.
-          </h2>
-          <p className="mt-1 max-w-[42rem] text-lg leading-relaxed text-mist">
-            Hi, I'm Wasani. I've spent 8+ years leading product marketing at Amazon, Warner Bros. Discovery (Bleacher Report), and other high-growth companies. I started MarketReady because I kept seeing the same thing: founders and growth teams scaling spend before their positioning could support it. This isn't an agency. It's me, working directly with you.
-          </p>
-        </div>
+      <div className="mr-container">
+        <div className="grid gap-10 md:grid-cols-2 md:items-center">
+          <div className="max-w-xl">
+            <p className="eyebrow">A note from the founder</p>
+            <h2 className="mt-3 font-display text-3xl text-ink lg:text-[32px]">
+              I've sat in the rooms where launches are won and lost.
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-mist">
+              Hi, I'm Wasani. I've spent years leading product marketing at
+              Amazon, Warner Bros. Discovery (Bleacher Report), and other
+              high-growth companies. I started MarketReady because I kept seeing
+              founders and growth teams scaling spend before their positioning
+              could support it. This isn't an agency. It's me, working directly
+              with you.
+            </p>
+          </div>
 
-        <div className="mb-4 mt-10">
-          <div className="mr-marquee" aria-hidden="true">
-            <div className="mr-marquee-track">
-              {[0, 1].map((i) => (
-                <div key={i} className="mr-logo-group">
-                  {FOUNDER_CRED_BRANDS.map((b) => (
-                    <div
-                      key={`${i}-${b.label}`}
-                      className="flex h-10 w-auto items-center justify-center px-6"
-                    >
-                      <img
-                        src={b.src}
-                        alt=""
-                        loading="lazy"
-                        className="h-auto max-h-7 w-auto max-w-[150px] object-contain opacity-75 transition-opacity hover:opacity-100"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+          <div>
+            <div className="mr-marquee" aria-hidden="true">
+              <div className="mr-marquee-track">
+                {[0, 1].map((i) => (
+                  <div key={i} className="mr-logo-group">
+                    {FOUNDER_CRED_BRANDS.map((b) => (
+                      <div
+                        key={`${i}-${b.label}`}
+                        className="flex h-10 w-auto items-center justify-center px-6"
+                      >
+                        <img
+                          src={b.src}
+                          alt=""
+                          loading="lazy"
+                          className="logo-mono h-auto max-h-7 w-auto max-w-[150px] object-contain opacity-60 transition-opacity hover:opacity-100"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
+            <p className="mt-3 text-xs text-fog">
+              Brands my teams have worked with, not MarketReady clients.
+            </p>
           </div>
         </div>
-        <p className="mt-4 text-center text-xs text-fog">
-          Brands my teams have worked with, not MarketReady clients.
-        </p>
       </div>
     </section>
   );
@@ -735,10 +744,10 @@ function ServicesStack() {
       id="services"
       className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream px-4 py-14 sm:py-[4.5rem]"
     >
-      <div className="relative mx-auto max-w-[1100px]">
+      <div className="mr-container">
         <div className="max-w-2xl">
           <p className="eyebrow text-navy">How we can work together</p>
-          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
+          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink text-balance sm:text-[32px]">
             Got your score? Here's how I help you fix the gaps.
           </h2>
           <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
@@ -817,14 +826,14 @@ function FaqAccordion() {
       id="faq"
       className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-sand py-14 sm:py-[4.5rem]"
     >
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+      <div className="mr-container">
         <div className="max-w-2xl">
           <p className="eyebrow">Questions I get asked</p>
           <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
             Frequently asked questions
           </h2>
         </div>
-        <div className="mt-8 max-w-3xl">
+        <div className="mt-8">
           <div className="flex flex-col gap-3">
             {FAQ_ITEMS.map((item, i) => {
               const isOpen = openIndex === i;
@@ -849,14 +858,12 @@ function FaqAccordion() {
                       <span className="text-base font-semibold text-ink">{item.q}</span>
                       <span
                         aria-hidden="true"
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors duration-200 ${
-                          isOpen
-                            ? "border-ember/50 bg-ambertint text-ember"
-                            : "border-hairline bg-ink/[0.03] text-fog"
+                        className={`ml-auto flex h-6 w-6 shrink-0 items-center justify-center transition-colors duration-200 ${
+                          isOpen ? "text-ember" : "text-fog"
                         }`}
                       >
                         <ChevronDown
-                          className={`h-3.5 w-3.5 transition-transform duration-300 ${
+                          className={`h-4 w-4 transition-transform duration-300 ${
                             isOpen ? "rotate-180" : ""
                           }`}
                         />
@@ -907,7 +914,7 @@ function Home() {
   const closeBooking = () => setBookingOpen(false);
 
   return (
-    <div className="min-h-dvh bg-cream">
+    <div className="min-h-dvh bg-night">
       <Header />
       <main>
         <HeroDiagnostic onBookBriefing={openBooking} />

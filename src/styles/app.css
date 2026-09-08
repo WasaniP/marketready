@@ -2,33 +2,48 @@
 @import "tailwindcss";
 
 @theme {
-  /* MarketReady humanized palette (owner spec): warm off-white base,
-     rust primary, deep pine secondary. The legacy semantic names
-     (ink / mist / electric / indigo / hairline / obsidian / night / panel)
-     are remapped here so the whole site re-themes consistently. */
-  --color-cream: #faf8f5; /* page bg, warm off-white */
-  --color-sand: #ebe4da; /* alt section bg, card fills (owner pass: darkened from #F2EDE6) */
-  --color-linen: #e3dcd2; /* borders / dividers / strokes */
-  --color-hairline: #ddd4c8; /* section-boundary hairline (owner pass: from #E3DCD2) */
-  --color-ink: #1c1917; /* primary headings + body */
-  --color-mist: #57534e; /* secondary / subheads */
-  --color-fog: #8c8681; /* captions / eyebrows / meta */
-  --color-ember: #B85C38; /* rust: CTAs / links / active */
-  --color-emberdeep: #93472A; /* rust hover / pressed */
-  --color-ambertint: #FBEDE6; /* rust tint: badges / highlights */
-  --color-navy: #1F4A42; /* deep pine: section headers, widget frame, footer */
-  --color-pinetint: #E4EDEA; /* pine tint: labels on the pine section */
-  --color-scorework: #A15C2B; /* diagnostic: needs work */
-  --color-scorerefine: #8A6A1F; /* diagnostic: needs refinement */
-  --color-scorepass: #1F4A42; /* diagnostic: strong / passing (pine) */
+  /* MarketReady 2026 consulting system: deep ink base, electric teal
+     primary, indigo secondary. Rendered with layered surfaces, gradient
+     glows, and glass cards so nothing reads flat. The warm legacy names
+     are kept as class vocabulary but re-pointed to this palette. */
+  --color-cream: #0b1017; /* page base, deep ink */
+  --color-sand: #111a24; /* alternate section surface, one step lighter */
+  --color-linen: #1e2833; /* borders / dividers / strokes */
+  --color-hairline: #24313d; /* section-boundary hairline (brighter for definition) */
+  --color-ink: #edf2f7; /* primary headings + body on dark */
+  --color-mist: #a8b3bf; /* secondary / subheads */
+  --color-fog: #74808d; /* captions / eyebrows / meta */
+  --color-ember: #14b8a6; /* electric teal: CTAs / links / active */
+  --color-emberdeep: #0fa392; /* teal hover / pressed */
+  --color-ambertint: #0f2b2c; /* teal-tint surface: badges on dark */
+  /* Literal `teal` token scale so bare `teal/30`, `teal-300`, `teal-500`
+     utilities resolve to the electric-teal palette (the dark 2026 system
+     uses these classes directly in components and app.css). */
+  --color-teal: #14b8a6;
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-teal-950: #042f2e;
+  --color-navy: #6366f1; /* indigo: secondary accent (teal = ember primary) */
+  --color-pinetint: #c9f3ec; /* pale teal labels on deep sections */
+  --color-scorework: #f59e0b; /* diagnostic: needs work */
+  --color-scorerefine: #facc15; /* diagnostic: needs refinement */
+  --color-scorepass: #34d399; /* diagnostic: strong */
 
-  /* Legacy semantic aliases (kept so existing classes re-theme, not break) */
-  --color-obsidian: #faf8f5;
-  --color-night: #f2ede6;
-  --color-panel: #f2ede6;
-  --color-hairline: #e3dcd2;
-  --color-electric: #B85C38;
-  --color-indigo: #1F4A42;
+  /* Legacy semantic aliases (kept so existing classes re-theme) */
+  --color-obsidian: #0b1017;
+  --color-night: #111a24;
+  --color-panel: #111a24;
+  --color-hairline: #24313d;
+  --color-electric: #14b8a6;
+  --color-indigo: #6366f1;
 
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
@@ -53,47 +68,67 @@
   }
 
   body {
-    @apply bg-cream font-sans text-ink antialiased;
+    @apply bg-night font-sans text-ink antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   ::selection {
-    background: rgb(184 92 56 / 0.22);
-    color: #1c1917;
+    background: rgb(20 184 166 / 0.28);
+    color: #edf2f7;
   }
 
   select option {
-    background-color: #faf8f5;
-    color: #1c1917;
+    background-color: #111a24;
+    color: #edf2f7;
   }
 }
 
 @layer components {
-  /* Warm light card: white fill, linen border, soft warm shadow. */
+  /* Single centered content container: 1200px max, 48px sides on desktop,
+     24px on mobile. Every section's content lives inside this — nothing
+     touches the viewport edge, and content stays left-aligned within. */
+  .mr-container {
+    @apply mx-auto w-full max-w-[1200px] px-6 sm:px-12;
+  }
+  /* Gauge center score: bright teal-tinged white with a soft glow on the
+   dark data panel. */
+.mr-gauge-score {
+  color: #f4fbfa;
+  text-shadow: 0 0 14px rgba(20, 184, 166, 0.45);
+}
+/* 2026 system: glass card on deep ink — translucent raised surface with
+     an inner top highlight, teal edge on hover, soft ambient shadow. */
   .glass-card {
-    @apply rounded-xl border border-hairline bg-white shadow-[0_1px_2px_rgba(28,25,23,0.05),0_10px_28px_rgba(28,25,23,0.07)];
+    @apply relative rounded-xl border border-linen bg-white/[0.04] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-sm;
+  }
+  .glass-card::before {
+    content: "";
+    @apply pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-white/20;
   }
 
-  /* Owner revision spec §8: cards on sand (#F2EDE6) sections use cream fill
-     with the same linen border + soft shadow as .glass-card. */
+  /* Same glass on the alternate (one-step-lighter) section surface. */
   .glass-card-sand {
-    @apply rounded-xl border border-hairline bg-cream shadow-[0_1px_2px_rgba(28,25,23,0.05),0_10px_28px_rgba(28,25,23,0.07)];
+    @apply relative rounded-xl border border-linen bg-white/[0.04] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-sm;
+  }
+  .glass-card-sand::before {
+    content: "";
+    @apply pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-white/20;
   }
 
-  /* Owner revision spec §8: cards on the pine (#1F4A42) section use
-     #14332D fill with a #2E5C53 border and NO shadow. */
+  /* Pine-card becomes the electric "data panel": teal-tinted panel with a
+     subtle teal border + glow, used for the gauge / data surfaces. */
   .pine-card {
-    @apply rounded-xl border border-[#2E5C53] bg-[#14332D];
+    @apply rounded-xl border border-teal/30 bg-gradient-to-b from-teal/15 to-teal/[0.04] shadow-[0_0_40px_-10px_rgba(20,184,166,0.35)];
   }
 
-  /* Primary CTA: rust fill, white text, deeper rust on hover. */
+  /* Primary CTA: electric teal fill, deep ink text, teal glow on hover. */
   .btn-electric {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-ember px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-emberdeep hover:shadow-[0_8px_24px_rgba(184,92,56,0.35)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-teal px-5 py-2.5 text-sm font-semibold text-[#04261f] transition-all duration-200 hover:bg-teal-300 hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
   }
 
-  /* Secondary CTA: outline on light. */
+  /* Secondary CTA: outline on dark. */
   .btn-ghost {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-linen bg-transparent px-5 py-2.5 text-sm font-medium text-ink transition-colors duration-200 hover:border-ember hover:text-ember active:scale-[0.98];
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-linen bg-transparent px-5 py-2.5 text-sm font-medium text-ink transition-colors duration-200 hover:border-teal hover:text-teal active:scale-[0.98];
   }
 
   .field-label {
@@ -101,21 +136,20 @@
   }
 
   .field-input {
-    @apply w-full rounded-lg border border-linen bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-fog focus:border-ember focus:ring-2 focus:ring-ember/25;
+    @apply w-full rounded-lg border border-linen bg-white/[0.05] px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-fog focus:border-teal focus:ring-2 focus:ring-teal/25;
   }
 
   .nav-link {
-    @apply text-sm font-medium text-mist transition-colors hover:text-ember;
+    @apply text-sm font-medium text-mist transition-colors hover:text-teal;
   }
 
   .chip {
-    @apply rounded-full border border-linen bg-ambertint/60 px-3 py-1 text-xs font-medium text-emberdeep;
+    @apply rounded-full border border-teal/30 bg-teal/10 px-3 py-1 text-xs font-medium text-teal;
   }
 
-  /* Small-caps kicker above serif headlines. Owner pass: ~12px, tighter
-     letterspacing so it reads as a label, not compete with headlines. */
+  /* Small-caps kicker above serif headlines. Electric teal, tight tracking. */
   .eyebrow {
-    @apply text-[12px] font-bold uppercase tracking-[0.14em] text-ember;
+    @apply text-[12px] font-bold uppercase tracking-[0.14em] text-teal;
   }
 }
 

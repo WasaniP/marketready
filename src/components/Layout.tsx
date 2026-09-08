@@ -61,7 +61,7 @@ export function Wordmark({
   /* Owner revision spec §2: inline wordmark in primary dark text with a rust
      underline + dot (replaces the PNG, which washed out on cream). On dark
      surfaces the text renders in warm neutral with the same rust accents. */
-  const text = tone === "dark" ? "text-[#F2EDE6]" : "text-ink";
+  const text = tone === "dark" ? "text-ink" : "text-ink";
   return (
     <a href="/" className={`flex flex-col leading-none ${className}`} aria-label="MarketReady home">
       <span className={`font-display text-[22px] font-bold tracking-tight ${text}`}>
@@ -112,13 +112,13 @@ export function ChevronDown({ className = "" }: { className?: string }) {
 const NAV_CTA_OUTLINE =
   "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-ember bg-transparent px-5 py-2.5 text-sm font-semibold text-ember transition-colors duration-200 hover:bg-ambertint active:scale-[0.98]";
 
-/* Owner spec §6: footer links — warm neutral on pine-dark, white on hover. */
+/* Owner spec §6: footer links — mist on the dark band, teal on hover. */
 const FOOTER_LINK =
-  "text-sm text-[#F2EDE6]/80 transition-colors hover:text-white";
+  "text-sm text-mist transition-colors hover:text-teal";
 
-/* Owner spec §6: outline CTA for use on the pine-dark footer band. */
+/* Owner spec §6: outline CTA for use on the dark footer band. */
 const FOOTER_CTA_OUTLINE =
-  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#F2EDE6]/40 bg-transparent px-5 py-2.5 text-sm font-semibold text-[#F2EDE6] transition-colors duration-200 hover:border-white hover:text-white active:scale-[0.98]";
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-teal/40 bg-transparent px-5 py-2.5 text-sm font-semibold text-teal transition-colors duration-200 hover:border-teal hover:bg-teal/10 active:scale-[0.98]";
 
 /* ------------------------------------------------------------------ */
 /* Services dropdown (desktop nav)                                     */
@@ -291,7 +291,7 @@ export function Header() {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled || menuOpen
-          ? "border-b border-linen bg-cream/90 shadow-[0_1px_2px_rgba(28,25,23,0.05)] backdrop-blur-xl"
+          ? "border-b border-linen bg-cream/90 shadow-[0_1px_2px_rgba(0,0,0,0.4)] backdrop-blur-xl"
           : "border-b border-transparent bg-transparent"
       }`}
     >
@@ -470,13 +470,13 @@ export function Header() {
 export function Footer({ onBook }: { onBook: () => void }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="bg-[#14332D] text-[#F2EDE6]">
+    <footer className="border-t border-hairline bg-sand text-ink">
       {/* Main footer body */}
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[2fr_1fr_1fr] md:py-16">
+      <div className="mr-container grid gap-10 py-14 md:grid-cols-[2fr_1fr_1fr] md:py-16">
         {/* Brand + mission */}
         <div className="max-w-sm">
           <Wordmark tone="dark" />
-          <p className="mt-4 text-sm leading-relaxed text-[#F2EDE6]/85">
+          <p className="mt-4 text-sm leading-relaxed text-mist">
             Are You MarketReady? I diagnose where your GTM is breaking,
             prescribe the highest-impact fixes, and activate them in 14 days.
             Wasani, Founder
@@ -485,7 +485,7 @@ export function Footer({ onBook }: { onBook: () => void }) {
 
         {/* Mirror of the top navigation + Score CTA */}
         <nav aria-label="Footer" className="flex flex-col items-start gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#F2EDE6]/60">
+          <span className="text-xs font-semibold uppercase tracking-wider text-fog">
             Navigate
           </span>
           <a
@@ -519,7 +519,7 @@ export function Footer({ onBook }: { onBook: () => void }) {
 
         {/* Contact */}
         <div className="flex flex-col items-start gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#F2EDE6]/60">
+          <span className="text-xs font-semibold uppercase tracking-wider text-fog">
             Get started
           </span>
           <button
@@ -531,7 +531,7 @@ export function Footer({ onBook }: { onBook: () => void }) {
           </button>
           <a
             href="mailto:hello@getmarketready.co"
-            className="mt-1 text-sm text-[#F2EDE6]/85 underline decoration-[#F2EDE6]/40 underline-offset-2 transition-colors hover:text-white hover:decoration-white/60"
+            className="mt-1 text-sm text-mist underline decoration-mist/40 underline-offset-2 transition-colors hover:text-teal hover:decoration-teal/60"
           >
             Have questions? Email us at hello@getmarketready.co
           </a>
@@ -539,27 +539,27 @@ export function Footer({ onBook }: { onBook: () => void }) {
       </div>
 
       {/* Legal strip */}
-      <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-6 sm:px-8 md:flex-row md:items-center md:justify-between">
-          <p className="text-xs text-[#F2EDE6]/60">
+      <div className="border-t border-hairline">
+        <div className="mr-container flex flex-col gap-3 py-6 md:flex-row md:items-center md:justify-between">
+          <p className="text-xs text-fog">
             © {year} MarketReady. All rights reserved.
           </p>
           <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2">
             <a
               href="/privacy"
-              className="text-xs text-[#F2EDE6]/60 transition-colors hover:text-white"
+              className="text-xs text-fog transition-colors hover:text-teal"
             >
               Privacy Policy
             </a>
             <a
               href="/terms"
-              className="text-xs text-[#F2EDE6]/60 transition-colors hover:text-white"
+              className="text-xs text-fog transition-colors hover:text-teal"
             >
               Terms of Service
             </a>
           </nav>
         </div>
-        <p className="border-t border-white/10 px-5 pb-6 pt-3 text-center text-xs text-[#F2EDE6]/50 sm:px-8">
+        <p className="border-t border-hairline px-6 pb-6 pt-3 text-center text-xs text-fog/80 sm:px-12">
           MarketReady Strategy Group: Go-To-Market Enablement &amp; Positioning.
         </p>
       </div>
