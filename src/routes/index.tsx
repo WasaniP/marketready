@@ -683,6 +683,41 @@ function FounderStory() {
     </section>
   );
 }
+/* ------------------------------------------------------------------ */
+/* Services: unpriced engagement models. Owner rule: no pricing lives  */
+/* on the homepage. The diagnostic CTA is the amber primary; every     */
+/* other CTA is outline/secondary.                                     */
+/* ------------------------------------------------------------------ */
+const SERVICE_CARDS = [
+  {
+    stage: "Start here · Free",
+    name: "MarketReady Diagnostic",
+    body: "The free AI audit and scorecard. I read your live site like a first-time buyer and show you where positioning leaks.",
+    points: ["Instant readiness score", "Surface red-flag callout", "Pillar-by-pillar breakdown"],
+    cta: "Get Your MarketReady Score →",
+    href: "/services/diagnostic",
+    primary: true,
+  },
+  {
+    stage: "Fix it in 14 days",
+    name: "Positioning Sprint",
+    body: "A focused engagement where I rebuild your positioning, messaging, and launch assets directly from the diagnostic.",
+    points: ["Positioning architecture", "Homepage copy rewrite", "Launch deck and GTM plan"],
+    cta: "Explore the Sprint →",
+    href: "/services/sprint",
+    primary: false,
+  },
+  {
+    stage: "Stay sharp",
+    name: "Fractional GTM Lead",
+    body: "Ongoing senior PMM partnership: I stay in the room as you launch, iterate messaging, and enable sales.",
+    points: ["Embedded PMM leadership", "Ongoing message iteration", "Sales enablement support"],
+    cta: "Explore Fractional →",
+    href: "/services/fractional",
+    primary: false,
+  },
+] as const;
+
 function ServicesStack() {
   return (
     <section
