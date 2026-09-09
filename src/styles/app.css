@@ -1360,17 +1360,16 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Work With Me (#services): third light section. #E8DAC4 bg (darker   */
-/* than #F2ECE2 by design), feTurbulence grain at multiply/16%, 1px    */
-/* #3A312B hairlines top + bottom, full-width header, 3-col cards      */
-/* (1-col below 900px), CTA pinned to card bottom. All light-section   */
-/* colors hard-coded + scoped here (global tokens remap to dark). No   */
-/* box-shadows.                                                        */
+/* Work With Me (#services): third light section. #EDE1D5 bg,          */
+/* feTurbulence grain at multiply/16%, 1px #3A312B hairlines top +     */
+/* bottom, full-width header, 3 editorial columns (1-col below 900px), */
+/* CTA pinned to column bottom. All light-section colors hard-coded +  */
+/* scoped here (global tokens remap to dark). No box-shadows.          */
 /* ------------------------------------------------------------------ */
 #services.wwm-section {
   position: relative;
   overflow: hidden;
-  background: #E8DAC4;
+  background: #EDE1D5;
   border-top: 1px solid #3A312B;
   border-bottom: 1px solid #3A312B;
   scroll-margin-top: 6rem;
@@ -1412,7 +1411,7 @@
 }
 #services .wwm-headline {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1.12;
   color: #16120F;
   margin-top: 10px;
@@ -1427,28 +1426,29 @@
 #services .wwm-cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 0;
   align-items: stretch;
   margin-top: 24px;
 }
-#services .wwm-card {
+#services .wwm-col {
   display: flex;
   flex-direction: column;
-  background: #FBF7F1;
-  border-radius: 8px;
-  padding: 18px;
-  border: 1px solid #DCCFC0;
-  border-top-width: 3px;
+  padding: 14px 20px 0;
 }
-#services .wwm-card-1 {
-  border-color: #A8502F;
-  border-top-width: 3px;
+#services .wwm-col-1 {
+  border-top: 3px solid #A8502F;
+  padding-right: 20px;
+  padding-left: 0;
+  border-right: 1px solid #DBCCBB;
 }
-#services .wwm-card-2 {
-  border-top-color: #C96A42;
+#services .wwm-col-2 {
+  border-top: 3px solid #C96A42;
+  border-right: 1px solid #DBCCBB;
 }
-#services .wwm-card-3 {
-  border-top-color: #C4A57A;
+#services .wwm-col-3 {
+  border-top: 3px solid #C4A57A;
+  padding-right: 0;
+  padding-left: 20px;
 }
 #services .wwm-timeframe-row {
   display: flex;
@@ -1461,23 +1461,21 @@
   letter-spacing: 0.08em;
   color: #8C8681;
 }
-#services .wwm-pill {
+#services .wwm-starthere {
   font-size: 9px;
+  letter-spacing: 0.08em;
   color: #A8502F;
-  border: 1px solid #A8502F;
-  border-radius: 20px;
-  padding: 2px 8px;
   white-space: nowrap;
 }
 #services .wwm-name {
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: 18px;
   color: #16120F;
   margin-top: 8px;
 }
 #services .wwm-price {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 28px;
   color: #A8502F;
   margin-top: 4px;
 }
@@ -1497,60 +1495,82 @@
   color: #3A312B;
   margin-top: 10px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #E5DACB;
+  border-bottom: 1px solid #DBCCBB;
 }
 #services .wwm-for strong {
   color: #16120F;
   font-weight: 700;
 }
-#services .wwm-youget {
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: #8C8681;
-  margin-top: 12px;
-  margin-bottom: 8px;
-}
 #services .wwm-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  margin-top: 10px;
+  margin-bottom: 14px;
+  padding: 10px 0 0;
+  border-top: 1px solid #DBCCBB;
   font-size: 12px;
-  line-height: 1.9;
+  line-height: 1.75;
   color: #3A312B;
   flex: 1;
 }
-#services .wwm-cta-solid,
-#services .wwm-cta-outline {
-  display: block;
-  width: 100%;
-  margin-top: 14px;
-  padding: 10px;
+#services .wwm-cta-solid {
+  display: inline-block;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-top: auto;
+  padding-top: 9px;
+  padding-bottom: 9px;
+  padding-left: 16px;
+  padding-right: 16px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   text-align: center;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-}
-#services .wwm-cta-solid {
   background: #A8502F;
   border: 1px solid #A8502F;
   color: #FBF7F1;
+  transition: background-color 0.2s, color 0.2s;
 }
 #services .wwm-cta-solid:hover {
   background: #8f4527;
 }
-#services .wwm-cta-outline {
+#services .wwm-cta-link {
+  align-self: flex-start;
+  flex: 0 0 auto;
+  margin-top: auto;
+  padding: 0 0 2px;
+  border: none;
+  border-bottom: 1px solid #A8502F;
+  border-radius: 0;
   background: transparent;
-  border: 1px solid #A8502F;
+  font-size: 12px;
+  font-weight: 500;
   color: #A8502F;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
 }
-#services .wwm-cta-outline:hover {
-  background: rgba(168, 80, 47, 0.08);
+#services .wwm-cta-link:hover {
+  color: #8f4527;
+  border-bottom-color: #8f4527;
 }
 @media (max-width: 900px) {
   #services .wwm-cards {
     grid-template-columns: minmax(0, 1fr);
+  }
+  #services .wwm-col-1,
+  #services .wwm-col-2 {
+    border-right: none;
+  }
+  #services .wwm-col-1,
+  #services .wwm-col-2,
+  #services .wwm-col-3 {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  #services .wwm-col-2,
+  #services .wwm-col-3 {
+    margin-top: 28px;
   }
 }
 @media (max-width: 768px) {

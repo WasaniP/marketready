@@ -752,9 +752,10 @@ function SelectedWork() {
   );
 }
 /* ------------------------------------------------------------------ */
-/* Services: "Work With Me" priced offers (owner spec 2026-09-09).     */
-/* Light #E8DAC4 section, hard-coded colors scoped in app.css under    */
-/* #services (global tokens remap to dark). No box-shadows.            */
+/* Services: "Work With Me" priced offers (owner spec 2026-09-09,      */
+/* editorial columns rev 2026-09-09). Light #EDE1D5 section,           */
+/* hard-coded colors scoped in app.css under #services (global tokens  */
+/* remap to dark). No box-shadows.                                     */
 /* ------------------------------------------------------------------ */
 const WORK_CARDS = [
   {
@@ -774,7 +775,7 @@ const WORK_CARDS = [
     cta: "Book the Audit →",
     service: "MarketReady Audit",
     variant: "solid" as const,
-    cardClass: "wwm-card-1",
+    cardClass: "wwm-col-1",
   },
   {
     timeframe: "14 DAYS",
@@ -794,14 +795,14 @@ const WORK_CARDS = [
     cta: "Book the Sprint →",
     service: "MarketReady Sprint",
     variant: "outline" as const,
-    cardClass: "wwm-card-2",
+    cardClass: "wwm-col-2",
   },
   {
     timeframe: "RETAINER",
     pill: null,
     name: "Fractional GTM Lead",
     price: "From $6,000",
-    per: "/mo",
+    per: " /mo",
     subPrice: null,
     forBody: "scale-up teams launching without anyone senior owning GTM.",
     points: [
@@ -814,7 +815,7 @@ const WORK_CARDS = [
     cta: "Talk About a Retainer →",
     service: "Fractional GTM Lead",
     variant: "outline" as const,
-    cardClass: "wwm-card-3",
+    cardClass: "wwm-col-3",
   },
 ] as const;
 
@@ -855,11 +856,11 @@ function ServicesStack({
         </p>
         <div className="wwm-cards">
           {WORK_CARDS.map((c) => (
-            <div key={c.name} className={`wwm-card ${c.cardClass}`}>
+            <div key={c.name} className={`wwm-col ${c.cardClass}`}>
               <div className="wwm-timeframe-row">
                 <p className="wwm-timeframe">{c.timeframe}</p>
                 {"pill" in c && c.pill ? (
-                  <span className="wwm-pill">{c.pill}</span>
+                  <span className="wwm-starthere">{c.pill}</span>
                 ) : null}
               </div>
               <h3 className="wwm-name">{c.name}</h3>
@@ -873,7 +874,6 @@ function ServicesStack({
               <p className="wwm-for">
                 <strong>For:</strong> {c.forBody}
               </p>
-              <p className="wwm-youget">YOU GET</p>
               <ul className="wwm-list">
                 {c.points.map((item) => (
                   <li key={item}>{item}</li>
@@ -883,7 +883,7 @@ function ServicesStack({
                 type="button"
                 onClick={() => onBook(c.service)}
                 className={
-                  c.variant === "solid" ? "wwm-cta-solid" : "wwm-cta-outline"
+                  c.variant === "solid" ? "wwm-cta-solid" : "wwm-cta-link"
                 }
               >
                 {c.cta}
