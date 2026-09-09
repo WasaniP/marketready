@@ -1033,6 +1033,7 @@ function Home() {
       <Footer onBook={openBooking} />
       {bookingOpen && (
         <BookingModal
+          key={preselectService ?? "default"}
           open={bookingOpen}
           onClose={closeBooking}
           initialService={preselectService}
