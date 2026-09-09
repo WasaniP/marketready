@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { PARAMETER_NAMES } from "~/lib/audit/engine";
 import { HeroDiagnostic } from "~/components/HeroDiagnostic";
+import { WORK_CASES } from "~/lib/work/cases";
 import { BookingModal } from "~/components/BookingModal";
 import { Header, Footer, ChevronDown } from "~/components/Layout";
 
@@ -688,6 +689,69 @@ function FounderStory() {
   );
 }
 /* ------------------------------------------------------------------ */
+/* Selected Work: light case-study index. Owner spec: second light      */
+/* section (#F2ECE2), placed between DiagnosticEngine and ServicesStack */
+/* so it is NOT adjacent to the founder note (#founder). Full-bleed    */
+/* 22px grid overlay (rhymes with the engine's 28px grid), hairline    */
+/* #3A312B rules top + bottom, 2-col card grid (1-col below 900px).    */
+/* The entire card is one clickable anchor to its /work/* case page.   */
+/* ------------------------------------------------------------------ */
+function SelectedWork() {
+  return (
+    <section id="selected-work" className="sw-section scroll-mt-24">
+      {/* 22px grid overlay across the whole section (no paper grain). */}
+      <svg
+        aria-hidden="true"
+        className="sw-grid"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern
+            id="sw-grid-pattern"
+            width="22"
+            height="22"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M 22 0 L 0 0 0 22"
+              fill="none"
+              stroke="#E3DAC9"
+              strokeWidth="1"
+            />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#sw-grid-pattern)" />
+      </svg>
+      <div className="sw-inner">
+        <p className="sw-eyebrow">SELECTED WORK</p>
+        <h2 className="sw-headline">What this work has moved.</h2>
+        <p className="sw-intro">
+          Positioning and GTM programs I&rsquo;ve led. Client names withheld
+          under agreement.
+        </p>
+        <div className="sw-grid-cards">
+          {WORK_CASES.map((c) => (
+            <a key={c.slug} href={`/work/${c.slug}`} className="sw-card">
+              <p className="sw-card-label">{c.caseLabel}</p>
+              <h3 className="sw-card-headline">{c.headline}</h3>
+              <div className="sw-card-metrics">
+                {c.metrics.map((m) => (
+                  <div key={m.label} className="sw-card-metric">
+                    <p className="sw-card-metric-value">{m.value}</p>
+                    <p className="sw-card-metric-label">{m.label}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="sw-card-desc">{c.description}</p>
+              <p className="sw-card-link">READ THE CASE STUDY →</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+/* ------------------------------------------------------------------ */
 /* Services: unpriced engagement models. Owner rule: no pricing lives  */
 /* on the homepage. The diagnostic CTA is the amber primary; every     */
 /* other CTA is outline/secondary.                                     */
@@ -910,6 +974,7 @@ function Home() {
         <FrictionObservations />
         <HowItWorks />
         <DiagnosticEngine />
+        <SelectedWork />
         <ServicesStack />
         <FaqAccordion />
       </main>
