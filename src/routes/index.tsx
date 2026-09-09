@@ -309,6 +309,14 @@ function HowItWorks() {
             </li>,
           ])}
         </ol>
+        <div className="hiw-closing-wrap">
+          <div className="hiw-closing-rule" aria-hidden="true" />
+          <p className="hiw-closing-line">
+            Two weeks in, you have a positioning statement your team agrees
+            on, a homepage that says it, and a sales narrative that repeats
+            it. That&apos;s the point of the sequence.
+          </p>
+        </div>
         <div className="text-center">
           <a href="/services/diagnostic" className="hiw-cta">
             Get Your MarketReady Score →
@@ -549,6 +557,11 @@ function DiagnosticEngine() {
             </h2>
             <p className="engine-intro">
               Nine dimensions, scored in seconds, grouped into three pillars: how you position, how you message, and how fast you launch.
+            </p>
+            <p className="engine-callout">
+              A low score isn&apos;t an abstraction. It&apos;s the demo where
+              30 minutes go to explaining the category, the ad spend that
+              bounces, and the deal that closes at a discount.
             </p>
             <div className="engine-gauge">
               <p className="engine-gauge-label">READINESS SCORE</p>

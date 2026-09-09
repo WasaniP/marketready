@@ -951,13 +951,10 @@ export function HeroDiagnostic({
                 <br />
                 Your <span className="hero-highlight">market story</span> might be.
               </h1>
-              <p className="mx-auto mt-3 max-w-[480px] text-[13px] leading-[1.6] text-[#f5f0e8] lg:mx-0">
-                I help B2B SaaS, consumer tech, and growing startups turn good
-                products into products people understand, remember, and buy. I
-                step in when you need experienced product marketing leadership to
-                bring clarity to your positioning and messaging, shape your GTM
-                strategy, and turn it into the tools, resources, and execution
-                your sales team needs to win.
+              <p className="mx-auto mt-3 max-w-[480px] text-[13px] leading-[1.6] text-[#B8AEA3] lg:mx-0">
+                If you&apos;re about to launch or about to scale spend,
+                I&apos;ll show you how your GTM reads to a first-time buyer
+                before you commit the budget.
               </p>
               <p className="mx-auto mt-2 max-w-[480px] text-[13px] leading-[1.6] text-[#f5f0e8] lg:mx-0">
                 <strong>The goal is simple:</strong> a story that sells, a sales team equipped to
