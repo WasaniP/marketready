@@ -74,7 +74,7 @@ const BASE_LEAD: KnockEmailLead = {
   score: 77,
   readiness: "Needs Attention",
   primaryFriction: "Messaging",
-  prescription: "14-Day Positioning Sprint ($5,000)",
+  prescription: "14-Day Positioning Sprint ($7,500)",
   keyObservation: "The hero headline buries the outcome.",
   commercialRisk: "Buyers keep alternatives in the running.",
   frictionLabel: "Unclear Value Prop",

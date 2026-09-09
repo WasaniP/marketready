@@ -1360,6 +1360,207 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Work With Me (#services): third light section. #E8DAC4 bg (darker   */
+/* than #F2ECE2 by design), feTurbulence grain at multiply/16%, 1px    */
+/* #3A312B hairlines top + bottom, full-width header, 3-col cards      */
+/* (1-col below 900px), CTA pinned to card bottom. All light-section   */
+/* colors hard-coded + scoped here (global tokens remap to dark). No   */
+/* box-shadows.                                                        */
+/* ------------------------------------------------------------------ */
+#services.wwm-section {
+  position: relative;
+  overflow: hidden;
+  background: #E8DAC4;
+  border-top: 1px solid #3A312B;
+  border-bottom: 1px solid #3A312B;
+  scroll-margin-top: 6rem;
+}
+#services .wwm-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: multiply;
+  z-index: 0;
+}
+#services .wwm-grain svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#services .wwm-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 64px 24px;
+}
+@media (min-width: 640px) {
+  #services .wwm-inner {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+#services .wwm-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: #A8502F;
+}
+#services .wwm-headline {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1.12;
+  color: #16120F;
+  margin-top: 10px;
+}
+#services .wwm-intro {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #3A312B;
+  max-width: 62ch;
+  margin-top: 10px;
+}
+#services .wwm-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+  margin-top: 24px;
+}
+#services .wwm-card {
+  display: flex;
+  flex-direction: column;
+  background: #FBF7F1;
+  border-radius: 8px;
+  padding: 18px;
+  border: 1px solid #DCCFC0;
+  border-top-width: 3px;
+}
+#services .wwm-card-1 {
+  border-color: #A8502F;
+  border-top-width: 3px;
+}
+#services .wwm-card-2 {
+  border-top-color: #C96A42;
+}
+#services .wwm-card-3 {
+  border-top-color: #C4A57A;
+}
+#services .wwm-timeframe-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+#services .wwm-timeframe {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #8C8681;
+}
+#services .wwm-pill {
+  font-size: 9px;
+  color: #A8502F;
+  border: 1px solid #A8502F;
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+#services .wwm-name {
+  font-family: var(--font-display);
+  font-size: 19px;
+  color: #16120F;
+  margin-top: 8px;
+}
+#services .wwm-price {
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: #A8502F;
+  margin-top: 4px;
+}
+#services .wwm-per {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: #8C8681;
+}
+#services .wwm-subprice {
+  font-size: 11px;
+  color: #8C8681;
+  margin-top: 2px;
+}
+#services .wwm-for {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #3A312B;
+  margin-top: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #E5DACB;
+}
+#services .wwm-for strong {
+  color: #16120F;
+  font-weight: 700;
+}
+#services .wwm-youget {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #8C8681;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+#services .wwm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.9;
+  color: #3A312B;
+  flex: 1;
+}
+#services .wwm-cta-solid,
+#services .wwm-cta-outline {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+#services .wwm-cta-solid {
+  background: #A8502F;
+  border: 1px solid #A8502F;
+  color: #FBF7F1;
+}
+#services .wwm-cta-solid:hover {
+  background: #8f4527;
+}
+#services .wwm-cta-outline {
+  background: transparent;
+  border: 1px solid #A8502F;
+  color: #A8502F;
+}
+#services .wwm-cta-outline:hover {
+  background: rgba(168, 80, 47, 0.08);
+}
+@media (max-width: 900px) {
+  #services .wwm-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  #services .wwm-inner {
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Case-study subpages (.work-case-*): same light system as the        */
 /* section — #F2ECE2 bg, 22px #E3DAC9 grid at 70%, #FAF8F5 bracketed   */
 /* panels, mono labels, serif headlines. All scoped to .work-case-*.   */

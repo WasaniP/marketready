@@ -403,8 +403,8 @@ function DiagnosticEngine({ onComplete }: { onComplete: (state: DiagnosticState)
   const rx = prescriptionFor(frictionId);
   const prescriptionLabel =
    rx === "sprint"
-    ? "14-Day Positioning Sprint ($5,000)"
-    : "Fractional GTM Advisory ($5,000/month)";
+    ? "14-Day Positioning Sprint ($7,500)"
+    : "Fractional GTM Advisory (from $6,000/month)";
   const payload: LeadPayload = {
    email: cleanEmail,
    url: home?.url || "not provided",
@@ -670,9 +670,10 @@ function DiagnosticEngine({ onComplete }: { onComplete: (state: DiagnosticState)
 /* Results view (ported from /assessment/results)           */
 /* ------------------------------------------------------------------ */
 
-/** The sole Sprint-price constant. This stays the single source of truth
- * for the results view. */
-const RX_PRICE = "$5,000";
+/** Sprint and advisory prices on the results view. Kept as constants so the
+ * prescription and CTAs stay in sync. Advisory is "from" pricing. */
+const RX_SPRINT_PRICE = "$7,500";
+const RX_ADVISORY_PRICE = "$6,000";
 
 /** Checkout-gate terms label. Kept as ONE literal so the exact sentence
  * ships contiguously in the bundle (QA greps it); the agreement name
@@ -831,8 +832,8 @@ function DiagnosticResults({
  const rx = prescriptionFor(friction);
  const prescriptionName =
   rx === "sprint"
-   ? `14-Day Positioning Sprint (${RX_PRICE})`
-   : `Fractional GTM Advisory (${RX_PRICE}/month)`;
+   ? `14-Day Positioning Sprint (${RX_SPRINT_PRICE})`
+   : `Fractional GTM Advisory (from ${RX_ADVISORY_PRICE}/month)`;
  const prescriptionLine =
   rx === "sprint"
    ? "A two-week engagement that turns the gaps this audit flagged into positioning architecture, homepage rewrites, and a core launch deck."
@@ -951,7 +952,7 @@ function DiagnosticResults({
      onClick={openGate}
      className="btn-electric flex-1"
     >
-     Start Your Sprint ($5,000) →
+     Start Your Sprint ($7,500) →
     </button>
     <button
      type="button"

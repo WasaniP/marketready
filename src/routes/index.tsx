@@ -752,92 +752,144 @@ function SelectedWork() {
   );
 }
 /* ------------------------------------------------------------------ */
-/* Services: unpriced engagement models. Owner rule: no pricing lives  */
-/* on the homepage. The diagnostic CTA is the amber primary; every     */
-/* other CTA is outline/secondary.                                     */
+/* Services: "Work With Me" priced offers (owner spec 2026-09-09).     */
+/* Light #E8DAC4 section, hard-coded colors scoped in app.css under    */
+/* #services (global tokens remap to dark). No box-shadows.            */
 /* ------------------------------------------------------------------ */
-const SERVICE_CARDS = [
+const WORK_CARDS = [
   {
-    stage: "Start here · Free",
-    name: "MarketReady Diagnostic",
-    body: "The free AI audit and scorecard. I read your live site like a first-time buyer and show you where positioning leaks.",
-    points: ["Instant readiness score", "Surface red-flag callout", "Pillar-by-pillar breakdown"],
-    cta: "Get Your MarketReady Score →",
-    href: "/services/diagnostic",
-    primary: true,
+    timeframe: "3 DAYS",
+    pill: "START HERE",
+    name: "MarketReady Audit",
+    price: "$2,000",
+    subPrice: "Credited toward a Positioning Sprint booked within 30 days.",
+    forBody:
+      "seed and Series A teams preparing to launch who need to know what's broken before they scale spend.",
+    points: [
+      "Full video teardown of your site",
+      "Written GTM strategy brief",
+      "Live 45-minute executive session",
+      "Prioritized fix list",
+    ],
+    cta: "Book the Audit →",
+    service: "MarketReady Audit",
+    variant: "solid" as const,
+    cardClass: "wwm-card-1",
   },
   {
-    stage: "Fix it in 14 days",
+    timeframe: "14 DAYS",
+    pill: null,
     name: "Positioning Sprint",
-    body: "A focused engagement where I rebuild your positioning, messaging, and launch assets directly from the diagnostic.",
-    points: ["Positioning architecture", "Homepage copy rewrite", "Launch deck and GTM plan"],
-    cta: "Explore the Sprint →",
-    href: "/services/sprint",
-    primary: false,
+    price: "$7,500",
+    subPrice: null,
+    forBody:
+      "category or feature launches where the message needs rebuilding, not tweaking.",
+    points: [
+      "Complete messaging system",
+      "Positioning statement",
+      "Homepage copy, rewritten",
+      "Competitive battlecards",
+      "Launch plan",
+    ],
+    cta: "Book the Sprint →",
+    service: "MarketReady Sprint",
+    variant: "outline" as const,
+    cardClass: "wwm-card-2",
   },
   {
-    stage: "Stay sharp",
+    timeframe: "RETAINER",
+    pill: null,
     name: "Fractional GTM Lead",
-    body: "Ongoing senior PMM partnership: I stay in the room as you launch, iterate messaging, and enable sales.",
-    points: ["Embedded PMM leadership", "Ongoing message iteration", "Sales enablement support"],
-    cta: "Explore Fractional →",
-    href: "/services/fractional",
-    primary: false,
+    price: "From $6,000",
+    per: "/mo",
+    subPrice: null,
+    forBody: "scale-up teams launching without anyone senior owning GTM.",
+    points: [
+      "Embedded GTM leadership",
+      "Ongoing messaging iteration",
+      "Sales enablement assets",
+      "Launch strategy and execution",
+      "Weekly strategic working sessions",
+    ],
+    cta: "Talk About a Retainer →",
+    service: "Fractional GTM Lead",
+    variant: "outline" as const,
+    cardClass: "wwm-card-3",
   },
 ] as const;
 
-function ServicesStack() {
+function ServicesStack({
+  onBook,
+}: {
+  onBook: (service?: string) => void;
+}) {
   return (
-    <section
-      id="services"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-14 sm:py-[4.5rem]"
-    >
-      <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
-        <div className="grid items-start gap-10 md:grid-cols-12 md:gap-12">
-          <div className="md:col-span-4">
-            <p className="eyebrow text-navy">How we can work together</p>
-            <h2 className="mt-3 max-w-[22ch] text-balance font-display text-3xl tracking-tight text-ink sm:text-[32px]">
-              Got your score? Here's how I help you fix the gaps.
-            </h2>
-            <p className="mt-3 max-w-[36rem] text-base leading-relaxed text-mist">
-              Pick the option that fits where you are right now. You work directly with me on every deliverable. No account managers, no junior hand-offs.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 items-stretch gap-4 md:col-span-8 md:grid-cols-3">
-          {SERVICE_CARDS.map((s) => (
-            <div
-              key={s.name}
-              className="glass-card flex h-full flex-col p-6"
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-fog">
-                {s.stage}
+    <section id="services" className="wwm-section scroll-mt-24">
+      {/* Paper grain overlay (above the bg, below everything else). */}
+      <div className="wwm-grain" aria-hidden="true">
+        <svg width="100%" height="100%" aria-hidden="true">
+          <filter id="wwm-grain-filter">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.75"
+              numOctaves="4"
+              stitchTiles="stitch"
+            />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+          <rect
+            width="100%"
+            height="100%"
+            filter="url(#wwm-grain-filter)"
+          />
+        </svg>
+      </div>
+      <div className="wwm-inner">
+        <p className="wwm-eyebrow">WORK WITH ME</p>
+        <h2 className="wwm-headline">Three ways I can help your product land.</h2>
+        <p className="wwm-intro">
+          Start with the free diagnostic if you want to see where you stand.
+          When you&rsquo;re ready to fix what&rsquo;s broken, here&rsquo;s how
+          we work together. You work directly with me on every deliverable. No
+          account managers, no junior hand-offs.
+        </p>
+        <div className="wwm-cards">
+          {WORK_CARDS.map((c) => (
+            <div key={c.name} className={`wwm-card ${c.cardClass}`}>
+              <div className="wwm-timeframe-row">
+                <p className="wwm-timeframe">{c.timeframe}</p>
+                {"pill" in c && c.pill ? (
+                  <span className="wwm-pill">{c.pill}</span>
+                ) : null}
+              </div>
+              <h3 className="wwm-name">{c.name}</h3>
+              <p className="wwm-price">
+                {c.price}
+                {"per" in c && c.per ? (
+                  <span className="wwm-per">{c.per}</span>
+                ) : null}
               </p>
-              <h3 className="mt-2 font-display text-lg text-ink">{s.name}</h3>
-              <p className="mb-3 mt-2 text-sm leading-relaxed text-mist">
-                {s.body}
+              {c.subPrice ? <p className="wwm-subprice">{c.subPrice}</p> : null}
+              <p className="wwm-for">
+                <strong>For:</strong> {c.forBody}
               </p>
-              <ul className="space-y-1.5 text-sm text-mist">
-                {s.points.map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="shrink-0 text-ember">✓</span>
-                    <span className="leading-snug">{item}</span>
-                  </li>
+              <p className="wwm-youget">YOU GET</p>
+              <ul className="wwm-list">
+                {c.points.map((item) => (
+                  <li key={item}>{item}</li>
                 ))}
               </ul>
-              <a
-                href={s.href}
+              <button
+                type="button"
+                onClick={() => onBook(c.service)}
                 className={
-                  s.primary
-                    ? "btn-electric mt-5 w-full"
-                    : "btn-ghost mt-5 w-full"
+                  c.variant === "solid" ? "wwm-cta-solid" : "wwm-cta-outline"
                 }
               >
-                {s.cta}
-              </a>
+                {c.cta}
+              </button>
             </div>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
     </section>
@@ -975,12 +1027,13 @@ function Home() {
         <HowItWorks />
         <DiagnosticEngine />
         <SelectedWork />
-        <ServicesStack />
+        <ServicesStack onBook={openBooking} />
         <FaqAccordion />
       </main>
       <Footer onBook={openBooking} />
       {bookingOpen && (
         <BookingModal
+          key={preselectService ?? "default"}
           open={bookingOpen}
           onClose={closeBooking}
           initialService={preselectService}

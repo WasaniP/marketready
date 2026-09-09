@@ -2,7 +2,7 @@
  * MarketReady: The MarketReady Audit (/services/audit).
  *
  * A distinct, full-scope one-time paid offering: a human-led positioning & GTM
- * audit at $3,000 flat, delivered in 3 to 5 days. The Audit diagnoses the full
+ * audit at $2,000 flat, delivered in 3 to 5 days. The Audit diagnoses the full
  * 3-pillar / 9-Parameter Framework and returns a prioritized written plan, while
  * the 14-Day Sprint executes the fixes. Creative elements mirror the Sprint
  * page's visual system (pillar bands in teal / cyan / indigo, connected day-node
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/services/audit")({
    {
     name: "description",
     content:
-     "The MarketReady Audit: a faster, human-led diagnosis at a $3,000 flat fee with a 3 to 5 day turnaround. Personal review of your website, pitch deck, and one sales call recording, scored across the full 9-Parameter Framework.",
+     "The MarketReady Audit: a faster, human-led diagnosis at a $2,000 flat fee with a 3 to 5 day turnaround. Personal review of your website, pitch deck, and one sales call recording, scored across the full 9-Parameter Framework.",
    },
   ],
  }),
@@ -287,7 +287,7 @@ function AuditPage() {
      stats={
       <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
        <div className="rounded-xl border border-hairline bg-ink/[0.03] px-5 py-3 text-center backdrop-blur-md">
-        <p className="text-2xl font-extrabold tracking-tight text-ink">$3,000</p>
+        <p className="text-2xl font-extrabold tracking-tight text-ink">$2,000</p>
         <p className="mt-0.5 text-xs font-semibold uppercase tracking-widest text-fog">
          Flat Fee
         </p>
@@ -302,7 +302,7 @@ function AuditPage() {
      }
     >
      <button type="button" onClick={bookAudit} className="btn-electric px-7 py-3.5 text-base">
-      Book Your Audit ($3,000) →
+      Book Your Audit ($2,000) →
      </button>
      <a href="/services/diagnostic" className="btn-ghost px-7 py-3.5 text-base">
       Run the Free Diagnostic First →
@@ -401,7 +401,7 @@ function AuditPage() {
         Zero-Risk Diagnosis: 100% of your Audit fee applies toward the Sprint.
        </h3>
        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-mist">
-        Apply your $3,000 Audit investment directly to the 14-Day Sprint if booked within 30 days.
+        Apply your $2,000 Audit investment directly to the 14-Day Sprint if booked within 30 days.
        </p>
       </div>
      </div>
@@ -427,10 +427,10 @@ function AuditPage() {
          exactly what to fix and in what order. Best when you need clarity and direction
          before committing to execution.
         </p>
-        <p className="mt-5 text-sm font-semibold text-mist">3 to 5 days · $3,000</p>
+        <p className="mt-5 text-sm font-semibold text-mist">3 to 5 days · $2,000</p>
         <div className="mt-auto pt-6">
          <button type="button" onClick={bookAudit} className="btn-electric w-full px-6 py-3 text-sm">
-          Book Your Audit - $3,000
+          Book Your Audit - $2,000
          </button>
         </div>
        </div>
@@ -446,10 +446,10 @@ function AuditPage() {
          assets built from your Diagnostic score. Best when the gap is clear and you need
          the fix shipped in 14 days.
         </p>
-        <p className="mt-5 text-sm font-semibold text-mist">14 days · $5,000</p>
+        <p className="mt-5 text-sm font-semibold text-mist">14 days · $7,500</p>
         <div className="mt-auto pt-6">
          <a href="/services/sprint" className="btn-ghost w-full px-6 py-3 text-center text-sm">
-          Explore 14-Day Sprint - $5,000
+          Explore 14-Day Sprint - $7,500
          </a>
         </div>
        </div>
@@ -476,7 +476,7 @@ function AuditPage() {
        </a>
       </div>
       <p className="mt-4 text-xs text-fog">
-       One-time fee of $3,000, billed upfront. No obligation; the free audit stands on its
+       One-time fee of $2,000, billed upfront. No obligation; the free audit stands on its
        own.
       </p>
      </div>
