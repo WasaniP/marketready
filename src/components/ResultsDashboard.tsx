@@ -24,7 +24,7 @@
  *   has no email capability, so the report is an instant download, never a
  *   fake "we emailed you" claim.
  *  Bottom offer card: a high-trust 15-minute diagnostic briefing invitation
- *   (no direct $3,000 Audit sales pitch).
+ *   (no direct $2,000 Audit sales pitch).
  *
  * All client-side, SSR-safe. No em/en dashes anywhere in the copy.
  */
@@ -451,7 +451,7 @@ function PdfCaptureBar({
 }
 
 /* ------------------------------------------------------------------ */
-/* Bottom offer: high-trust diagnostic briefing (no $3,000 hard-sell). */
+/* Bottom offer: high-trust diagnostic briefing (no $2,000 hard-sell). */
 /* ------------------------------------------------------------------ */
 
 function BriefingOffer({ onBookBriefing }: { onBookBriefing: () => void }) {

@@ -25,7 +25,7 @@ export const Route = createFileRoute("/services/sprint")({
    {
     name: "description",
     content:
-     "The MarketReady 14-Day Positioning Sprint at $5,000: nine strategy and launch assets built from your Diagnostic score, including positioning architecture, messaging framework, homepage copy, and launch assets.",
+     "The MarketReady 14-Day Positioning Sprint at $7,500: nine strategy and launch assets built from your Diagnostic score, including positioning architecture, messaging framework, homepage copy, and launch assets.",
    },
   ],
  }),
@@ -348,7 +348,7 @@ function SprintPage() {
       onClick={bookSprint}
       className="rounded-lg bg-teal-400 px-7 py-3.5 text-base font-bold text-slate-950 transition-colors hover:bg-teal-300"
      >
-      Book Your 14-Day Sprint ($5,000) →
+      Book Your 14-Day Sprint ($7,500) →
      </button>
      <a
       href="/services/diagnostic"
