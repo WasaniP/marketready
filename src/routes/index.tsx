@@ -441,7 +441,7 @@ const PILLAR_STATUS: Record<string, { label: string }> = {
 };
 
 function DiagnosticEngine() {
-  const [expandedPillar, setExpandedPillar] = useState<string | null>("pillar-positioning");
+  const [expandedPillar, setExpandedPillar] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
@@ -519,8 +519,11 @@ function DiagnosticEngine() {
                       <EngineMeter score={demo.score} state={demo.state} />
                       <ChevronDown className={`engine-panel-chevron${open ? " is-open" : ""}`} />
                     </button>
-                    {open && (
-                      <div className="engine-rows">
+                    <div
+                      className={`engine-rows${open ? " is-open" : ""}`}
+                      inert={open ? undefined : true}
+                    >
+                      <div className="engine-rows-inner">
                         {pillar.params.map((p, i) => (
                           <EngineCardRow
                             key={p.id}
@@ -531,7 +534,7 @@ function DiagnosticEngine() {
                           />
                         ))}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               );

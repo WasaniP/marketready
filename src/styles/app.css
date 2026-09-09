@@ -895,7 +895,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 34px;
-  align-items: start;
+  align-items: center;
 }
 #methodology .engine-pillars {
   display: flex;
@@ -994,7 +994,17 @@
   border-radius: 0;
 }
 #methodology .engine-rows {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
   border-top: 1px solid #3a312b;
+}
+#methodology .engine-rows.is-open {
+  grid-template-rows: 1fr;
+}
+#methodology .engine-rows-inner {
+  overflow: hidden;
+  min-height: 0;
 }
 #methodology .engine-row-wrap + .engine-row-wrap {
   border-top: 1px solid #3a312b;
@@ -1063,7 +1073,6 @@
 #methodology .engine-side {
   position: sticky;
   top: 96px;
-  align-self: start;
   min-width: 0;
 }
 #methodology .engine-eyebrow {
