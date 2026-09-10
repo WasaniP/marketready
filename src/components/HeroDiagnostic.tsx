@@ -10,12 +10,12 @@
  */
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
-import amazonLogo from "./hero-logos/amazon.svg?raw";
 import wbdLogo from "./hero-logos/wbd.svg?raw";
 import tntLogo from "./hero-logos/tntsports.svg?raw";
-import tbsLogo from "./hero-logos/tbs.svg?raw";
 import brLogo from "./hero-logos/bleacherreport.svg?raw";
-import varietyLogo from "./hero-logos/variety.svg?raw";
+import impactLogo from "./hero-logos/impact.svg?raw";
+import trackonomicsLogo from "./hero-logos/trackonomics.svg?raw";
+import pressboardLogo from "./hero-logos/pressboard.svg?raw";
 import { scoreAssessment, scoreColor, PILLAR_OF } from "~/lib/audit/engine";
 import type { AssessmentInput, AuditResult } from "~/lib/audit/types";
 import { toAIResult } from "~/lib/audit/ai";
@@ -198,13 +198,23 @@ function normalizeLogoSvg(raw: string): string {
   return w && h ? raw.replace("<svg", `<svg viewBox="0 0 ${w} ${h}"`) : raw;
 }
 
-const HERO_LOGOS: { name: string; svg: string; h: number }[] = [
-  { name: "Amazon", svg: amazonLogo, h: 12 },
-  { name: "Warner Bros. Discovery", svg: wbdLogo, h: 13 },
-  { name: "TNT Sports", svg: tntLogo, h: 14 },
-  { name: "TBS", svg: tbsLogo, h: 13 },
-  { name: "Bleacher Report", svg: brLogo, h: 13 },
-  { name: "Variety", svg: varietyLogo, h: 14 },
+/* Owner spec 2026-09-10 §1: seven-brand adtech/B2B-SaaS + media mix, in this
+   order. Nativo is OMITTED: the brand was acquired and nativo.com now serves
+   the Life360 Ads mark; no authentic Nativo vector survives on the live site,
+   Wayback (2021 Squarespace site shipped PNG only), Wikimedia, or any public
+   code source — awaiting owner's official vector file (see PR description).
+   Height = optical balance, NOT uniform: long wordmarks sit ~13-17px, the
+   most compact mark (impact.com) gets 18px; nothing exceeds the 22px cap.
+   light:true = per-mark legibility exception (§3) — the mark reads too thin
+   at rendered size, so it gets a slightly lighter fill (#A89E95) than the
+   #9C9188 default. */
+const HERO_LOGOS: { name: string; svg: string; h: number; light?: boolean }[] = [
+  { name: "Warner Bros. Discovery", svg: wbdLogo, h: 16 },
+  { name: "TNT Sports", svg: tntLogo, h: 16 },
+  { name: "Bleacher Report", svg: brLogo, h: 14 },
+  { name: "impact.com", svg: impactLogo, h: 18 },
+  { name: "Trackonomics", svg: trackonomicsLogo, h: 14, light: true },
+  { name: "Pressboard", svg: pressboardLogo, h: 14, light: true },
 ];
 
 const HERO_LOGOS_LABEL = "BRANDS MY TEAMS HAVE WORKED WITH";
@@ -218,7 +228,7 @@ function HeroLogos() {
           {HERO_LOGOS.map((l) => (
             <li key={l.name}>
               <span
-                className="hero-logo"
+                className={l.light ? "hero-logo hero-logo-lighter" : "hero-logo"}
                 role="img"
                 aria-label={l.name}
                 style={{ height: `${l.h}px` }}
@@ -1082,10 +1092,10 @@ export function HeroDiagnostic({
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
             <div className="text-center lg:text-left">
               <p className="eyebrow">ARE YOU MARKETREADY?</p>
-              <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-[#F5F0E8] sm:text-[30px]">
+              <h1 className="mx-auto mt-3 max-w-[460px] text-balance font-display text-[24px] font-bold leading-[1.2] tracking-tight text-[#F5F0E8] sm:text-[28px] lg:mx-0">
                 Turning products into stories that sell.
               </h1>
-              <p className="mx-auto max-w-[480px] text-[13px] leading-[1.55] text-[#C4BBB0] lg:mx-0">
+              <p className="mx-auto mt-4 max-w-[480px] text-[13px] leading-[1.55] text-[#C4BBB0] lg:mx-0">
                 Stronger positioning, sharper messaging, and focused go-to-market strategy that turn product value into customer demand and revenue.
               </p>
               <p className="mx-auto mt-[10px] max-w-[480px] text-[12px] leading-[1.55] text-[#A79C91] lg:mx-0">

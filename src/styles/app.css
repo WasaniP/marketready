@@ -92,12 +92,15 @@
   }
 
   /* Primary CTA: flat rust fill #C96A42, warm-dark #16120F text, deeper
-     rust on hover. NO gradient, NO glow (owner CTA audit 2026-09-09: a
-     leftover gradient image made every CTA outside the hero render
-     salmon — the scoped #top override covered only the hero, so the base
-     rule is flattened here; the hero keeps the same flat treatment). */
+     rust on hover. NO gradient, NO glow, NO shadow (owner CTA audit
+     2026-09-09 + 2026-09-10 hardening: the base rule is flattened here;
+     explicit background-image:none / box-shadow:none are locked in so a
+     stale gradient or glow can never be reintroduced by a shared utility
+     or a :hover/composed rule). */
   .btn-electric {
     @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-ember px-5 py-2.5 text-sm font-semibold text-[#16120f] transition-all duration-200 hover:bg-emberdeep active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+    background-image: none;
+    box-shadow: none;
   }
 
   /* Secondary CTA: outline on dark — transparent fill, rust border/text. */
@@ -188,21 +191,23 @@
   }
 
   /* Hero client logo strip (§6): 22px above, 1px #3A312B top border,
-     16px padding beneath it, 9px/0.12em/#7D736A label 12px above the row.
-     Six logos on one row ≥768px, two rows of three below. */
+     16px padding beneath it, 9px/0.12em/#9C9188 label 12px above the row.
+     Six logos on one evenly-distributed row ≥768px, two centered rows of
+     three below (owner spec 2026-09-10: adtech/B2B-SaaS + media mix —
+     Amazon/TBS/Variety out; impact.com/Trackonomics/Pressboard in). */
   .hero-logos {
     margin-top: 22px;
   }
   .hero-logos-label {
     font-size: 9px;
     letter-spacing: 0.12em;
-    color: #7d736a;
+    color: #9c9188;
     margin-bottom: 12px;
   }
   .hero-logos-row {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px 24px;
+    gap: 18px 16px;
     align-items: center;
     justify-items: center;
     margin: 0;
@@ -212,7 +217,7 @@
   @media (min-width: 768px) {
     .hero-logos-row {
       grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 0 24px;
+      gap: 0 16px;
     }
   }
   .hero-logos-row li {
@@ -222,11 +227,13 @@
     min-width: 0;
   }
   /* Inline SVG logos: explicit per-logo height (optical balance, none
-     above ~14px), width auto. Flat single-color #7D736A treatment: force
-     every fill with !important (beats fill attributes AND inline style
-     fills) → EXACT flat color, unlike a brightness/invert filter which
-     can only produce neutral grays. Brand marks are authentic (same
-     public/logos assets the founder marquee uses). */
+     above 22px). Flat single-color #9C9188 treatment: force every fill
+     with !important (beats fill attributes AND inline style fills) →
+     EXACT flat color, unlike a brightness/invert filter which can only
+     produce neutral grays. Brand marks are authentic monochrome SVG
+     sources (single-fill path data, no embedded multi-color fills); the
+     hero uses ?raw inline copies, public/logos keeps the full-color
+     assets for the founder bar. */
   .hero-logo {
     display: inline-flex;
     align-items: center;
@@ -244,7 +251,19 @@
   .hero-logo svg rect,
   .hero-logo svg circle,
   .hero-logo svg g {
-    fill: #7d736a !important;
+    fill: #9c9188 !important;
+    stroke: none;
+  }
+  /* Per-mark legibility exceptions (owner spec 2026-09-10 §3): individual
+     marks that read too thin at rendered size get a slightly LIGHTER fill.
+     Two classes = higher specificity than the base rule above, so the
+     !important still wins. Only marks listed in the exceptions apply. */
+  .hero-logo-lighter svg path,
+  .hero-logo-lighter svg polygon,
+  .hero-logo-lighter svg rect,
+  .hero-logo-lighter svg circle,
+  .hero-logo-lighter svg g {
+    fill: #a89e95 !important;
     stroke: none;
   }
 
