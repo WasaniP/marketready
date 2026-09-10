@@ -27,36 +27,20 @@ import { apiUrl } from "~/lib/apiOrigin";
 /* ------------------------------------------------------------------ */
 export function HeroMockup() {
   const rows = [
-    { label: "Category Positioning", score: "29/100", cls: "text-scorebright" },
-    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-scorebright" },
-    { label: "GTM Path & Offer", score: "27/100", cls: "text-scorebright" },
-    { label: "Differentiation Anchor", score: "21/100", cls: "text-scorebright" },
+    { label: "Category Positioning", score: "29/100", cls: "text-[#C4603A]" },
+    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-[#C9992F]" },
+    { label: "GTM Path & Offer", score: "27/100", cls: "text-[#C4603A]" },
+    { label: "Differentiation Anchor", score: "21/100", cls: "text-[#C4603A]" },
   ];
   const rowCls =
-    "flex items-center justify-between gap-3 rounded-lg border border-[#4a3528] bg-[#241c18] px-3.5 py-2.5";
+    "flex items-center justify-between gap-3 rounded-lg border border-[#3A312B] bg-[#16120F] px-3.5 py-2.5";
   return (
     <div className="relative mx-auto w-full max-w-[380px]">
-      {/* Cool-tinted aura behind the card (owner high-contrast spec) */}
+      {/* Flat 1px hairline border, no glow or lighter edge (owner spec 2026-09-09). */}
       <div
-        aria-hidden="true"
-        className="absolute -inset-6 rounded-[28px]"
-        style={{
-          background:
-            "radial-gradient(ellipse 62% 60% at 52% 42%, rgba(117,140,180,0.20), rgba(117,140,180,0.05) 60%, transparent 78%)",
-          filter: "blur(2px)",
-        }}
-      />
-      {/* Razor-thin border with gradient highlight along top & left edges */}
-      <div
-        className="relative overflow-hidden rounded-2xl"
-        style={{
-          borderRadius: "16px",
-          padding: 1,
-          background:
-            "linear-gradient(135deg, rgba(245,240,232,0.34), rgba(245,240,232,0.07) 34%, rgba(245,240,232,0.015) 60%, transparent 78%)",
-        }}
+        className="relative overflow-hidden rounded-2xl border border-[#3A312B] bg-[#1F1A16]"
       >
-        <div className="relative overflow-hidden rounded-[15px] bg-[#1b1713]">
+        <div className="relative overflow-hidden rounded-[15px] bg-[#1F1A16]">
           {/* Top header bar: browser chrome */}
           <div className="flex items-center gap-3 border-b border-[#322a24] bg-[#1f1a16] px-4 py-2.5">
             <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
@@ -74,9 +58,9 @@ export function HeroMockup() {
               <span className="text-[9px]">●</span>Sample report
             </span>
           </div>
-          {/* 4 metric rows; the last is partially faded like a real report */}
-          <div className="flex flex-col gap-2 bg-[#1b1713] p-4 sm:p-5">
-            {rows.slice(0, 3).map((r) => (
+          {/* All 4 metric rows at full opacity (owner spec 2026-09-09). */}
+          <div className="flex flex-col gap-2 bg-[#1F1A16] p-4 sm:p-5">
+            {rows.map((r) => (
               <div key={r.label} className={rowCls}>
                 <span className="min-w-0 text-[13px] font-medium text-[#e8e2d8]">{r.label}</span>
                 <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${r.cls}`}>
@@ -84,22 +68,9 @@ export function HeroMockup() {
                 </span>
               </div>
             ))}
-            <div className="relative h-[42px] overflow-hidden" aria-hidden="true">
-              <div className={rowCls}>
-                <span className="min-w-0 text-[13px] font-medium text-[#e8e2d8]">{rows[3].label}</span>
-                <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${rows[3].cls}`}>
-                  {rows[3].score}
-                </span>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#1b1713]" />
-            </div>
             {/* Sample finding inline beneath the lowest-scoring row */}
             <p className="text-[11px] leading-relaxed text-[#f08a4b]">
               Sample finding: category naming is too broad for high-intent buyers.
-            </p>
-            {/* Single merged disclaimer line */}
-            <p className="rounded-md bg-[#322a24] px-3 py-1.5 text-center text-[11px] font-bold uppercase leading-relaxed tracking-wide text-[#f0d9b0]">
-              Sample score for illustration, run your URL to get your real score.
             </p>
           </div>
         </div>
@@ -841,22 +812,32 @@ export function HeroDiagnostic({
   const centered = variant === "centered";
 
   return (
-    /* Owner revision spec §6: hero on flat cream, top padding roughly half
-       the old value (fixed header is h-16 + pt-6/pb-4, so pt-24 clears it).
-       Spec §8: no gradient/glow wash in the hero — flat surface. §7: the
-       only section boundary here is the hairline above the Manifesto. */
-    <section id="top" className="relative bg-[#121110] pt-24 pb-12 sm:pb-16">
-      <div
-        aria-hidden="true"
-        className="hero-glow-left"
-        style={{ zIndex: 0 }}
-      />
-      <div
-        aria-hidden="true"
-        className="hero-glow-right"
-        style={{ zIndex: 0 }}
-      />
-      <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
+    /* Owner revision spec §6: hero on flat #2A2320 (owner spec 2026-09-09:
+       no gradient/glow wash), top padding roughly half the old value
+       (fixed header is h-16 + pt-6/pb-4, so pt-24 clears it). §7: the
+       only section boundary here is the hairline above the Manifesto.
+       Paper-grain overlay reuses the Work With Me feTurbulence approach
+       (overlay @ 26%, pointer-events none); content sits above it. */
+    <section id="top" className="relative bg-[#2A2320] pt-24 pb-12 sm:pb-16">
+      <div className="hero-grain" aria-hidden="true">
+        <svg width="100%" height="100%" aria-hidden="true">
+          <filter id="hero-grain-filter">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.75"
+              numOctaves="4"
+              stitchTiles="stitch"
+            />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+          <rect
+            width="100%"
+            height="100%"
+            filter="url(#hero-grain-filter)"
+          />
+        </svg>
+      </div>
+      <div className="hero-content relative mx-auto max-w-6xl px-5 sm:px-8">
         {showResult ? (
           <div
             id="calculator"
@@ -946,12 +927,12 @@ export function HeroDiagnostic({
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
             <div className="text-center lg:text-left">
               <p className="eyebrow">ARE YOU MARKETREADY?</p>
-              <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-white sm:text-[30px]">
+              <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-[#F5F0E8] sm:text-[30px]">
                 Your product isn't the problem.
                 <br />
                 Your <span className="hero-highlight">market story</span> might be.
               </h1>
-              <p className="mx-auto mt-3 max-w-[480px] text-[13px] leading-[1.6] text-[#B8AEA3] lg:mx-0">
+              <p className="mx-auto mt-3 max-w-[480px] text-[13px] leading-[1.6] text-[#C4BBB0] lg:mx-0">
                 If you&apos;re about to launch or about to scale spend,
                 I&apos;ll show you how your GTM reads to a first-time buyer
                 before you commit the budget.
@@ -962,9 +943,6 @@ export function HeroDiagnostic({
               </p>
               <form onSubmit={handleSubmit} noValidate className="mx-auto mt-5 flex max-w-md flex-col gap-3 lg:mx-0">
                 <div className="text-left">
-                  <label htmlFor="calc-url" className="field-label">
-                    Your website URL <span className="text-ember">*</span>
-                  </label>
                   <input
                     id="calc-url"
                     type="url"
@@ -976,7 +954,7 @@ export function HeroDiagnostic({
                     className="field-input h-[48px] text-[15px]"
                     aria-describedby={error ? "calc-error" : undefined}
                   />
-                  <p className="mt-2 text-[12px] leading-relaxed text-[#f5f0e8]">
+                  <p className="mt-2 text-[12px] leading-relaxed text-[#C4BBB0]">
                     Run your URL through MarketReady and see your GTM through a buyer's eyes.
                   </p>
                 </div>
@@ -991,9 +969,6 @@ export function HeroDiagnostic({
                 >
                   Get Your MarketReady Score →
                 </button>
-                <p className="text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-fog">
-                  MY 60-SECOND READ - BUILT FOR B2B SAAS AND CONSUMER TECH
-                </p>
               </form>
             </div>
             {/* Spec §3: sample-report card is the sole hero visual, anchored

@@ -127,49 +127,56 @@
   .eyebrow {
     @apply text-[12px] font-bold uppercase tracking-[0.14em] text-pinetint;
   }
-  /* Hero headline phrase highlight — rust orange, same as the CTA
-     (--color-ember #C96A42), dark text on the fill. Owner preference:
-     orange, not cream (2026-09-08). */
+  /* Hero headline phrase underline — owner spec 2026-09-09: no bg block,
+     no glow; 3px rust (#C96A42) bottom border with 2px padding beneath.
+     Text inherits the headline #F5F0E8. */
   .hero-highlight {
     display: inline-block;
-    border-radius: 0.4em;
-    background-color: var(--color-ember);
-    color: var(--color-cream);
-    padding: 0.06em 0.28em 0.1em;
+    border-bottom: 3px solid #c96a42;
+    padding-bottom: 2px;
     line-height: 1.3;
-    box-shadow: 0 2px 14px rgba(201, 106, 66, 0.35);
   }
-  /* Hero ambient glows (owner high-contrast spec 2026-09-08): a soft
-     diffused cream radial glow behind the left content column, and a faint
-     cool-tinted aura behind the right dashboard card for temperature
-     contrast. Both sit above the flat charcoal page. */
-  .hero-glow-left {
+  /* Hero paper-grain overlay — owner spec 2026-09-09: same inline-SVG
+     feTurbulence approach as the Work With Me section (#wwm-grain-filter),
+     mix-blend-mode overlay at 26% opacity, absolute inset-0,
+     pointer-events none. Content sits above it (see #top .hero-content). */
+  #top .hero-grain {
     position: absolute;
-    top: -8%;
-    left: -10%;
-    width: 62%;
-    height: 130%;
-    background: radial-gradient(
-      ellipse 65% 58% at 30% 42%,
-      rgba(245, 240, 232, 0.14),
-      rgba(245, 240, 232, 0.045) 52%,
-      transparent 76%
-    );
+    inset: 0;
     pointer-events: none;
+    opacity: 0.26;
+    mix-blend-mode: overlay;
+    z-index: 0;
   }
-  .hero-glow-right {
-    position: absolute;
-    top: -4%;
-    right: -8%;
-    width: 58%;
-    height: 128%;
-    background: radial-gradient(
-      ellipse 60% 55% at 62% 44%,
-      rgba(117, 140, 180, 0.12),
-      rgba(117, 140, 180, 0.04) 55%,
-      transparent 78%
-    );
-    pointer-events: none;
+  #top .hero-grain svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  #top .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+  /* Hero CTA + URL field surfaces — owner spec 2026-09-09: flat rust fill
+     #C96A42 with #16120F text (no gradient image, no glow/shadow); URL
+     field #1F1A16 fill, 1px #3A312B border, #7D736A placeholder, no
+     shadow. Scoped to #top so other surfaces are untouched. */
+  #top .btn-electric {
+    background-image: none;
+    background-color: #c96a42;
+    color: #16120f;
+    box-shadow: none;
+  }
+  #top .btn-electric:hover {
+    background-color: #a8502f;
+  }
+  #top .field-input {
+    background-color: #1f1a16;
+    border-color: #3a312b;
+    box-shadow: none;
+  }
+  #top .field-input::placeholder {
+    color: #7d736a;
   }
 }
 
