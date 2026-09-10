@@ -187,7 +187,12 @@ export function HeroMockup({ animate = true }: { animate?: boolean }) {
 /* force every fill via CSS (`fill: #7d736a !important`), which beats   */
 /* both fill attributes and inline style fills → EXACT flat color      */
 /* (a brightness/invert filter could only produce neutral grays).      */
-/* Heights are per-logo for optical balance, none above 14px.          */
+/* Heights are per-logo CSS classes (hero-logo-*) for optical balance  */
+/* across three breakpoints — cap 34px ≥900px (owner spec 2026-09-10   */
+/* §1). WBD is the TEXT-ONLY two-line wordmark (shield cropped out of  */
+/* the authentic file); Trackonomics is the wordmark only (the "an     */
+/* Impact company" tagline is cropped out — it duplicated impact.com   */
+/* in the same row and was illegible at display size).                 */
 /* ------------------------------------------------------------------ */
 /** Ensure a viewBox so CSS height scales proportionally (amazon.svg
  *  ships none). width/height attrs stay — CSS overrides them. */
@@ -198,23 +203,23 @@ function normalizeLogoSvg(raw: string): string {
   return w && h ? raw.replace("<svg", `<svg viewBox="0 0 ${w} ${h}"`) : raw;
 }
 
-/* Owner spec 2026-09-10 §1: seven-brand adtech/B2B-SaaS + media mix, in this
-   order. Nativo is OMITTED: the brand was acquired and nativo.com now serves
-   the Life360 Ads mark; no authentic Nativo vector survives on the live site,
-   Wayback (2021 Squarespace site shipped PNG only), Wikimedia, or any public
-   code source — awaiting owner's official vector file (see PR description).
-   Height = optical balance, NOT uniform: long wordmarks sit ~13-17px, the
-   most compact mark (impact.com) gets 18px; nothing exceeds the 22px cap.
-   light:true = per-mark legibility exception (§3) — the mark reads too thin
-   at rendered size, so it gets a slightly lighter fill (#A89E95) than the
-   #9C9188 default. */
-const HERO_LOGOS: { name: string; svg: string; h: number; light?: boolean }[] = [
-  { name: "Warner Bros. Discovery", svg: wbdLogo, h: 16 },
-  { name: "TNT Sports", svg: tntLogo, h: 16 },
-  { name: "Bleacher Report", svg: brLogo, h: 14 },
-  { name: "impact.com", svg: impactLogo, h: 18 },
-  { name: "Trackonomics", svg: trackonomicsLogo, h: 14, light: true },
-  { name: "Pressboard", svg: pressboardLogo, h: 14, light: true },
+/* Owner spec 2026-09-10 §1: six-brand adtech/media mix, in this order.
+   Nativo is OMITTED after a second, broader sourcing pass — the brand
+   was acquired (by Impact.com) and no authentic vector survives on any
+   public archive (full list of ~25 sources tried with URLs in
+   /home/team/shared/hero-rework/NATIVO-HUNT-REPORT.md; press CDN only
+   yields 400px JPGs). Awaiting the owner's official Nativo file.
+   Heights live in CSS (.hero-logo-* classes) so each mark can scale
+   per breakpoint: mobile (3+3 rows) < 768, mid 768–899, ONE row ≥900px.
+   light:true = per-mark legibility exception (§3) — reads too thin at
+   rendered size, gets a slightly lighter fill (#A89E95). */
+const HERO_LOGOS: { name: string; svg: string; cls: string; light?: boolean }[] = [
+  { name: "Warner Bros. Discovery", svg: wbdLogo, cls: "hero-logo-wbd" },
+  { name: "TNT Sports", svg: tntLogo, cls: "hero-logo-tnt" },
+  { name: "Bleacher Report", svg: brLogo, cls: "hero-logo-br" },
+  { name: "impact.com", svg: impactLogo, cls: "hero-logo-impact" },
+  { name: "Trackonomics", svg: trackonomicsLogo, cls: "hero-logo-trackonomics", light: true },
+  { name: "Pressboard", svg: pressboardLogo, cls: "hero-logo-pressboard", light: true },
 ];
 
 const HERO_LOGOS_LABEL = "BRANDS MY TEAMS HAVE WORKED WITH";
@@ -228,10 +233,13 @@ function HeroLogos() {
           {HERO_LOGOS.map((l) => (
             <li key={l.name}>
               <span
-                className={l.light ? "hero-logo hero-logo-lighter" : "hero-logo"}
+                className={
+                  l.light
+                    ? `hero-logo hero-logo-lighter ${l.cls}`
+                    : `hero-logo ${l.cls}`
+                }
                 role="img"
                 aria-label={l.name}
-                style={{ height: `${l.h}px` }}
                 dangerouslySetInnerHTML={{ __html: normalizeLogoSvg(l.svg) }}
               />
             </li>

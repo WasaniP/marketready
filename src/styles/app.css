@@ -92,15 +92,31 @@
   }
 
   /* Primary CTA: flat rust fill #C96A42, warm-dark #16120F text, deeper
-     rust on hover. NO gradient, NO glow, NO shadow (owner CTA audit
-     2026-09-09 + 2026-09-10 hardening: the base rule is flattened here;
-     explicit background-image:none / box-shadow:none are locked in so a
-     stale gradient or glow can never be reintroduced by a shared utility
-     or a :hover/composed rule). */
+     rust #A8502F on hover. NO gradient, NO glow, NO shadow. Owner CTA
+     audit 2026-09-09 + 2026-09-10 (4th report): the surface is locked as
+     explicit plain-CSS declarations inside the rule (after @apply), so
+     no token indirection, purge, utility, or specificity war can ever
+     repaint it — see the declarations beneath the @apply line. */
   .btn-electric {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-ember px-5 py-2.5 text-sm font-semibold text-[#16120f] transition-all duration-200 hover:bg-emberdeep active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+    /* Layout/behavior utilities only — NO color utilities here. The four
+       explicit plain-CSS declarations below are the single source of truth
+       for the CTA surface (owner CTA audit 2026-09-10, 4th report): they
+       sit AFTER any @apply expansion, so no token indirection, purge step,
+       utility, or specificity war can ever repaint this button. */
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed;
+    background-color: #c96a42;
     background-image: none;
     box-shadow: none;
+    color: #16120f;
+  }
+  .btn-electric:hover {
+    background-color: #a8502f;
+    background-image: none;
+    box-shadow: none;
+  }
+  .btn-electric:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   /* Secondary CTA: outline on dark — transparent fill, rust border/text. */
@@ -192,9 +208,9 @@
 
   /* Hero client logo strip (§6): 22px above, 1px #3A312B top border,
      16px padding beneath it, 9px/0.12em/#9C9188 label 12px above the row.
-     Six logos on one evenly-distributed row ≥768px, two centered rows of
-     three below (owner spec 2026-09-10: adtech/B2B-SaaS + media mix —
-     Amazon/TBS/Variety out; impact.com/Trackonomics/Pressboard in). */
+     Six authentic marks (owner spec 2026-09-10 §1): 3+3 centered rows
+     <768px, 3+3 spread rows 768–919px, ONE evenly-distributed row ≥920px.
+     Gaps tightened (16→12px desktop) so the bigger marks fill the row. */
   .hero-logos {
     margin-top: 22px;
   }
@@ -216,8 +232,18 @@
   }
   @media (min-width: 768px) {
     .hero-logos-row {
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 0 16px;
+      gap: 24px 40px;
+    }
+  }
+  @media (min-width: 920px) {
+    /* One row: flex with natural widths + equal 12px gaps — the grid's
+       equal columns would letterbox the wide Trackonomics wordmark. */
+    .hero-logos-row {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
     }
   }
   .hero-logos-row li {
@@ -225,15 +251,16 @@
     align-items: center;
     justify-content: center;
     min-width: 0;
+    max-width: 100%;
   }
-  /* Inline SVG logos: explicit per-logo height (optical balance, none
-     above 22px). Flat single-color #9C9188 treatment: force every fill
-     with !important (beats fill attributes AND inline style fills) →
-     EXACT flat color, unlike a brightness/invert filter which can only
-     produce neutral grays. Brand marks are authentic monochrome SVG
-     sources (single-fill path data, no embedded multi-color fills); the
-     hero uses ?raw inline copies, public/logos keeps the full-color
-     assets for the founder bar. */
+  /* Inline SVG logos: per-mark heights in the hero-logo-* classes below
+     (optical balance, cap 34px — owner spec 2026-09-10 §1). Flat
+     single-color #9C9188 treatment: force every fill with !important
+     (beats fill attributes AND inline style fills) → EXACT flat color,
+     unlike a brightness/invert filter which can only produce neutral
+     grays. Brand marks are authentic monochrome SVG sources (single-fill
+     path data, no embedded multi-color fills); the hero uses ?raw inline
+     copies, public/logos keeps the full-color assets for the founder bar. */
   .hero-logo {
     display: inline-flex;
     align-items: center;
@@ -265,6 +292,34 @@
   .hero-logo-lighter svg g {
     fill: #a89e95 !important;
     stroke: none;
+  }
+  /* Per-mark heights: optical balance, NOT uniform. Stacked/two-line
+     marks (WBD, TNT, BR) read larger than single-line wordmarks; the
+     12-letter Trackonomics wordmark is inherently wide (≈11.3:1) so it
+     renders lowest to keep visual weight even without blowing the row
+     width. Cap 34px ≥920px. Trackonomics keeps its lighter-fill
+     treatment (thin stroke-y letterforms). */
+  .hero-logo-wbd { height: 16px; }
+  .hero-logo-tnt { height: 18px; }
+  .hero-logo-br { height: 20px; }
+  .hero-logo-impact { height: 19px; }
+  .hero-logo-trackonomics { height: 13px; }
+  .hero-logo-pressboard { height: 16px; }
+  @media (min-width: 768px) {
+    .hero-logo-wbd { height: 26px; }
+    .hero-logo-tnt { height: 28px; }
+    .hero-logo-br { height: 30px; }
+    .hero-logo-impact { height: 29px; }
+    .hero-logo-trackonomics { height: 17px; }
+    .hero-logo-pressboard { height: 25px; }
+  }
+  @media (min-width: 920px) {
+    .hero-logo-wbd { height: 30px; }
+    .hero-logo-tnt { height: 32px; }
+    .hero-logo-br { height: 34px; }
+    .hero-logo-impact { height: 34px; }
+    .hero-logo-trackonomics { height: 20px; }
+    .hero-logo-pressboard { height: 29px; }
   }
 
   /* Hero sample-card load animation (§7): rows fade + rise 8px (400ms,
