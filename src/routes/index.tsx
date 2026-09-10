@@ -155,10 +155,11 @@ const HOW_IT_WORKS_STEPS = [
   },
 ] as const;
 
-/* Friction observations: first-person, stat-free. Per owner spec §12:  */
-/* no framework-style titles, no headline stats, no invented citations; */
-/* each observation stands alone as the row's lead line. Stacked-row    */
-/* layout: ghosted serif numerals, sand headers, consequence tags.      */
+/* Friction observations: first-person rows, compact warm-dark layout     */
+/* (owner rework 2026-09-10): shortened intro, cited JOLT Effect stat    */
+/* block in the left column, hover-lift rows (bg/numeral/header/tag),   */
+/* sticky left column (overflow: clip on the section). Stacked-row        */
+/* layout: ghosted serif numerals, sand headers, consequence tags.        */
 /* ------------------------------------------------------------------ */
 function FrictionObservations() {
   const rows = [
@@ -205,8 +206,16 @@ function FrictionObservations() {
               Three patterns that quietly hold back growth
             </h2>
             <p className="friction-intro">
-              After years inside media and tech brands, I notice the same three failure modes. If any of these sound familiar, your positioning may be the problem, not your product.
+              If any of these sound familiar, your positioning may be the problem, not your product.
             </p>
+            <div className="friction-stat">
+              <p className="friction-stat-figure">40–60%</p>
+              <p className="friction-stat-body">
+                of qualified B2B deals are lost to no decision, not to a
+                competitor.
+              </p>
+              <p className="friction-stat-source">Matt Dixon, The JOLT Effect</p>
+            </div>
           </div>
           <div>
             {rows.map((row) => (
