@@ -9,7 +9,13 @@
  * HeroResults). Extracted verbatim from the homepage route (build #NN).
  */
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { CSSProperties, FormEvent } from "react";
+import amazonLogo from "./hero-logos/amazon.svg?raw";
+import wbdLogo from "./hero-logos/wbd.svg?raw";
+import tntLogo from "./hero-logos/tntsports.svg?raw";
+import tbsLogo from "./hero-logos/tbs.svg?raw";
+import brLogo from "./hero-logos/bleacherreport.svg?raw";
+import varietyLogo from "./hero-logos/variety.svg?raw";
 import { scoreAssessment, scoreColor, PILLAR_OF } from "~/lib/audit/engine";
 import type { AssessmentInput, AuditResult } from "~/lib/audit/types";
 import { toAIResult } from "~/lib/audit/ai";
@@ -19,23 +25,109 @@ import { apiUrl } from "~/lib/apiOrigin";
 
 
 /* ------------------------------------------------------------------ */
-/* Owner revision spec §3: the sample-report card is the SOLE hero       */
-/* visual (founder photo removed). Larger card, anchored high in the     */
-/* right column; 4 parameter rows with a partial fade on the last so it  */
-/* reads as a real report. Flat surface per §8 — no ambient glow wash.   */
-/* Scores are illustrative samples, never a real result (§12).           */
 /* ------------------------------------------------------------------ */
-export function HeroMockup() {
-  const rows = [
-    { label: "Category Positioning", score: "29/100", cls: "text-[#C4603A]" },
-    { label: "Hero Messaging & Speed", score: "34/100", cls: "text-[#C9992F]" },
-    { label: "GTM Path & Offer", score: "27/100", cls: "text-[#C4603A]" },
-    { label: "Differentiation Anchor", score: "21/100", cls: "text-[#C4603A]" },
-  ];
-  const rowCls =
-    "flex items-center justify-between gap-3 rounded-lg border border-[#3A312B] bg-[#16120F] px-3.5 py-2.5";
+/* Owner revision spec §3/§7: the sample-report card is the SOLE hero   */
+/* visual (founder photo removed). Larger card, anchored high in the    */
+/* right column; 4 parameter rows; flat surface per §8 (no glow wash).  */
+/* Scores are illustrative samples, never a real result (§12). §5: 12px */
+/* L-brackets top-right + bottom-right only, 1px #C96A42, -1px offset   */
+/* (light rhyme with the #methodology engine-gauge brackets — no grid   */
+/* overlay / mono labels in the hero). §7: rows reveal on load (fade +  */
+/* 8px rise, 120ms apart), numerals count up, finding fades in, then    */
+/* one scan sweep (1.2s) that stops. Reduced motion = final state.      */
+/* ------------------------------------------------------------------ */
+interface HeroRow {
+  label: string;
+  score: string; // "NN/100"
+  cls: string;
+}
+
+const MOCKUP_ROWS: HeroRow[] = [
+  { label: "Category Positioning", score: "29/100", cls: "text-[#C4603A]" },
+  { label: "Hero Messaging & Speed", score: "34/100", cls: "text-[#C9992F]" },
+  { label: "GTM Path & Offer", score: "27/100", cls: "text-[#C4603A]" },
+  { label: "Differentiation Anchor", score: "21/100", cls: "text-[#C4603A]" },
+];
+
+const ROW_CLS =
+  "flex items-center justify-between gap-3 rounded-lg border border-[#3A312B] bg-[#16120F] px-3.5 py-2.5";
+
+const ROW_STAGGER_MS = 120; // each row starts 120ms after the previous
+const ROW_FADE_MS = 400; // fade + 8px rise, ease-out
+const COUNTUP_MS = 600; // numeral counts 0 → value over 600ms
+const FINDING_AT_MS = 1000; // finding fades in after all four rows land
+const SCAN_AT_MS = 1500; // then one sweep (CSS owns the 1.2s sweep)
+
+export function HeroMockup({ animate = true }: { animate?: boolean }) {
+  const targets = MOCKUP_ROWS.map((r) => parseInt(r.score, 10));
+  const [visible, setVisible] = useState(0); // rows revealed so far (0..4)
+  const [nums, setNums] = useState<number[]>(() => MOCKUP_ROWS.map(() => 0));
+  const [finding, setFinding] = useState(false);
+  const [scan, setScan] = useState(false);
+  const rafRef = useRef<number | null>(null);
+  const timersRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    const finalState = () => {
+      setVisible(MOCKUP_ROWS.length);
+      setNums(targets);
+      setFinding(true);
+    };
+    if (!animate) {
+      finalState();
+      return;
+    }
+    // prefers-reduced-motion: render the final state immediately, no
+    // animation (also guarded in CSS for no-JS / emulation gaps).
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      finalState();
+      return;
+    }
+    const at = (ms: number, fn: () => void) => {
+      timersRef.current.push(window.setTimeout(fn, ms));
+    };
+    // a. rows reveal staggered (fade + 8px rise via inline transition)
+    MOCKUP_ROWS.forEach((_, i) =>
+      at(i * ROW_STAGGER_MS, () => setVisible((v) => Math.max(v, i + 1))),
+    );
+    // b. each numeral counts 0 → target over 600ms from its row's start
+    MOCKUP_ROWS.forEach((_, i) => {
+      const target = targets[i];
+      at(i * ROW_STAGGER_MS, () => {
+        const start = performance.now();
+        const tick = (now: number) => {
+          const p = Math.min(1, (now - start) / COUNTUP_MS);
+          const eased = 1 - Math.pow(1 - p, 3);
+          setNums((prev) => {
+            const next = prev.slice();
+            next[i] = Math.round(target * eased);
+            return next;
+          });
+          if (p < 1) rafRef.current = requestAnimationFrame(tick);
+        };
+        rafRef.current = requestAnimationFrame(tick);
+      });
+    });
+    // c. sample finding fades in after all rows have landed
+    at(FINDING_AT_MS, () => setFinding(true));
+    // d. single scan sweep, then stops (no loop, not scroll-tied)
+    at(SCAN_AT_MS, () => setScan(true));
+    return () => {
+      timersRef.current.forEach((t) => window.clearTimeout(t));
+      timersRef.current = [];
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const rowStyle = (shown: boolean): CSSProperties => ({
+    opacity: shown ? 1 : 0,
+    transform: shown ? "translateY(0)" : "translateY(8px)",
+    transition: `opacity ${ROW_FADE_MS}ms ease-out, transform ${ROW_FADE_MS}ms ease-out`,
+  });
+
   return (
-    <div className="relative mx-auto w-full max-w-[380px]">
+    <div className="hero-mockup relative mx-auto w-full max-w-[380px]">
       {/* Flat 1px hairline border, no glow or lighter edge (owner spec 2026-09-09). */}
       <div
         className="relative overflow-hidden rounded-2xl border border-[#3A312B] bg-[#1F1A16]"
@@ -58,22 +150,83 @@ export function HeroMockup() {
               <span className="text-[9px]">●</span>Sample report
             </span>
           </div>
-          {/* All 4 metric rows at full opacity (owner spec 2026-09-09). */}
+          {/* All 4 metric rows (owner spec 2026-09-09); §7 staggered reveal
+              on load — opacity/transform transitioned, numerals count up. */}
           <div className="flex flex-col gap-2 bg-[#1F1A16] p-4 sm:p-5">
-            {rows.map((r) => (
-              <div key={r.label} className={rowCls}>
+            {MOCKUP_ROWS.map((r, i) => (
+              <div key={r.label} className={`hero-mockup-row ${ROW_CLS}`} style={rowStyle(visible > i)}>
                 <span className="min-w-0 text-[13px] font-medium text-[#e8e2d8]">{r.label}</span>
                 <span className={`shrink-0 font-mono text-[18px] font-bold tabular-nums ${r.cls}`}>
-                  {r.score}
+                  {nums[i]}/100
                 </span>
               </div>
             ))}
             {/* Sample finding inline beneath the lowest-scoring row */}
-            <p className="text-[11px] leading-relaxed text-[#f08a4b]">
+            <p
+              className="hero-mockup-finding text-[11px] leading-relaxed text-[#f08a4b]"
+              style={{
+                opacity: finding ? 1 : 0,
+                transition: `opacity ${ROW_FADE_MS}ms ease-out`,
+              }}
+            >
               Sample finding: category naming is too broad for high-intent buyers.
             </p>
           </div>
+          {/* §7d: single 1.2s scan sweep, 40% opacity #C96A42 line, stops */}
+          {scan && <div className="hero-card-scan" aria-hidden="true" />}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* §6: client logo strip — six authentic brand wordmarks (the same     */
+/* public/logos assets the founder marquee uses), all rendered in one  */
+/* flat #7D736A treatment. Method: inline the SVG markup (?raw) and    */
+/* force every fill via CSS (`fill: #7d736a !important`), which beats   */
+/* both fill attributes and inline style fills → EXACT flat color      */
+/* (a brightness/invert filter could only produce neutral grays).      */
+/* Heights are per-logo for optical balance, none above 14px.          */
+/* ------------------------------------------------------------------ */
+/** Ensure a viewBox so CSS height scales proportionally (amazon.svg
+ *  ships none). width/height attrs stay — CSS overrides them. */
+function normalizeLogoSvg(raw: string): string {
+  if (/viewBox\s*=/.test(raw)) return raw;
+  const w = raw.match(/width="([\d.]+)"/)?.[1];
+  const h = raw.match(/height="([\d.]+)"/)?.[1];
+  return w && h ? raw.replace("<svg", `<svg viewBox="0 0 ${w} ${h}"`) : raw;
+}
+
+const HERO_LOGOS: { name: string; svg: string; h: number }[] = [
+  { name: "Amazon", svg: amazonLogo, h: 12 },
+  { name: "Warner Bros. Discovery", svg: wbdLogo, h: 13 },
+  { name: "TNT Sports", svg: tntLogo, h: 14 },
+  { name: "TBS", svg: tbsLogo, h: 13 },
+  { name: "Bleacher Report", svg: brLogo, h: 13 },
+  { name: "Variety", svg: varietyLogo, h: 14 },
+];
+
+const HERO_LOGOS_LABEL = "BRANDS MY TEAMS HAVE WORKED WITH";
+
+function HeroLogos() {
+  return (
+    <div className="hero-logos">
+      <div className="border-t border-[#3A312B] pt-4">
+        <p className="hero-logos-label">{HERO_LOGOS_LABEL}</p>
+        <ul className="hero-logos-row">
+          {HERO_LOGOS.map((l) => (
+            <li key={l.name}>
+              <span
+                className="hero-logo"
+                role="img"
+                aria-label={l.name}
+                style={{ height: `${l.h}px` }}
+                dangerouslySetInnerHTML={{ __html: normalizeLogoSvg(l.svg) }}
+              />
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
@@ -920,28 +1073,25 @@ export function HeroDiagnostic({
           </div>
         ) : (
           <>
-          {/* Owner revision spec §3/§9: hero left column — kicker + full-ink
-              serif headline at ~80% of the old size (two balanced lines),
-              subhead tightened to the URL input. No founder photo anywhere
-              in the hero; the sample-report card anchors the right column. */}
+          {/* Owner revision spec §1/§2/§3: hero left column — kicker +
+              serif headline (no underline span — the "market story"
+              phrase is gone), two-line subhead (13px #C4BBB0 then 12px
+              #A79C91, 10px apart, 16px above the URL field), helper text
+              under the input. No founder photo anywhere in the hero; the
+              sample-report card + logo strip anchor the right/bottom. */}
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
             <div className="text-center lg:text-left">
               <p className="eyebrow">ARE YOU MARKETREADY?</p>
               <h1 className="mt-3 font-display text-[24px] font-bold leading-[1.2] tracking-tight text-[#F5F0E8] sm:text-[30px]">
-                Your product isn't the problem.
-                <br />
-                Your <span className="hero-highlight">market story</span> might be.
+                Turning products into stories that sell.
               </h1>
-              <p className="mx-auto mt-3 max-w-[480px] text-[13px] leading-[1.6] text-[#C4BBB0] lg:mx-0">
-                If you&apos;re about to launch or about to scale spend,
-                I&apos;ll show you how your GTM reads to a first-time buyer
-                before you commit the budget.
+              <p className="mx-auto max-w-[480px] text-[13px] leading-[1.55] text-[#C4BBB0] lg:mx-0">
+                Stronger positioning, sharper messaging, and focused go-to-market strategy that turn product value into customer demand and revenue.
               </p>
-              <p className="mx-auto mt-2 max-w-[480px] text-[13px] leading-[1.6] text-[#f5f0e8] lg:mx-0">
-                <strong>The goal is simple:</strong> a story that sells, a sales team equipped to
-                win, and a GTM engine built to help your business scale.
+              <p className="mx-auto mt-[10px] max-w-[480px] text-[12px] leading-[1.55] text-[#A79C91] lg:mx-0">
+                Experienced product marketing support with strategy and hands-on execution for companies building and growing products in competitive markets.
               </p>
-              <form onSubmit={handleSubmit} noValidate className="mx-auto mt-5 flex max-w-md flex-col gap-3 lg:mx-0">
+              <form onSubmit={handleSubmit} noValidate className="mx-auto mt-4 flex max-w-md flex-col gap-3 lg:mx-0">
                 <div className="text-left">
                   <input
                     id="calc-url"
@@ -955,7 +1105,7 @@ export function HeroDiagnostic({
                     aria-describedby={error ? "calc-error" : undefined}
                   />
                   <p className="mt-2 text-[12px] leading-relaxed text-[#C4BBB0]">
-                    Run your URL through MarketReady and see your GTM through a buyer's eyes.
+                    Run your URL through MarketReady&apos;s free Market Readiness Diagnostic to identify gaps in your positioning, messaging, and GTM.
                   </p>
                 </div>
                 {error && (
@@ -972,11 +1122,15 @@ export function HeroDiagnostic({
               </form>
             </div>
             {/* Spec §3: sample-report card is the sole hero visual, anchored
-                high in the right column. Stacks below the text on mobile. */}
+                high in the right column. Stacks below the text on mobile.
+                §7: the hero instance animates on load (staggered rows,
+                count-up numerals, finding, single scan sweep). */}
             <div className="flex justify-center">
-              <HeroMockup />
+              <HeroMockup animate />
             </div>
           </div>
+          {/* §6: client logo strip, full width beneath both columns */}
+          <HeroLogos />
           </>
         )}
       </div>
