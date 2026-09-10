@@ -10,9 +10,10 @@
  */
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
-import wbdLogo from "./hero-logos/wbd.svg?raw";
+import varietyLogo from "./hero-logos/variety.svg?raw";
 import tntLogo from "./hero-logos/tntsports.svg?raw";
 import brLogo from "./hero-logos/bleacherreport.svg?raw";
+import aewLogo from "./hero-logos/aew.svg?raw";
 import impactLogo from "./hero-logos/impact.svg?raw";
 import trackonomicsLogo from "./hero-logos/trackonomics.svg?raw";
 import pressboardLogo from "./hero-logos/pressboard.svg?raw";
@@ -181,7 +182,7 @@ export function HeroMockup({ animate = true }: { animate?: boolean }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* §6: client logo strip — six authentic brand wordmarks (the same     */
+/* §6: client logo strip — seven authentic brand wordmarks (the same  */
 /* public/logos assets the founder marquee uses), all rendered in one  */
 /* flat #7D736A treatment. Method: inline the SVG markup (?raw) and    */
 /* force every fill via CSS (`fill: #7d736a !important`), which beats   */
@@ -189,10 +190,14 @@ export function HeroMockup({ animate = true }: { animate?: boolean }) {
 /* (a brightness/invert filter could only produce neutral grays).      */
 /* Heights are per-logo CSS classes (hero-logo-*) for optical balance  */
 /* across three breakpoints — cap 34px ≥900px (owner spec 2026-09-10   */
-/* §1). WBD is the TEXT-ONLY two-line wordmark (shield cropped out of  */
-/* the authentic file); Trackonomics is the wordmark only (the "an     */
-/* Impact company" tagline is cropped out — it duplicated impact.com   */
-/* in the same row and was illegible at display size).                 */
+/* §1). Variety is the full lockup (letters + underline swoosh — note  */
+/* the round-2 crop of the authentic file clipped the swoosh tail by   */
+/* ~13 units; the new tight crop includes it, so the full mark shows); */
+/* AEW is the full lockup (outer brackets + stacked wordmark, both     */
+/* from the owner-approved founder-bar files). Trackonomics is the     */
+/* wordmark only (the "an Impact company" tagline is cropped out — it  */
+/* duplicated impact.com in the same row and was illegible at display  */
+/* size). WBD removed entirely in round 6 (2026-09-10).                */
 /* ------------------------------------------------------------------ */
 /** Ensure a viewBox so CSS height scales proportionally (amazon.svg
  *  ships none). width/height attrs stay — CSS overrides them. */
@@ -203,20 +208,32 @@ function normalizeLogoSvg(raw: string): string {
   return w && h ? raw.replace("<svg", `<svg viewBox="0 0 ${w} ${h}"`) : raw;
 }
 
-/* Owner spec 2026-09-10 §1: six-brand adtech/media mix, in this order.
-   Nativo is OMITTED after a second, broader sourcing pass — the brand
-   was acquired (by Impact.com) and no authentic vector survives on any
-   public archive (full list of ~25 sources tried with URLs in
-   /home/team/shared/hero-rework/NATIVO-HUNT-REPORT.md; press CDN only
-   yields 400px JPGs). Awaiting the owner's official Nativo file.
-   Heights live in CSS (.hero-logo-* classes) so each mark can scale
-   per breakpoint: mobile (3+3 rows) < 768, mid 768–899, ONE row ≥900px.
+/* Owner spec 2026-09-10 §1 → round 6: seven-brand adtech/media mix, in this
+   order. Round 6 (2026-09-10): WBD REMOVED entirely (root cause of the
+   glyph clipping the owner saw — the W letterform extends left of the crop).
+   Variety re-added at position 1 (authentic monochrome source, full lockup
+   including the underline swoosh) and AEW added at position 4 (authentic
+   full lockup: outer brackets + "ALL ELITE WRESTLING" + "AEW" — monochrome
+   source created from public/logos/aew.svg, the owner-approved founder-bar
+   file; the two files the owner dropped in /home/team/shared are NOT vectors
+   (one is a WEBP raster, the other a generic 24×24 Streamline-HQ icon) and
+   were not usable). Nativo remains OMITTED (acquired by Impact.com 2022 —
+   no authentic vector survives on any public archive; see
+   /home/team/shared/hero-rework/NATIVO-HUNT-REPORT.md). Awaiting the
+   owner's official Nativo file to complete the 7-mark set (which then
+   becomes 8 marks).
+   Heights live in CSS (.hero-logo-* classes) so each mark can scale per
+   breakpoint: < 600 = 2-col grid (2+2+2+1 rows), 600–899 = 4-col grid
+   (4+3 rows), ≥ 900 = ONE full-width row, marks spread edge-to-edge via
+   flex space-between (minimum 24px gaps grow to ~65px on wide screens).
    light:true = per-mark legibility exception (§3) — reads too thin at
-   rendered size, gets a slightly lighter fill (#A89E95). */
+   rendered size, gets a slightly lighter fill (#A89E95). Variety and AEW
+   are solid-weight marks and do NOT need the exception. */
 const HERO_LOGOS: { name: string; svg: string; cls: string; light?: boolean }[] = [
-  { name: "Warner Bros. Discovery", svg: wbdLogo, cls: "hero-logo-wbd" },
+  { name: "Variety", svg: varietyLogo, cls: "hero-logo-variety" },
   { name: "TNT Sports", svg: tntLogo, cls: "hero-logo-tnt" },
   { name: "Bleacher Report", svg: brLogo, cls: "hero-logo-br" },
+  { name: "AEW", svg: aewLogo, cls: "hero-logo-aew" },
   { name: "impact.com", svg: impactLogo, cls: "hero-logo-impact" },
   { name: "Trackonomics", svg: trackonomicsLogo, cls: "hero-logo-trackonomics", light: true },
   { name: "Pressboard", svg: pressboardLogo, cls: "hero-logo-pressboard", light: true },
