@@ -91,12 +91,13 @@
     @apply rounded-xl border border-hairline bg-linen;
   }
 
-  /* Primary CTA: rust-terracotta gradient fill, warm-dark text, deeper
-     rust on hover, soft glow (owner high-contrast spec 2026-09-08). */
+  /* Primary CTA: flat rust fill #C96A42, warm-dark #16120F text, deeper
+     rust on hover. NO gradient, NO glow (owner CTA audit 2026-09-09: a
+     leftover gradient image made every CTA outside the hero render
+     salmon — the scoped #top override covered only the hero, so the base
+     rule is flattened here; the hero keeps the same flat treatment). */
   .btn-electric {
     @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-ember px-5 py-2.5 text-sm font-semibold text-[#16120f] transition-all duration-200 hover:bg-emberdeep active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
-    background-image: linear-gradient(180deg, #d97a4f 0%, #c96a42 55%, #b85a33 100%);
-    box-shadow: 0 6px 24px rgba(201, 106, 66, 0.4);
   }
 
   /* Secondary CTA: outline on dark — transparent fill, rust border/text. */
@@ -122,19 +123,9 @@
     @apply rounded-full border border-hairline bg-ambertint/60 px-3 py-1 text-xs font-medium text-emberdeep;
   }
 
-  /* Small-caps kicker above serif headlines. Owner warm-dark spec: sand
-     (#E8C9A0) eyebrows — rust reserved for CTAs/links/active only. */
+  /* Eyebrows: sand (#E8C9A0) — rust reserved for CTAs/links/active only. */
   .eyebrow {
     @apply text-[12px] font-bold uppercase tracking-[0.14em] text-pinetint;
-  }
-  /* Hero headline phrase underline — owner spec 2026-09-09: no bg block,
-     no glow; 3px rust (#C96A42) bottom border with 2px padding beneath.
-     Text inherits the headline #F5F0E8. */
-  .hero-highlight {
-    display: inline-block;
-    border-bottom: 3px solid #c96a42;
-    padding-bottom: 2px;
-    line-height: 1.3;
   }
   /* Hero paper-grain overlay — owner spec 2026-09-09: same inline-SVG
      feTurbulence approach as the Work With Me section (#wwm-grain-filter),
@@ -157,19 +148,10 @@
     position: relative;
     z-index: 1;
   }
-  /* Hero CTA + URL field surfaces — owner spec 2026-09-09: flat rust fill
-     #C96A42 with #16120F text (no gradient image, no glow/shadow); URL
-     field #1F1A16 fill, 1px #3A312B border, #7D736A placeholder, no
-     shadow. Scoped to #top so other surfaces are untouched. */
-  #top .btn-electric {
-    background-image: none;
-    background-color: #c96a42;
-    color: #16120f;
-    box-shadow: none;
-  }
-  #top .btn-electric:hover {
-    background-color: #a8502f;
-  }
+  /* Hero URL field surface — owner spec 2026-09-09: #1F1A16 fill, 1px
+     #3A312B border, #7D736A placeholder, no shadow. (No #top CTA override
+     needed: the base .btn-electric is flat rust #C96A42 sitewide — see
+     the CTA audit note above.) */
   #top .field-input {
     background-color: #1f1a16;
     border-color: #3a312b;
@@ -178,11 +160,133 @@
   #top .field-input::placeholder {
     color: #7d736a;
   }
+
+  /* Hero sample card corner brackets (§5): 12px L shapes, 1px #C96A42,
+     top-right + bottom-right only, -1px offset so they sit ON the card's
+     outer border. Deliberate light rhyme with the #methodology engine-
+     gauge brackets (same 12px/1px language, right side only here) — no
+     grid overlay / mono labels in the hero (§8). */
+  .hero-mockup::before,
+  .hero-mockup::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+  }
+  .hero-mockup::before {
+    top: -1px;
+    right: -1px;
+    border-top: 1px solid #c96a42;
+    border-right: 1px solid #c96a42;
+  }
+  .hero-mockup::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 1px solid #c96a42;
+    border-right: 1px solid #c96a42;
+  }
+
+  /* Hero client logo strip (§6): 22px above, 1px #3A312B top border,
+     16px padding beneath it, 9px/0.12em/#7D736A label 12px above the row.
+     Six logos on one row ≥768px, two rows of three below. */
+  .hero-logos {
+    margin-top: 22px;
+  }
+  .hero-logos-label {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: #7d736a;
+    margin-bottom: 12px;
+  }
+  .hero-logos-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px 24px;
+    align-items: center;
+    justify-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  @media (min-width: 768px) {
+    .hero-logos-row {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0 24px;
+    }
+  }
+  .hero-logos-row li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+  }
+  /* Inline SVG logos: explicit per-logo height (optical balance, none
+     above ~14px), width auto. Flat single-color #7D736A treatment: force
+     every fill with !important (beats fill attributes AND inline style
+     fills) → EXACT flat color, unlike a brightness/invert filter which
+     can only produce neutral grays. Brand marks are authentic (same
+     public/logos assets the founder marquee uses). */
+  .hero-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+  }
+  .hero-logo svg {
+    display: block;
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+  }
+  .hero-logo svg path,
+  .hero-logo svg polygon,
+  .hero-logo svg rect,
+  .hero-logo svg circle,
+  .hero-logo svg g {
+    fill: #7d736a !important;
+    stroke: none;
+  }
+
+  /* Hero sample-card load animation (§7): rows fade + rise 8px (400ms,
+     ease-out, 120ms apart — inline transitions on opacity/transform),
+     numerals count 0 → value over 600ms (JS), finding fades in, then one
+     scan sweep (1.2s, 40% opacity 1px #C96A42 line) top-to-bottom that
+     STOPS (forwards, no loop). Ran once on load, not scroll-tied.
+     Reduced motion: see the prefers-reduced-motion block below. */
+  .hero-card-scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -2%;
+    height: 1px;
+    background: #c96a42;
+    pointer-events: none;
+    animation: hero-card-scan 1.2s ease-in-out forwards;
+  }
 }
 
 /* ------------------------------------------------------------------ */
 /* Build #7: Diagnostic Engine scan-preview animations                 */
 /* ------------------------------------------------------------------ */
+
+/* Hero sample-card scan sweep (§7d): top-to-bottom once, then stops. */
+@keyframes hero-card-scan {
+  0% {
+    top: -2%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.4;
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    top: 101%;
+    opacity: 0;
+  }
+}
 
 @keyframes mr-scan-line {
   0% {
@@ -404,13 +508,27 @@
   .mr-step-reveal,
   .mr-shift-slide,
   .mr-data-pulse,
-  .mr-acc-reveal {
+  .mr-acc-reveal,
+  .hero-card-scan {
     animation: none;
   }
   .mr-gauge-sweep,
   .mr-path-draw {
     transition: none;
     animation: none;
+  }
+  /* Hero sample card (§7e): reduced motion renders the final state
+     immediately — rows fully visible, finding visible, no scan. These
+     need !important: the reveal styles are inline transitions, so only
+     an !important stylesheet rule can override them. */
+  .hero-mockup-row,
+  .hero-mockup-finding {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .hero-card-scan {
+    display: none !important;
   }
 }
 
