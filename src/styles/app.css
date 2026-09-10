@@ -697,6 +697,11 @@
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   gap: 32px;
+  /* Owner spec (founder rework round 7): center the right column's content
+     against the left column's body copy instead of stretching it into dead
+     space; with the grid items shrink-wrapped to content height, the left
+     column's border-right divider spans only the content height too. */
+  align-items: center;
 }
 #founder .founder-left {
   padding-right: 32px;
@@ -762,32 +767,6 @@
   color: #a8502f;
   text-wrap: balance;
 }
-#founder .founder-logobar {
-  position: relative;
-  z-index: 2;
-  margin-top: 32px;
-  padding-top: 18px;
-  border-top: 1px solid #d8cec0;
-}
-#founder .founder-logos {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-}
-#founder .founder-logo {
-  width: auto;
-  max-width: 150px;
-  object-fit: contain;
-  opacity: 1;
-}
-#founder .founder-caption {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #7d736a;
-  text-align: left;
-}
 @media (max-width: 899px) {
   #founder .founder-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -800,15 +779,6 @@
 @media (max-width: 767px) {
   #founder .founder-mono {
     display: none;
-  }
-  #founder .founder-logos {
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 12px 12px;
-  }
-  #founder .founder-logo {
-    flex: 0 1 22%;
-    max-width: 22%;
   }
 }
 

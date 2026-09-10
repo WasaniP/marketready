@@ -579,31 +579,20 @@ function DiagnosticEngine() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Founder story (first-person). The logo marquee below is untouched:  */
-/* the same authentic brand marks, brands the founder's teams worked   */
-/* at, not MarketReady clients.                                        */
+/* Founder story (first-person). Round 7 (owner spec 2026-09-10): the  */
+/* logo strip was REMOVED entirely per owner request — the founder     */
+/* section now closes on the signature; brand marks live on /about.    */
 /* ------------------------------------------------------------------ */
 
 /* Founder light panel (owner spec 2026-09-08): the single cream section on
    the homepage — warm cream bg, paper grain, ghosted MR monogram, two-column
-   editorial layout, static full-color logo bar. Copy is unchanged; only the
-   layout, color, and texture were reworked. Hard-coded LIGHT values are used
-   throughout (the remapped cream/ink/mist/fog tokens resolve to dark). */
-
-const FOUNDER_CRED_BRANDS: { label: string; src: string; h: number }[] = [
-  { label: "Amazon", src: "/logos/amazon.svg", h: 12 },
-  { label: "Warner Bros. Discovery", src: "/logos/wbd.svg", h: 13 },
-  { label: "TNT Sports", src: "/logos/tntsports.svg", h: 13 },
-  { label: "TBS", src: "/logos/tbs.svg", h: 14 },
-  { label: "Bleacher Report", src: "/logos/bleacherreport.svg", h: 12 },
-  { label: "Variety", src: "/logos/variety.svg", h: 13 },
-  { label: "AEW", src: "/logos/aew.svg", h: 14 },
-  { label: "NCAA", src: "/logos/ncaa.svg", h: 15 },
-];
+   editorial layout. Copy is unchanged; only the layout, color, and texture
+   were reworked. Hard-coded LIGHT values are used throughout (the remapped
+   cream/ink/mist/fog tokens resolve to dark). */
 
 /* Founder bio (owner spec §12): first-person founder copy replaces the   */
-/* old keyword-fragment badges. Logo bar directly beneath; no photo here   */
-/* (headshot stays on /about only).                                        */
+/* old keyword-fragment badges. No photo here (headshot stays on /about   */
+/* only).                                                                 */
 
 function FounderStory() {
   return (
@@ -630,7 +619,7 @@ function FounderStory() {
       <div className="founder-mono" aria-hidden="true">
         MR
       </div>
-      <div className="relative mx-auto w-full max-w-[1200px] px-6 py-8 sm:px-12 sm:py-12">
+      <div className="relative mx-auto w-full max-w-[1200px] px-6 pt-8 pb-16 sm:px-12 sm:pt-12">
         <div className="founder-grid">
           {/* Left column: eyebrow, headline, body, signature. */}
           <div className="founder-left">
@@ -677,25 +666,6 @@ function FounderStory() {
               Hands-on execution. No agency layers.
             </p>
           </div>
-        </div>
-        {/* Static full-color logo bar, full container width. */}
-        <div className="founder-logobar">
-          <div className="founder-logos">
-            {FOUNDER_CRED_BRANDS.map((b) => (
-              <img
-                key={b.label}
-                src={b.src}
-                alt={b.label}
-                title={b.label}
-                loading="lazy"
-                className="founder-logo"
-                style={{ height: `${b.h}px` }}
-              />
-            ))}
-          </div>
-          <p className="founder-caption">
-            Brands my teams have worked with, not MarketReady clients.
-          </p>
         </div>
       </div>
     </section>
