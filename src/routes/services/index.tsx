@@ -313,7 +313,7 @@ function ServicesPage() {
       <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
        <a
         href="/services/diagnostic"
-        className="inline-flex items-center justify-center rounded-lg bg-teal-400 px-7 py-3.5 text-base font-bold text-slate-950 transition-colors hover:bg-teal-300"
+        className="btn-electric px-7 py-3.5 text-base"
        >
         Get Your MarketReady Score →
        </a>
@@ -408,7 +408,7 @@ function ServicesPage() {
             {tier.ctaStyle === "solid" ? (
              <a
               href={tier.href}
-              className="inline-block rounded-lg bg-teal-400 px-4 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-teal-300"
+              className="btn-electric px-4 py-2 text-sm"
              >
               {tier.cta}
              </a>
@@ -469,7 +469,7 @@ function ServicesPage() {
           {tier.ctaStyle === "solid" ? (
            <a
             href={tier.href}
-            className="inline-block rounded-lg bg-teal-400 px-5 py-2.5 text-sm font-bold text-slate-950 transition-colors hover:bg-teal-300"
+            className="btn-electric px-5 py-2.5 text-sm"
            >
             {tier.cta}
            </a>
@@ -676,7 +676,7 @@ function ServicesPage() {
       <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
        <a
         href="/services/diagnostic"
-        className="inline-flex items-center justify-center rounded-lg bg-teal-400 px-7 py-3.5 text-base font-bold text-slate-950 transition-colors hover:bg-teal-300"
+        className="btn-electric px-7 py-3.5 text-base"
        >
         Run Free Assessment →
        </a>

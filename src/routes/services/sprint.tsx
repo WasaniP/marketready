@@ -346,7 +346,7 @@ function SprintPage() {
      <button
       type="button"
       onClick={bookSprint}
-      className="rounded-lg bg-teal-400 px-7 py-3.5 text-base font-bold text-slate-950 transition-colors hover:bg-teal-300"
+      className="btn-electric px-7 py-3.5 text-base"
      >
       Book Your 14-Day Sprint ($7,500) →
      </button>
