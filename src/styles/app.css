@@ -222,28 +222,37 @@
   }
   .hero-logos-row {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 14px;
     align-items: center;
     justify-items: center;
     margin: 0;
     padding: 0;
     list-style: none;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 600px) {
+    /* Owner spec §5 (round 6): 600–899px = TWO rows (4+3). 4-column grid,
+       row 2 holds the final 3 marks centered in their cells. */
     .hero-logos-row {
-      gap: 24px 40px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 24px 28px;
     }
   }
-  @media (min-width: 920px) {
-    /* One row: flex with natural widths + equal 12px gaps — the grid's
-       equal columns would letterbox the wide Trackonomics wordmark. */
+  @media (min-width: 900px) {
+    /* Owner spec §5 (round 6): ONE single row ≥900px, marks EVENLY
+       DISTRIBUTED ACROSS THE FULL CONTAINER WIDTH. Flex with
+       justify-content: space-between spans the row edge-to-edge; the 24px
+       gap guarantees separation at the narrowest width (900px) and the
+       leftover space is split evenly between neighbors (≈65px gaps at
+       desktop) → true full-width spread, never a centered text block.
+       Trackonomics (wide, 11.3:1) rides as a flex item without breaking
+       the row. */
     .hero-logos-row {
       display: flex;
       flex-wrap: nowrap;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
-      gap: 12px;
+      gap: 24px;
     }
   }
   .hero-logos-row li {
@@ -293,33 +302,38 @@
     fill: #a89e95 !important;
     stroke: none;
   }
-  /* Per-mark heights: optical balance, NOT uniform. Stacked/two-line
-     marks (WBD, TNT, BR) read larger than single-line wordmarks; the
-     12-letter Trackonomics wordmark is inherently wide (≈11.3:1) so it
-     renders lowest to keep visual weight even without blowing the row
-     width. Cap 34px ≥920px. Trackonomics keeps its lighter-fill
-     treatment (thin stroke-y letterforms). */
-  .hero-logo-wbd { height: 16px; }
-  .hero-logo-tnt { height: 18px; }
+  /* Per-mark heights: optical balance, NOT uniform (round 6, 2026-09-10).
+     Stacked/two-line marks (Bleacher Report, AEW, Variety with swoosh)
+     read larger; single-line wordmarks (Trackonomics, Pressboard) render
+     smaller. Cap 34px ≥900px. Trackonomics is scaled DOWN further from
+     round 5 (20px → 11px desktop) — the 11.3:1 wordmark is now clearly
+     subordinate to the other marks instead of dominating the row.
+     900px math: Σ widths ≈ 681px + 6×24px gaps = 825px ≤ 836px row @900px;
+     ≈65px gaps @ container width 1088px (1440 viewport). */
+  .hero-logo-variety { height: 18px; }
+  .hero-logo-tnt { height: 19px; }
   .hero-logo-br { height: 20px; }
+  .hero-logo-aew { height: 20px; }
   .hero-logo-impact { height: 19px; }
-  .hero-logo-trackonomics { height: 13px; }
+  .hero-logo-trackonomics { height: 9px; }
   .hero-logo-pressboard { height: 16px; }
-  @media (min-width: 768px) {
-    .hero-logo-wbd { height: 26px; }
-    .hero-logo-tnt { height: 28px; }
-    .hero-logo-br { height: 30px; }
-    .hero-logo-impact { height: 29px; }
-    .hero-logo-trackonomics { height: 17px; }
-    .hero-logo-pressboard { height: 25px; }
+  @media (min-width: 600px) {
+    .hero-logo-variety { height: 22px; }
+    .hero-logo-tnt { height: 23px; }
+    .hero-logo-br { height: 25px; }
+    .hero-logo-aew { height: 25px; }
+    .hero-logo-impact { height: 24px; }
+    .hero-logo-trackonomics { height: 9px; }
+    .hero-logo-pressboard { height: 20px; }
   }
-  @media (min-width: 920px) {
-    .hero-logo-wbd { height: 30px; }
-    .hero-logo-tnt { height: 32px; }
+  @media (min-width: 900px) {
+    .hero-logo-variety { height: 33px; }
+    .hero-logo-tnt { height: 31px; }
     .hero-logo-br { height: 34px; }
+    .hero-logo-aew { height: 32px; }
     .hero-logo-impact { height: 34px; }
-    .hero-logo-trackonomics { height: 20px; }
-    .hero-logo-pressboard { height: 29px; }
+    .hero-logo-trackonomics { height: 11px; }
+    .hero-logo-pressboard { height: 26px; }
   }
 
   /* Hero sample-card load animation (§7): rows fade + rise 8px (400ms,
