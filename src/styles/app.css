@@ -783,15 +783,21 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Friction observations (stacked rows, warm-dark). Owner spec 2026-09-08: */
-/* smoky section, ghosted serif numerals, sand headers, rust tags,     */
-/* paper grain overlay (founder-section precedent, overlay @ ~28%).    */
+/* Friction observations (stacked rows, warm-dark). Owner rework        */
+/* 2026-09-10: cited stat block in the left column, 12px/13px compact   */
+/* type scale, hover-lift rows (bg #1F1A16, radius 6, brighter numeral  */
+/* + header, rust tag underline), sticky left column enabled via        */
+/* overflow: clip (hidden made the section a scroll container).         */
 /* ------------------------------------------------------------------ */
 #friction {
   position: relative;
-  overflow: hidden;
-  padding-top: 64px;
-  padding-bottom: 64px;
+  /* overflow: clip (not hidden): clips the grain the same way but does
+     NOT create a scroll container, so position: sticky on
+     .friction-left engages. No other ancestor has overflow hidden/auto
+     (html/body use overflow-x: clip only; route wrapper/main are bare). */
+  overflow: clip;
+  padding-top: 48px;
+  padding-bottom: 48px;
 }
 #friction .friction-grain {
   position: absolute;
@@ -811,7 +817,7 @@
   z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
-  gap: 48px;
+  gap: 32px;
   align-items: start;
 }
 #friction .friction-left {
@@ -828,8 +834,8 @@
 #friction .friction-headline {
   margin-top: 10px;
   font-family: var(--font-display);
-  font-size: 34px;
-  line-height: 1.15;
+  font-size: 24px;
+  line-height: 1.13;
   letter-spacing: -0.01em;
   color: #f5f0e8;
   text-wrap: balance;
@@ -837,43 +843,97 @@
 #friction .friction-intro {
   margin-top: 14px;
   max-width: 40rem;
-  font-size: 15px;
+  font-size: 12px;
   line-height: 1.55;
   color: #b8aea3;
+}
+/* Cited stat block: margin-top 24px from intro, 1px #3A312B rule, 16px
+   padding above content. Figure 38px display rust; body 12px; source
+   10px. */
+#friction .friction-stat {
+  margin-top: 24px;
+  border-top: 1px solid #3a312b;
+  padding-top: 16px;
+}
+#friction .friction-stat-figure {
+  font-family: var(--font-display);
+  font-size: 38px;
+  line-height: 1;
+  color: #c96a42;
+  margin-bottom: 6px;
+}
+#friction .friction-stat-body {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #b8aea3;
+  margin-bottom: 8px;
+}
+#friction .friction-stat-source {
+  font-size: 10px;
+  color: #7d736a;
 }
 #friction .friction-row {
   display: flex;
   align-items: baseline;
   gap: 16px;
-  padding-top: 14px;
-  padding-bottom: 14px;
+  padding: 16px 0;
   border-bottom: 1px solid #3a312b;
+  transition: background-color 150ms ease, color 150ms ease,
+    border-color 150ms ease, border-radius 150ms ease, padding 150ms ease,
+    margin 150ms ease;
 }
+/* Row 1 stays flush with the column top at rest (pre-existing); its hover
+   keeps padding-top 0 so its content can never shift. */
 #friction .friction-row:first-child {
   padding-top: 0;
 }
+/* Hover lift (rows are NOT clickable - visual only, cursor unchanged).
+   Geometry: rest padding 16px/0, hover 12px/14px. Content position is
+   kept pixel-identical by compensating margins that mirror the padding
+   change in lockstep (content top = margin-top + padding-top = 4 + 12 =
+   16, same as rest; horizontal = -14 + 14 = 0). Occupied space stays
+   identical: bottom margin +4 restores the 4px the bottom padding
+   loses, so the next row and the closing line never move. */
+#friction .friction-row:hover {
+  background-color: #1f1a16;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 4px -14px;
+}
+#friction .friction-row:first-child:hover {
+  padding: 0 14px 12px;
+  margin: 0 -14px 4px;
+}
 #friction .friction-numeral {
   flex-shrink: 0;
-  width: 48px;
+  width: 44px;
   font-family: var(--font-display);
-  font-size: 44px;
-  line-height: 0.85;
+  font-size: 34px;
+  line-height: 0.9;
   color: #332b26;
   user-select: none;
+  transition: color 150ms ease;
+}
+#friction .friction-row:hover .friction-numeral {
+  color: #4a3f37;
 }
 #friction .friction-row-content {
   min-width: 0;
 }
 #friction .friction-row-header {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.3;
   color: #e8c9a0;
   margin-bottom: 6px;
+  transition: color 150ms ease;
+}
+#friction .friction-row:hover .friction-row-header {
+  color: #f5f0e8;
 }
 #friction .friction-row-body {
-  font-size: 15px;
+  font-size: 12px;
   line-height: 1.55;
   color: #b8aea3;
   margin-bottom: 8px;
@@ -883,6 +943,15 @@
   font-weight: 400;
   letter-spacing: 0.02em;
   color: #c96a42;
+  /* 1px transparent bottom border + 1px padding pre-reserved at rest so
+     the rust underline can appear on hover via border-color alone - zero
+     layout change, smooth 150ms fade-in, occupied space identical. */
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+  transition: border-color 150ms ease;
+}
+#friction .friction-row:hover .friction-tag {
+  border-bottom-color: #c96a42;
 }
 #friction .friction-closing {
   margin-top: 16px;
@@ -909,11 +978,8 @@
 }
 @media (max-width: 768px) {
   #friction {
-    padding-top: 48px;
-    padding-bottom: 48px;
-  }
-  #friction .friction-numeral {
-    font-size: 40px;
+    padding-top: 40px;
+    padding-bottom: 40px;
   }
 }
 /* ------------------------------------------------------------------ */
