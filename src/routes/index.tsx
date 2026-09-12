@@ -457,7 +457,7 @@ function SelectedWork() {
             <path
               d="M 22 0 L 0 0 0 22"
               fill="none"
-              stroke="#E3DAC9"
+              stroke="#E8E1D4"
               strokeWidth="1"
             />
           </pattern>
@@ -468,8 +468,8 @@ function SelectedWork() {
         <p className="sw-eyebrow">SELECTED WORK</p>
         <h2 className="sw-headline">What this work has moved.</h2>
         <p className="sw-intro">
-          Positioning and GTM programs I&rsquo;ve led. Client names withheld
-          under agreement.
+          Positioning and GTM programs I&rsquo;ve led, across media, adtech,
+          and B2B SaaS.
         </p>
         <div className="sw-grid-cards">
           {WORK_CASES.map((c) => (
