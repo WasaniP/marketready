@@ -29,8 +29,8 @@ export const WORK_CASES: WorkCase[] = [
   {
     num: "01",
     slug: "publisher-marketplace",
-    sector: "ENTERPRISE PUBLISHER MARKETPLACE",
-    caseLabel: "CASE 01 / 04 · ENTERPRISE PUBLISHER MARKETPLACE",
+    sector: "ENTERPRISE AFFILIATE MARKETPLACE",
+    caseLabel: "CASE 01 / 04 · ENTERPRISE AFFILIATE MARKETPLACE",
     headline: "40% adoption in 3 months",
     headlineLabel: "PLATFORM ADOPTION",
     metrics: [
@@ -47,8 +47,8 @@ export const WORK_CASES: WorkCase[] = [
   {
     num: "02",
     slug: "consumer-sports",
-    sector: "CONSUMER SPORTS TECHNOLOGY",
-    caseLabel: "CASE 02 / 04 · CONSUMER SPORTS TECHNOLOGY",
+    sector: "TOP-5 US SPORTS MEDIA APP",
+    caseLabel: "CASE 02 / 04 · TOP-5 US SPORTS MEDIA APP",
     headline: "+38% 7-day activation",
     headlineLabel: "7-DAY ACTIVATION",
     metrics: [
@@ -65,8 +65,8 @@ export const WORK_CASES: WorkCase[] = [
   {
     num: "03",
     slug: "b2b-saas-platform",
-    sector: "B2B SAAS ENTERPRISE PLATFORM",
-    caseLabel: "CASE 03 / 04 · B2B SAAS ENTERPRISE PLATFORM",
+    sector: "ENTERPRISE PARTNERSHIP SAAS PLATFORM",
+    caseLabel: "CASE 03 / 04 · ENTERPRISE PARTNERSHIP SAAS PLATFORM",
     headline: "+8 pts repeat purchase rate",
     headlineLabel: "REPEAT PURCHASE RATE",
     metrics: [
@@ -83,9 +83,9 @@ export const WORK_CASES: WorkCase[] = [
   {
     num: "04",
     slug: "collectibles-marketplace",
-    sector: "WEB3 & COLLECTIBLES MARKETPLACE",
-    caseLabel: "CASE 04 / 04 · WEB3 & COLLECTIBLES MARKETPLACE",
-    headline: "+$8.5M partnership-driven GMV",
+    sector: "LICENSED DIGITAL COLLECTIBLES MARKETPLACE",
+    caseLabel: "CASE 04 / 04 · LICENSED DIGITAL COLLECTIBLES MARKETPLACE",
+    headline: "+$8.5M partnership GMV",
     headlineLabel: "PARTNERSHIP GMV",
     metrics: [
       { value: "+65%", label: "NEW COLLECTORS" },
