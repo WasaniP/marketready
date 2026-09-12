@@ -257,9 +257,11 @@ function FrictionObservations() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Methodology: offer bands + segmented track + 3 columns + closing CTA */
+/* Methodology: linked offer groups (label + track segments + columns) */
+/* + closing CTA. Step copy lives in HOW_IT_WORKS_STEPS (unchanged).   */
 /* ------------------------------------------------------------------ */
 function HowItWorks() {
+  const [stepDiagnose, stepPrescribe, stepActivate] = HOW_IT_WORKS_STEPS;
   return (
     <section
       id="how-it-works"
@@ -291,34 +293,57 @@ function HowItWorks() {
           </p>
         </div>
 
-        {/* Offer bands cover which phases (Audit over 01-02, Sprint over 03). */}
-        <div className="hiw-bands">
-          <div className="hiw-band">
-            <span className="hiw-band-label">MarketReady Audit</span>
-            <span className="hiw-band-days">3–5 DAYS</span>
-          </div>
-          <div className="hiw-band">
-            <span className="hiw-band-label">Positioning Sprint</span>
-            <span className="hiw-band-days">14 DAYS</span>
-          </div>
-        </div>
-        <div className="hiw-track" aria-hidden="true">
-          <span className="hiw-track-seg hiw-track-1" />
-          <span className="hiw-track-seg hiw-track-2" />
-          <span className="hiw-track-seg hiw-track-3" />
+        {/* Offer groups: each offer is ONE hover target wrapping its label
+            row, its track segment(s), and its column(s). Audit wraps
+            Diagnose + Prescribe (segments 1-2); Sprint wraps Activate
+            (segment 3). The outer grid's empty 2% column is the gap. */}
+        <div className="hiw-groups">
+          <a href="/services/audit" className="hiw-group hiw-group-audit">
+            <div className="hiw-group-label">
+              <span className="hiw-band-label">MarketReady Audit</span>
+              <span className="hiw-band-days">3–5 DAYS</span>
+            </div>
+            <div className="hiw-group-track" aria-hidden="true">
+              <span className="hiw-track-seg hiw-track-1" />
+              <span className="hiw-track-seg hiw-track-2" />
+            </div>
+            <div className="hiw-group-cols">
+              <div className="hiw-step hiw-step-01">
+                <div className="hiw-step-head">
+                  <span className="hiw-numeral">{stepDiagnose.n}</span>
+                  <h3 className="hiw-title">{stepDiagnose.name}</h3>
+                </div>
+                <p className="hiw-body">{stepDiagnose.body}</p>
+              </div>
+              <div className="hiw-step hiw-step-02">
+                <div className="hiw-step-head">
+                  <span className="hiw-numeral">{stepPrescribe.n}</span>
+                  <h3 className="hiw-title">{stepPrescribe.name}</h3>
+                </div>
+                <p className="hiw-body">{stepPrescribe.body}</p>
+              </div>
+            </div>
+          </a>
+          <a href="/services/sprint" className="hiw-group hiw-group-sprint">
+            <div className="hiw-group-label">
+              <span className="hiw-band-label">Positioning Sprint</span>
+              <span className="hiw-band-days">14 DAYS</span>
+            </div>
+            <div className="hiw-group-track" aria-hidden="true">
+              <span className="hiw-track-seg hiw-track-3" />
+            </div>
+            <div className="hiw-group-cols">
+              <div className="hiw-step hiw-step-03">
+                <div className="hiw-step-head">
+                  <span className="hiw-numeral">{stepActivate.n}</span>
+                  <h3 className="hiw-title">{stepActivate.name}</h3>
+                </div>
+                <p className="hiw-body">{stepActivate.body}</p>
+              </div>
+            </div>
+          </a>
         </div>
 
-        <ol className="hiw-steps">
-          {HOW_IT_WORKS_STEPS.map((step) => (
-            <li key={step.n} className={`hiw-step hiw-step-${step.n}`}>
-              <div className="hiw-step-head">
-                <span className="hiw-numeral">{step.n}</span>
-                <h3 className="hiw-title">{step.name}</h3>
-              </div>
-              <p className="hiw-body">{step.body}</p>
-            </li>
-          ))}
-        </ol>
         <div className="hiw-closing">
           <p className="hiw-credit">
             Start with the Audit. The fee credits toward the Sprint if you keep
