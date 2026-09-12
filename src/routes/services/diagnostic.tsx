@@ -5,7 +5,9 @@
  * here from /assessment, which now 308-redirects here):
  *
  *  Hero (shared <HeroDiagnostic> instant-scan card) → 5-Dimensional Friction
- *  Matrix → the live interactive engine (#diagnostic-engine): five rating
+ *  Matrix → the full presentational Diagnostic Engine (3 pillars / 9
+ *  dimensions; moved here from the homepage) → the live interactive engine
+ *  (#diagnostic-engine): five rating
  *  steps (one per dimension, 1 to 5 scale) → lead gate (name + work email,
  *  POST /api/leads Source "Full Assessment") → inline results (score,
  *  readiness band, primary friction, dynamic prescription, dual CTAs with the
@@ -25,6 +27,7 @@ import type { FormEvent, KeyboardEvent } from "react";
 import { Header, Footer } from "~/components/Layout";
 import { BookingModal } from "~/components/BookingModal";
 import { HeroDiagnostic } from "~/components/HeroDiagnostic";
+import { DiagnosticEngine as EngineMethodology } from "~/components/DiagnosticEngine";
 import { SectionHeading } from "~/components/services-ui";
 import { captureLead } from "~/lib/leads";
 import type { LeadPayload } from "~/lib/leads";
@@ -1133,6 +1136,12 @@ function DiagnosticPage() {
 
     {/* 5-Dimensional Friction Matrix: minimalist glass grid table */}
     <FrictionTable />
+
+    {/* The full Diagnostic Engine (3 pillars, 9 dimensions) — moved here
+        from the homepage #methodology section. Purely presentational:
+        click-to-expand accordions, gauge, brackets. Does not touch the
+        gate/results flow below. */}
+    <EngineMethodology />
 
     {/* The live interactive engine: questions → gate → results */}
     <section

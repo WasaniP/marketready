@@ -8,7 +8,7 @@
  *
  * Build #22 (site expansion A): nav restructured to
  * How It Works | Services ▾ | Resources | About ("Methodology" link dropped :
- * the #methodology homepage section stays). 'Services' label now navigates to
+ * the full Diagnostic Engine moved to /services/diagnostic). 'Services' label now navigates to
  * /services, with a chevron toggle for the dropdown; the dropdown gains a final
  * 'Explore all services →' item. Header CTA replaced with
  * 'Get Your MarketReady Score →' → /services/diagnostic (btn-electric). Footer gains a
