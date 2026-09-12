@@ -151,7 +151,7 @@ const HOW_IT_WORKS_STEPS = [
   {
     n: "03",
     name: "Activate",
-    body: "We put the fixes into market through a focused sprint, turning strategy into work that gets shipped.",
+    body: "I put the fixes into market through a focused sprint, turning strategy into work that gets shipped.",
   },
 ] as const;
 
@@ -257,13 +257,13 @@ function FrictionObservations() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Methodology stepper: Diagnose → Prescribe → Activate                */
+/* Methodology: offer bands + segmented track + 3 columns + closing CTA */
 /* ------------------------------------------------------------------ */
 function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-12 sm:py-16"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-10 sm:py-12"
     >
       {/* Paper grain overlay (above the bg, below everything else). */}
       <div className="hiw-grain" aria-hidden="true">
@@ -283,53 +283,52 @@ function HowItWorks() {
         <div className="text-center">
           <p className="hiw-eyebrow">The MarketReady Method</p>
           <h2 className="hiw-headline font-display">
-            Diagnose. Prescribe. Activate.
+            When the positioning is wrong, everything downstream costs more.
           </h2>
-          <p className="hiw-intro-1">
-            One readiness score. Three focused moves. I identify where your
-            positioning is breaking down, map the highest-impact fixes, and
-            help you put them into market.
-          </p>
           <p className="hiw-intro-2">
-            Most teams jump straight to execution. We start by finding the
+            Most teams jump straight to execution. I start by finding the
             problem worth fixing.
           </p>
         </div>
 
+        {/* Offer bands cover which phases (Audit over 01-02, Sprint over 03). */}
+        <div className="hiw-bands">
+          <div className="hiw-band">
+            <span className="hiw-band-label">MarketReady Audit</span>
+            <span className="hiw-band-days">3–5 DAYS</span>
+          </div>
+          <div className="hiw-band">
+            <span className="hiw-band-label">Positioning Sprint</span>
+            <span className="hiw-band-days">14 DAYS</span>
+          </div>
+        </div>
+        <div className="hiw-track" aria-hidden="true">
+          <span className="hiw-track-seg hiw-track-1" />
+          <span className="hiw-track-seg hiw-track-2" />
+          <span className="hiw-track-seg hiw-track-3" />
+        </div>
+
         <ol className="hiw-steps">
-          {HOW_IT_WORKS_STEPS.flatMap((step, i) => [
-            ...(i > 0
-              ? [
-                  <li
-                    key={`hiw-arrow-${step.n}`}
-                    className="hiw-arrow"
-                    aria-hidden="true"
-                  >
-                    →
-                  </li>,
-                ]
-              : []),
+          {HOW_IT_WORKS_STEPS.map((step) => (
             <li key={step.n} className={`hiw-step hiw-step-${step.n}`}>
               <div className="hiw-step-head">
                 <span className="hiw-numeral">{step.n}</span>
                 <h3 className="hiw-title">{step.name}</h3>
               </div>
               <p className="hiw-body">{step.body}</p>
-            </li>,
-          ])}
+            </li>
+          ))}
         </ol>
-        <div className="hiw-closing-wrap">
-          <div className="hiw-closing-rule" aria-hidden="true" />
-          <p className="hiw-closing-line">
-            Two weeks in, you have a positioning statement your team agrees
-            on, a homepage that says it, and a sales narrative that repeats
-            it. That&apos;s the point of the sequence.
+        <div className="hiw-closing">
+          <p className="hiw-credit">
+            Start with the Audit. The fee credits toward the Sprint if you keep
+            going.
           </p>
-        </div>
-        <div className="text-center">
-          <a href="/services/diagnostic" className="hiw-cta">
-            Get Your MarketReady Score →
-          </a>
+          <div className="text-center">
+            <a href="/services/diagnostic" className="hiw-cta">
+              Get Your MarketReady Score →
+            </a>
+          </div>
         </div>
       </div>
     </section>
