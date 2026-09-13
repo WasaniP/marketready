@@ -994,6 +994,97 @@
   }
 }
 /* ------------------------------------------------------------------ */
+/* FAQ rework (owner spec 2026-09-13): card containers stripped — rows  */
+/* separated by 1px #3A312B hairlines only. Two-column grid             */
+/* (minmax(0, 0.85fr) / minmax(0, 1.6fr), 38px column gap) with the     */
+/* header in the left column and the accordion rows on the right,       */
+/* collapsing to a single stacked column below 900px. Bare 11px chevron */
+/* (fog collapsed / ember expanded), 14px ink questions, 13px mist      */
+/* answers, focus-visible rust ring on the row buttons.                 */
+/* ------------------------------------------------------------------ */
+#faq .faq-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.6fr);
+  column-gap: 38px;
+  align-items: start;
+}
+#faq .faq-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #e8c9a0;
+  margin-bottom: 9px;
+}
+#faq .faq-headline {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.12;
+  color: #f5f0e8;
+  margin-bottom: 12px;
+}
+#faq .faq-intro {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #b8aea3;
+}
+#faq .faq-row {
+  border-bottom: 1px solid #3a312b;
+}
+#faq .faq-row:last-child {
+  border-bottom: none;
+}
+#faq .faq-row-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  text-align: left;
+  cursor: pointer;
+}
+#faq .faq-row:first-child .faq-row-button {
+  padding-top: 0;
+}
+#faq .faq-q {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f5f0e8;
+}
+#faq .faq-row-button[aria-expanded="true"] .faq-q {
+  color: #e8c9a0;
+}
+#faq .faq-chevron {
+  flex-shrink: 0;
+  width: 11px;
+  height: 11px;
+  color: #7d736a;
+  transition:
+    transform 0.3s ease,
+    color 0.3s ease;
+}
+#faq .faq-chevron-open {
+  color: #c96a42;
+  transform: rotate(180deg);
+}
+#faq .faq-a {
+  padding: 10px 0 13px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #b8aea3;
+}
+#faq button:focus-visible {
+  outline: 2px solid #c96a42;
+  outline-offset: 2px;
+}
+@media (max-width: 899px) {
+  #faq .faq-grid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 32px;
+  }
+}
+/* ------------------------------------------------------------------ */
 /* Methodology redesign (owner spec 2026-09-11): 25px/22ch headline,   */
 /* single intro, offer bands over a segmented 24.5/24.5/49 track,      */
 /* 1fr/1fr/2fr columns w/ dividers, closing rule + credit + CTA.       */
