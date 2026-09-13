@@ -418,8 +418,14 @@ function FounderStory() {
               </p>
             </div>
           </div>
-          {/* Right column: closing tagline, vertically centered. */}
+          {/* Right column: t-shirt mockup + closing tagline, vertically centered. */}
           <div className="founder-right">
+            <img
+              src="/manifesto-tshirt.png"
+              alt="MarketReady dark navy t-shirt"
+              loading="lazy"
+              className="founder-tshirt"
+            />
             <div className="founder-tag-rule" aria-hidden="true" />
             <p className="founder-tagline">
               Hands-on execution. No agency layers.
