@@ -754,6 +754,14 @@
   justify-content: center;
   align-items: flex-start;
 }
+#founder .founder-tshirt {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  border: 1px solid rgb(58 49 43 / 0.16);
+  margin-bottom: 24px;
+}
 #founder .founder-tag-rule {
   width: 28px;
   height: 2px;
@@ -774,6 +782,9 @@
   #founder .founder-left {
     padding-right: 0;
     border-right: none;
+  }
+  #founder .founder-tshirt {
+    max-width: none;
   }
 }
 @media (max-width: 767px) {
