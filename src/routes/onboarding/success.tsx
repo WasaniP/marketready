@@ -32,7 +32,7 @@ export const Route = createFileRoute("/onboarding/success")({
       {
         name: "description",
         content:
-          "Kick off your MarketReady Sprint. Submit your onboarding intake and start the 14-day clock.",
+          "Kick off your GTM Sprint. Submit your onboarding intake and start the 14-day clock.",
       },
     ],
   }),
@@ -71,7 +71,7 @@ const NEXT_STEPS = [
   {
     n: "03",
     title: "The Sprint begins",
-    body: "Your 14-day Positioning Sprint clock starts the day your intake is submitted.",
+    body: "Your 14-day GTM Sprint clock starts the day your intake is submitted.",
   },
 ];
 
@@ -246,7 +246,7 @@ function OnboardingSuccess() {
                     </svg>
                   </span>
                   <h2 className="text-2xl font-bold tracking-tight text-ink">
-                    Intake Received! Your 14-Day Sprint Clock Officially Begins Now.
+                    Intake Received! Your 14-Day GTM Sprint Clock Officially Begins Now.
                   </h2>
                   <p className="max-w-md text-sm leading-relaxed text-mist">
                     We have everything we need to start. Our team will review
@@ -368,7 +368,7 @@ function OnboardingSuccess() {
                     {status === "submitting" ? "Submitting…" : "Submit Intake"}
                   </button>
                   <p className="text-center text-xs text-zinc-500">
-                    Submitting this starts your 14-day Sprint timeline.
+                    Submitting this starts your 14-day GTM Sprint timeline.
                   </p>
                 </form>
               )}

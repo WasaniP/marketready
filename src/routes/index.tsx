@@ -199,7 +199,7 @@ function HowItWorks() {
           </a>
           <a href="/services/sprint" className="hiw-group hiw-group-sprint">
             <div className="hiw-group-label">
-              <span className="hiw-band-label">Positioning Sprint</span>
+              <span className="hiw-band-label">GTM Sprint</span>
               <span className="hiw-band-days">14 DAYS</span>
             </div>
             <div className="hiw-group-track" aria-hidden="true">
@@ -501,18 +501,20 @@ function SelectedWork() {
 /* ------------------------------------------------------------------ */
 const WORK_CARDS = [
   {
-    timeframe: "3 DAYS",
+    timeframe: "5 DAYS",
     pill: "START HERE",
     name: "MarketReady Audit",
     price: "$2,000",
-    subPrice: "Credited toward a Positioning Sprint booked within 30 days.",
+    subPrice: "Credited toward a GTM Sprint booked within 30 days.",
     forBody:
-      "seed and Series A teams preparing to launch who need to know what's broken before they scale spend.",
+      "growing companies ready to scale who need to stress-test their GTM system before accelerating spend.",
     points: [
-      "Full video teardown of your site",
-      "Written GTM strategy brief",
-      "Live 45-minute executive session",
-      "Prioritized fix list",
+      "Scored multi-dimensional breakdown",
+      "Positioning leak identification",
+      "Conversion friction points",
+      "Sales narrative disconnects",
+      "Prioritized fix sequence",
+      "Live strategic walkthrough",
     ],
     cta: "Book the Audit →",
     service: "MarketReady Audit",
@@ -522,40 +524,43 @@ const WORK_CARDS = [
   {
     timeframe: "14 DAYS",
     pill: null,
-    name: "Positioning Sprint",
+    name: "GTM Sprint",
     price: "$7,500",
     subPrice: null,
     forBody:
-      "category or feature launches where the message needs rebuilding, not tweaking.",
+      "growth-stage companies hitting pipeline friction, where traffic or spend is flowing but the core narrative is failing to convert.",
     points: [
-      "Complete messaging system",
-      "Positioning statement",
-      "Homepage copy, rewritten",
-      "Competitive battlecards",
-      "Launch plan",
+      "Positioning architecture and market differentiation",
+      "Complete messaging framework",
+      "Rewritten homepage copy",
+      "Sales deck and core messaging assets",
+      "Go-to-market launch plan",
+      "Before-and-after scorecard delta",
     ],
     cta: "Book the Sprint →",
-    service: "MarketReady Sprint",
+    service: "GTM Sprint",
     variant: "outline" as const,
     cardClass: "wwm-col-2",
   },
   {
     timeframe: "RETAINER",
     pill: null,
-    name: "Fractional GTM Lead",
+    name: "Fractional GTM Partner",
     price: "From $6,000",
     per: " /mo",
     subPrice: null,
-    forBody: "scale-up teams launching without anyone senior owning GTM.",
+    forBody:
+      "companies that need ongoing, senior-level product marketing leadership without a full-time hire.",
     points: [
-      "Embedded GTM leadership",
-      "Ongoing messaging iteration",
-      "Sales enablement assets",
-      "Launch strategy and execution",
-      "Weekly strategic working sessions",
+      "Dedicated GTM strategy and roadmap execution",
+      "Continuous positioning and messaging refinement",
+      "Sales enablement and collateral development",
+      "Launch management for new features and products",
+      "Messaging and pipeline friction audits",
+      "Regular performance reporting and strategic alignment",
     ],
-    cta: "Talk About a Retainer →",
-    service: "Fractional GTM Lead",
+    cta: "Book a Call →",
+    service: "Fractional GTM Partner",
     variant: "outline" as const,
     cardClass: "wwm-col-3",
   },

@@ -4,7 +4,7 @@
  * A distinct, full-scope one-time paid offering: a human-led positioning & GTM
  * audit at $2,000 flat, delivered in 3 to 5 days. The Audit diagnoses the full
  * 3-pillar / 9-Parameter Framework and returns a prioritized written plan, while
- * the 14-Day Sprint executes the fixes. Creative elements mirror the Sprint
+ * the GTM Sprint executes the fixes. Creative elements mirror the Sprint
  * page's visual system (pillar bands in teal / cyan / indigo, connected day-node
  * timeline) but are scaled to the Audit's shorter, diagnosis-only window.
  * Primary CTA opens the booking modal with 'MarketReady Audit' pre-selected.
@@ -401,7 +401,7 @@ function AuditPage() {
         Zero-Risk Diagnosis: 100% of your Audit fee applies toward the Sprint.
        </h3>
        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-mist">
-        Apply your $2,000 Audit investment directly to the 14-Day Sprint if booked within 30 days.
+        Apply your $2,000 Audit investment directly to the GTM Sprint if booked within 30 days.
        </p>
       </div>
      </div>
@@ -438,7 +438,7 @@ function AuditPage() {
        {/* Sprint (secondary) */}
        <div className="flex flex-col rounded-xl border border-indigo/30 bg-indigo/[0.05] p-7 backdrop-blur-md">
         <span className="inline-block w-fit rounded-full border border-indigo/40 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo">
-         The 14-Day Sprint
+         The GTM Sprint
         </span>
         <h3 className="mt-4 text-lg font-bold text-ink">For execution and built assets</h3>
         <p className="mt-3 text-sm leading-relaxed text-mist">
@@ -449,7 +449,7 @@ function AuditPage() {
         <p className="mt-5 text-sm font-semibold text-mist">14 days · $7,500</p>
         <div className="mt-auto pt-6">
          <a href="/services/sprint" className="btn-ghost w-full px-6 py-3 text-center text-sm">
-          Explore 14-Day Sprint - $7,500
+          Explore GTM Sprint - $7,500
          </a>
         </div>
        </div>

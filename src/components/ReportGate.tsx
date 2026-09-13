@@ -158,7 +158,7 @@ export function ReportGate({ result }: { result: AuditResult }) {
         "Cover page with overall score & risk label",
         "9-parameter scorecard, color-coded",
         "Top-3 gap rewrites (before / after)",
-        "Next-steps plan: Sprint & Fractional GTM Lead",
+        "Next-steps plan: Sprint & Fractional GTM Partner",
        ].map((f) => (
         <li key={f} className="flex items-start gap-2">
          <svg

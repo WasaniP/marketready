@@ -25,7 +25,7 @@ export const Route = createFileRoute("/services/")({
    {
     name: "description",
     content:
-     "MarketReady services overview: from instant diagnostic to a dedicated Fractional GTM Lead. The free assessment scores your positioning across 9 PMM parameters, then the $2,000 MarketReady Audit, the $7,500 14-Day Positioning Sprint, or Fractional GTM Lead closes the gap.",
+     "MarketReady services overview: from instant diagnostic to a dedicated Fractional GTM Partner. The free assessment scores your positioning across 9 PMM parameters, then the $2,000 MarketReady Audit, the $7,500 14-Day GTM Sprint, or Fractional GTM Partner closes the gap.",
    },
   ],
  }),
@@ -78,7 +78,7 @@ const TIERS: Tier[] = [
  },
  {
   id: "sprint",
-  name: "14-Day Positioning Sprint",
+  name: "14-Day GTM Sprint",
   price: "$7,500",
   scope: "Complete Messaging System, Competitive Battlecards & Homepage Copy Rewrite",
   speed: "14 DAYS",
@@ -90,9 +90,9 @@ const TIERS: Tier[] = [
  },
  {
   id: "advisory",
-  name: "Fractional GTM Lead",
+  name: "Fractional GTM Partner",
   price: "From $6,000/mo",
-  scope: "Embedded Fractional GTM Leadership, Messaging Iteration & Sales Enablement",
+  scope: "Embedded GTM Leadership, Messaging Iteration & Sales Enablement",
   speed: "RETAINER",
   pillClass: "text-fog border-hairline/60",
   bestFor: "Scale-Up Execution",
@@ -303,7 +303,7 @@ function ServicesPage() {
        [ SERVICES OVERVIEW ]
       </span>
       <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-5xl">
-       From Instant Diagnostic to Dedicated Fractional GTM Lead.
+       From Instant Diagnostic to Dedicated Fractional GTM Partner.
       </h1>
       <p className="mx-auto mt-4 max-w-2xl text-lg text-mist">
        Every engagement starts with the Free Diagnostic Assessment. It scores your

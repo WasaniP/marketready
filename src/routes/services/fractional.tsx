@@ -1,12 +1,12 @@
 /**
- * MarketReady: Fractional GTM Lead (/services/fractional, build #43).
+ * MarketReady: Fractional GTM Partner (/services/fractional, build #43).
  *
  * Comprehensive embedded-GTM retainer page: hero, a MarketReady vs
  * Full-Time Hire vs Traditional Agency comparison table, tiered capacity
  * 'Choose Your Embedded Velocity' grid, a Full Velocity detail block, a
  * two-column fit qualification block, an upgrade-credit card, and a final CTA
  * card. Primary CTA books the retainer: booking modal with 'Fractional GTM
- * Lead' pre-selected. 0 em/en dashes anywhere (commas, colons, periods,
+ * Partner' pre-selected. 0 em/en dashes anywhere (commas, colons, periods,
  * arrows, and glyphs only).
  */
 import { createFileRoute } from "@tanstack/react-router";
@@ -24,11 +24,11 @@ import {
 export const Route = createFileRoute("/services/fractional")({
  head: () => ({
   meta: [
-   { title: "Fractional GTM Lead: MarketReady" },
+   { title: "Fractional GTM Partner: MarketReady" },
    {
     name: "description",
     content:
-     "The MarketReady Fractional GTM Lead retainer delivers senior product marketing leadership to iterate messaging, enable sales, and run continuous post-launch execution without a full-time hire.",
+     "The MarketReady Fractional GTM Partner retainer delivers senior product marketing leadership to iterate messaging, enable sales, and run continuous post-launch execution without a full-time hire.",
    },
   ],
  }),
@@ -706,8 +706,8 @@ function FractionalPage() {
  };
  const closeBooking = () => setBookingOpen(false);
 
- const applyRetainer = () => openBooking("Fractional GTM Lead");
- const bookCall = () => openBooking("Fractional GTM Lead");
+ const applyRetainer = () => openBooking("Fractional GTM Partner");
+ const bookCall = () => openBooking("Fractional GTM Partner");
 
  return (
   <div className="min-h-dvh bg-gradient-to-b from-[#16120F] via-[#1F1A16] to-[#16120F]">
@@ -910,11 +910,11 @@ function FractionalPage() {
         UPGRADE PATH
        </span>
        <h3 className="mt-4 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-        Zero-Risk Upgrade to Fractional GTM Lead.
+        Zero-Risk Upgrade to Fractional GTM Partner.
        </h3>
        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-mist">
         Completed the Sprint or Audit? 100% of your previous fee applies toward your
-        first month of Fractional GTM Lead.
+        first month of Fractional GTM Partner.
        </p>
       </div>
      </div>
@@ -941,7 +941,7 @@ function FractionalPage() {
      </div>
     </section>
    </main>
-   <Footer onBook={() => openBooking("Fractional GTM Lead")} />
+   <Footer onBook={() => openBooking("Fractional GTM Partner")} />
    {bookingOpen && (
     <BookingModal open={bookingOpen} onClose={closeBooking} initialService={preselectService} />
    )}

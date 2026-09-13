@@ -406,8 +406,8 @@ function DiagnosticEngine({ onComplete }: { onComplete: (state: DiagnosticState)
   const rx = prescriptionFor(frictionId);
   const prescriptionLabel =
    rx === "sprint"
-    ? "14-Day Positioning Sprint ($7,500)"
-    : "Fractional GTM Advisory (from $6,000/month)";
+    ? "14-Day GTM Sprint ($7,500)"
+    : "Fractional GTM Partner (from $6,000/month)";
   const payload: LeadPayload = {
    email: cleanEmail,
    url: home?.url || "not provided",
@@ -835,8 +835,8 @@ function DiagnosticResults({
  const rx = prescriptionFor(friction);
  const prescriptionName =
   rx === "sprint"
-   ? `14-Day Positioning Sprint (${RX_SPRINT_PRICE})`
-   : `Fractional GTM Advisory (from ${RX_ADVISORY_PRICE}/month)`;
+   ? `14-Day GTM Sprint (${RX_SPRINT_PRICE})`
+   : `Fractional GTM Partner (from ${RX_ADVISORY_PRICE}/month)`;
  const prescriptionLine =
   rx === "sprint"
    ? "A two-week engagement that turns the gaps this audit flagged into positioning architecture, homepage rewrites, and a core launch deck."
@@ -1001,7 +1001,7 @@ function DiagnosticResults({
          Confirm your Sprint booking
         </h4>
         <p className="mt-1 text-sm leading-relaxed text-mist">
-         14-Day Positioning Sprint, a one-time engagement, billed
+         14-Day GTM Sprint, a one-time engagement, billed
          upfront. You&apos;ll complete a short booking form next; we&apos;ll
          handle scheduling from there.
         </p>

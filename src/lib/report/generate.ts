@@ -8,7 +8,7 @@
  *  1. Cover: wordmark, title, assessed URL, overall score + risk label, meta.
  *  2. Scorecard: all 9 parameters with status colors (#10B981 / #F59E0B / #EF4444).
  *  3. Top-3 critical gaps: before/after rewrites.
- *  4. Next steps: Sprint offer, Fractional GTM Lead, in-app booking CTA.
+ *  4. Next steps: Sprint offer, Fractional GTM Partner, in-app booking CTA.
  *
  * The report is delivered as an instant download; nothing is ever emailed
  * (the business has no email capability).
@@ -429,7 +429,7 @@ function pageNextSteps(doc: jsPDF, result: AuditResult) {
   const cardW = (CONTENT_W - gap) / 2;
 
   const sprintCard: { name: string; headline: string; note: string; features: string[]; highlight: boolean } = {
-    name: "MarketReady Sprint",
+    name: "GTM Sprint",
     headline: "A complete positioning system in 14 days",
     note: "Fixed scope · delivered in two weeks",
     features: [
@@ -441,7 +441,7 @@ function pageNextSteps(doc: jsPDF, result: AuditResult) {
     highlight: true,
   };
   const partnerCard: { name: string; headline: string; note: string; features: string[]; highlight: boolean } = {
-    name: "Fractional GTM Lead",
+    name: "Fractional GTM Partner",
     headline: "Embedded GTM execution through launch and beyond",
     note: "Ongoing engagement · milestone-based",
     features: ["Ongoing GTM execution", "Post-launch messaging optimization", "Growth advisory"],
@@ -490,7 +490,7 @@ function pageNextSteps(doc: jsPDF, result: AuditResult) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(WHITE);
-  doc.text("Book your 14-Day Sprint on MarketReady", PAGE_W / 2, ctaY + 28, { align: "center" });
+  doc.text("Book your GTM Sprint on MarketReady", PAGE_W / 2, ctaY + 28, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor("#CCFBF1");

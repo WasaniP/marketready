@@ -20,7 +20,7 @@ export function BookingSection({ onBookSprint }: { onBookSprint: () => void }) {
    <div className="overflow-hidden rounded-xl border border-ember/30 bg-ember/[0.05] p-6 sm:p-8">
     <div className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
      <div className="max-w-2xl">
-      <span className="chip border-ember/40 text-ember">14-Day Sprint</span>
+      <span className="chip border-ember/40 text-ember">GTM Sprint</span>
       <h4 className="mt-3 text-xl font-bold tracking-tight text-ink sm:text-2xl">
        Fix the gaps in 14 days
       </h4>
@@ -48,7 +48,7 @@ export function BookingSection({ onBookSprint }: { onBookSprint: () => void }) {
       </ul>
      </div>
      <button type="button" onClick={onBookSprint} className="btn-electric w-full shrink-0 sm:w-auto">
-      Book 14-Day Sprint
+      Book GTM Sprint
       <svg
        aria-hidden="true"
        className="h-4 w-4"

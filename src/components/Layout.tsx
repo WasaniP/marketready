@@ -35,13 +35,13 @@ export const SERVICES_LINKS = [
     href: "/services/audit",
   },
   {
-    name: "MarketReady Sprint (14-Day Strategy & Launch Deck)",
+    name: "GTM Sprint (14-Day Strategy & Launch Deck)",
     subtext:
       "Positioning architecture, homepage rewrites, core launch deck, and custom AI prompt workflows.",
     href: "/services/sprint",
   },
   {
-    name: "Fractional GTM Lead (Ongoing Growth Retainer)",
+    name: "Fractional GTM Partner (Ongoing Growth Retainer)",
     subtext: "Embedded PMM leadership, messaging iteration, and launch execution.",
     href: "/services/fractional",
   },
@@ -465,7 +465,7 @@ export function Header() {
  * Footer (owner revision spec §6/§12): pine-dark band (#14332D) with warm
  * neutral text. Brand + first-person tagline, a nav column mirroring the
  * header plus the outline Score CTA, and a contact column with the direct
- * mailto line + the Book 14-Day Sprint button (onBook). A legal strip holds
+ * mailto line + the Book GTM Sprint button (onBook). A legal strip holds
  * the copyright, Privacy Policy, Terms, and the standing notice line.
  * No pricing appears here.
  */
@@ -529,7 +529,7 @@ export function Footer({ onBook }: { onBook: () => void }) {
             onClick={onBook}
             className="btn-electric w-auto whitespace-nowrap"
           >
-            Book 14-Day Sprint
+            Book GTM Sprint
           </button>
           <a
             href="mailto:hello@getmarketready.co"
