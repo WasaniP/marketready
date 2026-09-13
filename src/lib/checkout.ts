@@ -19,8 +19,8 @@ export const SPRINT_PAYMENT_LINK: string | null = null;
  * No pricing figures appear here (pricing is revealed only on the assessment
  * results page, never in the checkout plumbing). */
 export const CHECKOUT_SERVICES = {
-  sprint: "MarketReady Sprint",
-  advisory: "Fractional GTM Lead",
+  sprint: "GTM Sprint",
+  advisory: "Fractional GTM Partner",
 } as const;
 
 export type CheckoutService = (typeof CHECKOUT_SERVICES)[keyof typeof CHECKOUT_SERVICES];

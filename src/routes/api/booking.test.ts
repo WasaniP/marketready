@@ -149,7 +149,7 @@ const VALID_BODY = {
   workEmail: "ada@analyticalengines.test",
   company: "Analytical Engines",
   websiteUrl: "https://analyticalengines.test",
-  serviceInterest: "MarketReady Sprint",
+  serviceInterest: "GTM Sprint",
   source: "booking_modal",
   capturedAt: "2026-09-07T12:00:00.000Z",
 };
@@ -230,7 +230,7 @@ describe("POST /api/booking Airtable write", () => {
       "Work Email": "ada@analyticalengines.test",
       Company: "Analytical Engines",
       "Website URL": "https://analyticalengines.test",
-      "Service Interest": "MarketReady Sprint",
+      "Service Interest": "GTM Sprint",
       Source: "booking_modal",
       Timestamp: "2026-09-07T12:00:00.000Z",
     });
@@ -288,7 +288,7 @@ describe("POST /api/booking Airtable write", () => {
     expect(sent.data.firstName).toBe("Ada");
     expect(sent.data.company).toBe("Analytical Engines");
     expect(sent.data.websiteUrl).toBe("https://analyticalengines.test");
-    expect(sent.data.serviceInterest).toBe("MarketReady Sprint");
+    expect(sent.data.serviceInterest).toBe("GTM Sprint");
     expect(sent.data.source).toBe("booking_modal");
     expect(sent.data.capturedAt).toBe("2026-09-07T12:00:00.000Z");
     delete process.env.KNOCK_API_KEY;

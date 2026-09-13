@@ -1,7 +1,7 @@
 /**
  * MarketReady /services/advisory → /services/fractional redirect.
  *
- * The 'Launch Partner & Advisory' service was renamed to 'Fractional GTM Lead'
+ * The 'Launch Partner & Advisory' service was renamed to 'Fractional GTM Partner'
  * and moved to /services/fractional (build #42). This old route issues a
  * permanent 308 redirect so existing bookmarks and in-page links still resolve.
  */

@@ -74,7 +74,7 @@ const BASE_LEAD: KnockEmailLead = {
   score: 77,
   readiness: "Needs Attention",
   primaryFriction: "Messaging",
-  prescription: "14-Day Positioning Sprint ($7,500)",
+  prescription: "14-Day GTM Sprint ($7,500)",
   keyObservation: "The hero headline buries the outcome.",
   commercialRisk: "Buyers keep alternatives in the running.",
   frictionLabel: "Unclear Value Prop",
@@ -97,7 +97,7 @@ const BASE_BOOKING: KnockBookingConfirmation = {
   workEmail: "ada@analyticalengines.test",
   company: "Analytical Engines",
   websiteUrl: "https://analyticalengines.test",
-  serviceInterest: "MarketReady Sprint",
+  serviceInterest: "GTM Sprint",
   source: "booking_modal",
   capturedAt: "2026-09-07T12:00:00.000Z",
   message: "",
@@ -355,7 +355,7 @@ describe("buildBookingConfirmationData (template data-key contract)", () => {
     expect(data.workEmail).toBe("ada@analyticalengines.test");
     expect(data.company).toBe("Analytical Engines");
     expect(data.websiteUrl).toBe("https://analyticalengines.test");
-    expect(data.serviceInterest).toBe("MarketReady Sprint");
+    expect(data.serviceInterest).toBe("GTM Sprint");
     expect(data.source).toBe("booking_modal");
     expect(data.message).toBe("");
     expect(data.capturedAt).toBe("2026-09-07T12:00:00.000Z");

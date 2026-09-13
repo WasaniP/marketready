@@ -1914,16 +1914,16 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Work With Me (#services): third light section. #EDE1D5 bg,          */
-/* feTurbulence grain at multiply/16%, 1px #3A312B hairlines top +     */
+/* Work With Me (#services): dark section. #1F1A16 bg,                 */
+/* feTurbulence grain at overlay/28%, 1px #3A312B hairlines top +      */
 /* bottom, full-width header, 3 editorial columns (1-col below 900px), */
-/* CTA pinned to column bottom. All light-section colors hard-coded +  */
+/* CTA pinned to column bottom. All section colors hard-coded +        */
 /* scoped here (global tokens remap to dark). No box-shadows.          */
 /* ------------------------------------------------------------------ */
 #services.wwm-section {
   position: relative;
   overflow: hidden;
-  background: #EDE1D5;
+  background: #1F1A16;
   border-top: 1px solid #3A312B;
   border-bottom: 1px solid #3A312B;
   scroll-margin-top: 6rem;
@@ -1932,8 +1932,8 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.16;
-  mix-blend-mode: multiply;
+  opacity: 0.28;
+  mix-blend-mode: overlay;
   z-index: 0;
 }
 #services .wwm-grain svg {
@@ -1961,19 +1961,19 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-weight: 600;
-  color: #A8502F;
+  color: #E8C9A0;
 }
 #services .wwm-headline {
   font-family: var(--font-display);
   font-size: 26px;
   line-height: 1.12;
-  color: #16120F;
+  color: #F5F0E8;
   margin-top: 10px;
 }
 #services .wwm-intro {
   font-size: 13px;
   line-height: 1.6;
-  color: #3A312B;
+  color: #B8AEA3;
   max-width: 62ch;
   margin-top: 10px;
 }
@@ -1987,72 +1987,74 @@
 #services .wwm-col {
   display: flex;
   flex-direction: column;
-  padding: 14px 20px 0;
+  padding: 14px 0 0;
 }
 #services .wwm-col-1 {
-  border-top: 3px solid #A8502F;
-  padding-right: 20px;
+  border-top: 3px solid #C96A42;
+  padding-right: 22px;
   padding-left: 0;
-  border-right: 1px solid #DBCCBB;
+  border-right: 1px solid #3A312B;
 }
 #services .wwm-col-2 {
-  border-top: 3px solid #C96A42;
-  border-right: 1px solid #DBCCBB;
+  border-top: 3px solid #A8502F;
+  padding-left: 22px;
+  padding-right: 22px;
+  border-right: 1px solid #3A312B;
 }
 #services .wwm-col-3 {
   border-top: 3px solid #C4A57A;
   padding-right: 0;
-  padding-left: 20px;
+  padding-left: 22px;
 }
 #services .wwm-timeframe-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 8px;
 }
 #services .wwm-timeframe {
   font-size: 10px;
   letter-spacing: 0.08em;
-  color: #8C8681;
+  color: #7D736A;
 }
 #services .wwm-starthere {
   font-size: 9px;
   letter-spacing: 0.08em;
-  color: #A8502F;
+  color: #C96A42;
   white-space: nowrap;
 }
 #services .wwm-name {
   font-family: var(--font-display);
   font-size: 18px;
-  color: #16120F;
+  color: #F5F0E8;
   margin-top: 8px;
 }
 #services .wwm-price {
   font-family: var(--font-display);
   font-size: 28px;
-  color: #A8502F;
+  color: #C96A42;
   margin-top: 4px;
 }
 #services .wwm-per {
   font-family: var(--font-sans);
   font-size: 12px;
-  color: #8C8681;
+  color: #7D736A;
 }
 #services .wwm-subprice {
   font-size: 11px;
-  color: #8C8681;
+  color: #7D736A;
   margin-top: 2px;
 }
 #services .wwm-for {
   font-size: 12px;
   line-height: 1.5;
-  color: #3A312B;
+  color: #B8AEA3;
   margin-top: 10px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #DBCCBB;
+  border-bottom: 1px solid #3A312B;
 }
 #services .wwm-for strong {
-  color: #16120F;
+  color: #E8DED2;
   font-weight: 700;
 }
 #services .wwm-list {
@@ -2061,10 +2063,10 @@
   margin-top: 10px;
   margin-bottom: 14px;
   padding: 10px 0 0;
-  border-top: 1px solid #DBCCBB;
+  border-top: 1px solid #3A312B;
   font-size: 12px;
   line-height: 1.75;
-  color: #3A312B;
+  color: #B8AEA3;
   flex: 1;
 }
 #services .wwm-cta-solid {
@@ -2081,13 +2083,13 @@
   font-weight: 500;
   text-align: center;
   cursor: pointer;
-  background: #A8502F;
-  border: 1px solid #A8502F;
-  color: #FBF7F1;
+  background: #C96A42;
+  border: 1px solid #C96A42;
+  color: #16120F;
   transition: background-color 0.2s, color 0.2s;
 }
 #services .wwm-cta-solid:hover {
-  background: #8f4527;
+  background: #A8502F;
 }
 #services .wwm-cta-link {
   align-self: flex-start;
@@ -2095,18 +2097,18 @@
   margin-top: auto;
   padding: 0 0 2px;
   border: none;
-  border-bottom: 1px solid #A8502F;
+  border-bottom: 1px solid #C96A42;
   border-radius: 0;
   background: transparent;
   font-size: 12px;
   font-weight: 500;
-  color: #A8502F;
+  color: #C96A42;
   cursor: pointer;
   transition: color 0.2s, border-color 0.2s;
 }
 #services .wwm-cta-link:hover {
-  color: #8f4527;
-  border-bottom-color: #8f4527;
+  color: #A8502F;
+  border-bottom-color: #A8502F;
 }
 @media (max-width: 900px) {
   #services .wwm-cards {
@@ -2124,7 +2126,9 @@
   }
   #services .wwm-col-2,
   #services .wwm-col-3 {
+    border-top: 1px solid #3A312B;
     margin-top: 28px;
+    padding-top: 26px;
   }
 }
 @media (max-width: 768px) {

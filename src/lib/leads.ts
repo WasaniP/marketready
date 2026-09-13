@@ -30,7 +30,7 @@ export interface LeadPayload {
   /** Which surface captured the lead, e.g. "report_gate" | "booking_modal". */
   source?: string;
   /** Service interest: comma-joined selection(s) from the booking modal
-   * checklist, e.g. "MarketReady Sprint" or "MarketReady Diagnostic, Launch
+   * checklist, e.g. "GTM Sprint" or "MarketReady Diagnostic, Launch
    * Partner & Advisory". Omitted when nothing was selected. */
   serviceInterest?: string;
   /** Free-text message, captured by the /contact form ("How can we help?"). */

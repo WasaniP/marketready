@@ -2,7 +2,7 @@
  * MarketReady Terms page (build #24).
  *
  * Productized-services terms covering the owner-specified points verbatim in
- * meaning: the 14-day Sprint timeline begins once the onboarding intake is
+ * meaning: the GTM Sprint timeline begins once the onboarding intake is
  * submitted; single 100% upfront payment, non-refundable once work commences;
  * liability capped at the fee paid. Plus minimal, honest boilerplate (scope,
  * client responsibilities, IP, governing law, State of California). No
@@ -89,8 +89,8 @@ function TermsPage() {
               <p>
                 MarketReady provides productized go-to-market services: the
                 MarketReady Diagnostic (a positioning and GTM readiness audit),
-                the 14-Day Positioning Sprint (positioning architecture,
-                messaging, and launch assets), and Fractional GTM Lead
+                the 14-Day GTM Sprint (positioning architecture,
+                messaging, and launch assets), and Fractional GTM Partner
                 (ongoing fractional GTM support). The specific deliverables for
                 your engagement are confirmed at kickoff.
               </p>
@@ -98,7 +98,7 @@ function TermsPage() {
 
             <TermSection n="2" title="Engagement Timeline">
               <p>
-                The 14-Day Positioning Sprint timeline begins once the
+                The 14-Day GTM Sprint timeline begins once the
                 onboarding intake is submitted. The countdown is dependent on
                 intake submission. The clock starts when we receive your
                 completed intake, not before. Advisory engagements run on a

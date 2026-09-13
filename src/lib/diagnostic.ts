@@ -122,7 +122,7 @@ export function primaryFriction(answers: DiagnosticAnswers): DimensionId {
 export type Prescription = "sprint" | "advisory";
 
 /** Prescription mapping: positioning/messaging/conversion friction → the
- * 14-Day Sprint; GTM path / acquisition friction → the advisory retainer. */
+ * GTM Sprint; GTM path / acquisition friction → the advisory retainer. */
 export function prescriptionFor(friction: DimensionId): Prescription {
   return friction === "gtm-path" || friction === "acquisition" ? "advisory" : "sprint";
 }

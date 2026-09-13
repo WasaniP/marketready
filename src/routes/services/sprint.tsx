@@ -1,10 +1,10 @@
 /**
- * MarketReady: 14-Day Sprint (/services/sprint, build #27 + content pass).
+ * MarketReady: GTM Sprint (/services/sprint, build #27 + content pass).
  *
  * 'Nine deliverables, shipped in 14 days' (from the owner-approved copy spec)
  * plus the honest terms line (one round of revisions) and explicit exclusions.
  * Both CTAs route honestly: 'Book a Call' opens the booking modal with
- * 'MarketReady Sprint' pre-selected; 'Get the Sprint' uses the same
+ * 'GTM Sprint' pre-selected; 'Get the Sprint' uses the same
  * lead-capture booking path (Stripe is not wired, so there is no fake
  * checkout and no 'buy now' wording).
  */
@@ -21,11 +21,11 @@ import {
 export const Route = createFileRoute("/services/sprint")({
  head: () => ({
   meta: [
-   { title: "14-Day Sprint: MarketReady" },
+   { title: "GTM Sprint: MarketReady" },
    {
     name: "description",
     content:
-     "The MarketReady 14-Day Positioning Sprint at $7,500: nine strategy and launch assets built from your Diagnostic score, including positioning architecture, messaging framework, homepage copy, and launch assets.",
+     "The MarketReady 14-Day GTM Sprint at $7,500: nine strategy and launch assets built from your Diagnostic score, including positioning architecture, messaging framework, homepage copy, and launch assets.",
    },
   ],
  }),
@@ -331,14 +331,14 @@ function SprintPage() {
  };
  const closeBooking = () => setBookingOpen(false);
 
- const bookSprint = () => openBooking("MarketReady Sprint");
+ const bookSprint = () => openBooking("GTM Sprint");
 
  return (
   <div className="min-h-dvh bg-gradient-to-b from-[#16120F] via-[#1F1A16] to-[#16120F]">
    <Header />
    <main>
     <SubPageHero
-     chip={<ServicesChip>14-Day Sprint</ServicesChip>}
+     chip={<ServicesChip>GTM Sprint</ServicesChip>}
      title="14-Day Strategy &amp; Launch Assets From Your Diagnostic Score."
      sub="Built from your Diagnostic: not a generic template. Every Sprint starts with your actual scores, so the fixes are specific to your product."
      topPadding="pt-20 sm:pt-24"
@@ -348,7 +348,7 @@ function SprintPage() {
       onClick={bookSprint}
       className="btn-electric px-7 py-3.5 text-base"
      >
-      Book Your 14-Day Sprint ($7,500) →
+      Book Your GTM Sprint ($7,500) →
      </button>
      <a
       href="/services/diagnostic"

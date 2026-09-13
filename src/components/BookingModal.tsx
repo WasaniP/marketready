@@ -1,5 +1,5 @@
 /**
- * MarketReady booking modal : the "Book 14-Day Sprint" overlay.
+ * MarketReady booking modal : the "Book GTM Sprint" overlay.
  *
  * Replaces every external Cal.com link on the site with an in-app modal that
  * captures a lead (name, work email, company, website : all four required —
@@ -35,8 +35,8 @@ import {
  * Short names (no pricing anywhere) : the checklist mirrors the nav dropdown. */
 const SERVICE_OPTIONS = [
  { value: "MarketReady Diagnostic" },
- { value: "MarketReady Sprint" },
- { value: "Fractional GTM Lead" },
+ { value: "GTM Sprint" },
+ { value: "Fractional GTM Partner" },
  { value: "MarketReady Audit" },
  { value: "Diagnostic Briefing" },
 ] as const;
@@ -331,10 +331,10 @@ export function BookingModal({
       <div className="flex items-start justify-between gap-4">
        <div>
         <span className="chip border-ember/40 text-ember">
-         {isAdvisory ? "Advisory" : isAudit ? "MarketReady Audit" : isBriefing ? "Diagnostic Briefing" : "14-Day Sprint"}
+         {isAdvisory ? "Advisory" : isAudit ? "MarketReady Audit" : isBriefing ? "Diagnostic Briefing" : "GTM Sprint"}
         </span>
         <h4 id="booking-modal-title" className="mt-3 text-xl font-bold tracking-tight text-ink">
-         {isAdvisory ? "Apply for Advisory Slot" : isAudit ? "Request Your MarketReady Audit" : isBriefing ? "Book a 15-Min Diagnostic Briefing" : "Book 14-Day Sprint"}
+         {isAdvisory ? "Apply for Advisory Slot" : isAudit ? "Request Your MarketReady Audit" : isBriefing ? "Book a 15-Min Diagnostic Briefing" : "Book GTM Sprint"}
         </h4>
         <p className="mt-1 text-sm text-mist">
          {isAdvisory
