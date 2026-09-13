@@ -669,7 +669,7 @@ const FAQ_ITEMS = [
     a: "The Sprint is about strategy and finished, ready-to-use assets. Live team training, sales enablement sessions, and ongoing execution live in the fractional retainer.",
   },
   {
-    q: "I want more than the free score, but I'm not ready for a full Sprint. Is there anything in between?",
+    q: "I want more than the free score, but I'm not ready for a full Sprint. What's in between?",
     a: "Yes. The MarketReady Audit is a human-led review delivered in a few days: a written diagnosis with prioritized recommendations, without the full Sprint build-out. And if you move to a Sprint within 30 days, your Audit fee applies toward it.",
   },
 ] as const;
@@ -679,28 +679,24 @@ function FaqAccordion() {
   return (
     <section
       id="faq"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-sand py-14 sm:py-[4.5rem]"
+      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-sand py-10 sm:py-12"
     >
       <div className="mx-auto w-full max-w-[1200px] px-6 sm:px-12">
-        <div className="max-w-2xl">
-          <p className="eyebrow">Questions I get asked</p>
-          <h2 className="mt-3 font-display text-3xl tracking-tight text-ink sm:text-[32px]">
-            Frequently asked questions
-          </h2>
-        </div>
-        <div className="mt-8 w-full">
-          <div className="flex flex-col gap-3">
+        <div className="faq-grid">
+          <div className="faq-header">
+            <p className="faq-eyebrow">Questions I get asked</p>
+            <h2 className="faq-headline">Frequently asked questions</h2>
+            <p className="faq-intro">
+              Still unsure? Run the free diagnostic and we can talk about what it finds.
+            </p>
+          </div>
+          <div className="faq-rows">
             {FAQ_ITEMS.map((item, i) => {
               const isOpen = openIndex === i;
               const panelId = `faq-panel-${i}`;
               const buttonId = `faq-button-${i}`;
               return (
-                <div
-                  key={item.q}
-                  className={`glass-card overflow-hidden transition-all duration-300 hover:-translate-y-0.5 ${
-                    isOpen ? "border-ember/40" : "hover:border-hairline"
-                  }`}
-                >
+                <div key={item.q} className="faq-row">
                   <h3>
                     <button
                       type="button"
@@ -708,23 +704,12 @@ function FaqAccordion() {
                       aria-expanded={isOpen}
                       aria-controls={panelId}
                       onClick={() => setOpenIndex((cur) => (cur === i ? null : i))}
-                      className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+                      className="faq-row-button"
                     >
-                      <span className="text-base font-semibold text-ink">{item.q}</span>
-                      <span
-                        aria-hidden="true"
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors duration-200 ${
-                          isOpen
-                            ? "border-ember/50 bg-ambertint text-ember"
-                            : "border-hairline bg-ink/[0.03] text-fog"
-                        }`}
-                      >
-                        <ChevronDown
-                          className={`h-3.5 w-3.5 transition-transform duration-300 ${
-                            isOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </span>
+                      <span className="faq-q">{item.q}</span>
+                      <ChevronDown
+                        className={`faq-chevron ${isOpen ? "faq-chevron-open" : ""}`}
+                      />
                     </button>
                   </h3>
                   <div
@@ -736,9 +721,7 @@ function FaqAccordion() {
                     }`}
                   >
                     <div className="overflow-hidden">
-                      <p className="border-t border-hairline px-6 pb-5 pt-4 text-sm leading-relaxed text-mist">
-                        {item.a}
-                      </p>
+                      <p className="faq-a">{item.a}</p>
                     </div>
                   </div>
                 </div>
