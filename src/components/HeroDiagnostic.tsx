@@ -33,9 +33,11 @@ import { apiUrl } from "~/lib/apiOrigin";
 /* Scores are illustrative samples, never a real result (§12). §5: 12px */
 /* L-brackets top-right + bottom-right only, 1px #C96A42, -1px offset   */
 /* (light rhyme with the #methodology engine-gauge brackets — no grid   */
-/* overlay / mono labels in the hero). §7: rows reveal on load (fade +  */
-/* 8px rise, 120ms apart), numerals count up, finding fades in, then    */
-/* one scan sweep (1.2s) that stops. Reduced motion = final state.      */
+/* overlay / mono labels in the hero). §7 (2026-09-14): rows reveal on  */
+/* load, driven by a live-crawl status line (fade + 8px rise, 400ms),   */
+/* numerals count up over 500ms, "Scan complete" holds 800ms, finding    */
+/* fades in as the status fades out, then one scan sweep (1.2s) stops.   */
+/* Reduced motion = final state.                                         */
 /* ------------------------------------------------------------------ */
 interface HeroRow {
   label: string;
@@ -53,11 +55,30 @@ const MOCKUP_ROWS: HeroRow[] = [
 const ROW_CLS =
   "flex items-center justify-between gap-3 rounded-lg border border-[#3A312B] bg-[#16120F] px-3.5 py-2.5";
 
-const ROW_STAGGER_MS = 120; // each row starts 120ms after the previous
+/* Owner spec 2026-09-14 §4: the sample card runs a status-line-driven
+   "live crawl" once on load. The status text cycles through four working
+   states (~600ms each); as EACH state completes, the matching score row
+   fades in (+8px rise, 400ms ease-out — the inline transition below) and
+   counts up over 500ms. After the fourth row lands the status flips to
+   "Scan complete" (green), holds 800ms, then fades out as the sample
+   finding fades in; a single 1.2s scan sweep (CSS `.hero-card-scan`)
+   fires after that and stops. Total ≈ 4.8s, reading as ~4s of tool
+   running. Reduced motion = final state immediately (see below). */
+const MOCKUP_STATUSES = [
+  "Reading homepage…",
+  "Checking category clarity…",
+  "Scoring differentiation…",
+  "Compiling results…",
+];
+
+const STATUS_MS = 600; // each working status shows ~600ms (spec: 550–700)
+const DONE_HOLD_MS = 800; // "Scan complete" holds 800ms
 const ROW_FADE_MS = 400; // fade + 8px rise, ease-out
-const COUNTUP_MS = 600; // numeral counts 0 → value over 600ms
-const FINDING_AT_MS = 1000; // finding fades in after all four rows land
-const SCAN_AT_MS = 1500; // then one sweep (CSS owns the 1.2s sweep)
+const COUNTUP_MS = 500; // numeral counts 0 → value over 500ms
+// Finding fades in AS the status line fades out (both 400ms ease-out),
+// then the single scan sweep fires (CSS owns the 1.2s sweep).
+const FINDING_AT_MS = STATUS_MS * MOCKUP_STATUSES.length + DONE_HOLD_MS;
+const SCAN_AT_MS = FINDING_AT_MS + ROW_FADE_MS;
 
 export function HeroMockup({ animate = true }: { animate?: boolean }) {
   const targets = MOCKUP_ROWS.map((r) => parseInt(r.score, 10));
@@ -65,6 +86,11 @@ export function HeroMockup({ animate = true }: { animate?: boolean }) {
   const [nums, setNums] = useState<number[]>(() => MOCKUP_ROWS.map(() => 0));
   const [finding, setFinding] = useState(false);
   const [scan, setScan] = useState(false);
+  // Status line: `status` null = no content (reduced-motion / end state);
+  // `done` = "Scan complete" green state; `statusGone` fades the strip out.
+  const [status, setStatus] = useState<string | null>(MOCKUP_STATUSES[0]);
+  const [done, setDone] = useState(false);
+  const [statusGone, setStatusGone] = useState(false);
   const rafRef = useRef<number | null>(null);
   const timersRef = useRef<number[]>([]);
 
@@ -73,6 +99,8 @@ export function HeroMockup({ animate = true }: { animate?: boolean }) {
       setVisible(MOCKUP_ROWS.length);
       setNums(targets);
       setFinding(true);
+      setStatus(null);
+      setDone(true);
     };
     if (!animate) {
       finalState();
@@ -87,14 +115,24 @@ export function HeroMockup({ animate = true }: { animate?: boolean }) {
     const at = (ms: number, fn: () => void) => {
       timersRef.current.push(window.setTimeout(fn, ms));
     };
-    // a. rows reveal staggered (fade + 8px rise via inline transition)
-    MOCKUP_ROWS.forEach((_, i) =>
-      at(i * ROW_STAGGER_MS, () => setVisible((v) => Math.max(v, i + 1))),
-    );
-    // b. each numeral counts 0 → target over 600ms from its row's start
+    // a. status-driven rows: each working state completes at (i+1)*STATUS_MS;
+    //    the matching row fades in (fade + 8px rise via inline transition)
+    //    and the next status — or "Scan complete" — takes over the line.
+    MOCKUP_STATUSES.forEach((_, i) => {
+      at((i + 1) * STATUS_MS, () => {
+        setVisible((v) => Math.max(v, i + 1));
+        setStatus(
+          i + 1 < MOCKUP_STATUSES.length
+            ? MOCKUP_STATUSES[i + 1]
+            : "Scan complete",
+        );
+        if (i + 1 === MOCKUP_STATUSES.length) setDone(true);
+      });
+    });
+    // b. each numeral counts 0 → target over 500ms from its row's start
     MOCKUP_ROWS.forEach((_, i) => {
       const target = targets[i];
-      at(i * ROW_STAGGER_MS, () => {
+      at((i + 1) * STATUS_MS, () => {
         const start = performance.now();
         const tick = (now: number) => {
           const p = Math.min(1, (now - start) / COUNTUP_MS);
@@ -109,9 +147,13 @@ export function HeroMockup({ animate = true }: { animate?: boolean }) {
         rafRef.current = requestAnimationFrame(tick);
       });
     });
-    // c. sample finding fades in after all rows have landed
-    at(FINDING_AT_MS, () => setFinding(true));
-    // d. single scan sweep, then stops (no loop, not scroll-tied)
+    // c. sample finding fades in AS the status line fades out (400ms ease-out)
+    at(FINDING_AT_MS, () => {
+      setFinding(true);
+      setStatusGone(true);
+    });
+    // d. single scan sweep after the finding lands, then stops (no loop,
+    //    not scroll-tied — CSS owns the 1.2s sweep)
     at(SCAN_AT_MS, () => setScan(true));
     return () => {
       timersRef.current.forEach((t) => window.clearTimeout(t));
@@ -151,9 +193,43 @@ export function HeroMockup({ animate = true }: { animate?: boolean }) {
               <span className="text-[9px]">●</span>Sample report
             </span>
           </div>
-          {/* All 4 metric rows (owner spec 2026-09-09); §7 staggered reveal
-              on load — opacity/transform transitioned, numerals count up. */}
+          {/* Status line (owner spec 2026-09-14 §4): fixed-height strip
+              between the chrome header and the rows, ALWAYS rendered so the
+              card height never shifts when the status appears/fades. The
+              pulsing rust dot (#C96A42, ~4px core) sits left of the mono
+              10px #7D736A text; "Scan complete" flips to a static #6E9464
+              dot + text, holds 800ms, then fades out as the finding fades
+              in. Reduced motion: strip stays (space reserved) but renders
+              empty (JS + CSS guard below). */}
           <div className="flex flex-col gap-2 bg-[#1F1A16] p-4 sm:p-5">
+            <div
+              className="hero-mockup-status-line flex h-[30px] items-center gap-2 font-mono text-[10px] leading-none"
+              style={{
+                opacity: statusGone ? 0 : 1,
+                transition: `opacity ${ROW_FADE_MS}ms ease-out`,
+              }}
+            >
+              {status && (
+                <>
+                  {done ? (
+                    <span
+                      aria-hidden="true"
+                      className="relative inline-flex h-1 w-1 shrink-0 rounded-full bg-[#6E9464]"
+                    />
+                  ) : (
+                    <span aria-hidden="true" className="relative flex h-1 w-1 shrink-0">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C96A42] opacity-60" />
+                      <span className="relative inline-flex h-1 w-1 rounded-full bg-[#C96A42]" />
+                    </span>
+                  )}
+                  <span className={done ? "text-[#6E9464]" : "text-[#7D736A]"}>
+                    {status}
+                  </span>
+                </>
+              )}
+            </div>
+            {/* All 4 metric rows (owner spec 2026-09-09); status-driven
+                reveal — opacity/transform transitioned, numerals count up. */}
             {MOCKUP_ROWS.map((r, i) => (
               <div key={r.label} className={`hero-mockup-row ${ROW_CLS}`} style={rowStyle(visible > i)}>
                 <span className="min-w-0 text-[13px] font-medium text-[#e8e2d8]">{r.label}</span>
@@ -173,7 +249,7 @@ export function HeroMockup({ animate = true }: { animate?: boolean }) {
               Sample finding: category naming is too broad for high-intent buyers.
             </p>
           </div>
-          {/* §7d: single 1.2s scan sweep, 40% opacity #C96A42 line, stops */}
+          {/* §4d: single 1.2s scan sweep, 40% opacity #C96A42 line, stops */}
           {scan && <div className="hero-card-scan" aria-hidden="true" />}
         </div>
       </div>
@@ -1118,13 +1194,16 @@ export function HeroDiagnostic({
             <div className="text-center lg:text-left">
               <p className="eyebrow">ARE YOU MARKETREADY?</p>
               <h1 className="mx-auto mt-3 max-w-[460px] text-balance font-display text-[24px] font-bold leading-[1.2] tracking-tight text-[#F5F0E8] sm:text-[28px] lg:mx-0">
-                Turning products into stories that sell.
+                Optimize your GTM engine. Maximize product growth.
               </h1>
               <p className="mx-auto mt-4 max-w-[480px] text-[13px] leading-[1.55] text-[#C4BBB0] lg:mx-0">
-                Stronger positioning, sharper messaging, and focused go-to-market strategy that turn product value into customer demand and revenue.
+                Weak positioning creates expensive problems downstream. Sales works harder. Acquisition costs more. Launches underperform.
+              </p>
+              <p className="mx-auto mt-[10px] max-w-[480px] text-[13px] leading-[1.55] text-[#C4BBB0] lg:mx-0">
+                I find the friction costing you growth, fix the foundation, and set your business up to scale.
               </p>
               <p className="mx-auto mt-[10px] max-w-[480px] text-[12px] leading-[1.55] text-[#A79C91] lg:mx-0">
-                Experienced product marketing support with strategy and hands-on execution for companies building and growing products in competitive markets.
+                Seasoned PMM expertise. Hands-on execution. No agency layers.
               </p>
               <form onSubmit={handleSubmit} noValidate className="mx-auto mt-4 flex max-w-md flex-col gap-3 lg:mx-0">
                 <div className="text-left">

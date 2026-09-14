@@ -615,6 +615,13 @@
     transform: none !important;
     transition: none !important;
   }
+  /* Status line (owner spec 2026-09-14 §4): the fixed-height strip stays
+     (space reserved, card geometry identical) but renders NO status
+     content — beats the inline opacity/transition so even the first paint
+     before the JS early-return shows nothing. */
+  .hero-mockup-status-line {
+    opacity: 0 !important;
+  }
   .hero-card-scan {
     display: none !important;
   }
