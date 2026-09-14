@@ -695,7 +695,7 @@
   font-family: var(--font-display);
   font-size: 180px;
   line-height: 1;
-  color: rgb(22 18 15 / 0.05);
+  color: rgb(22 18 15 / 0.03);
   user-select: none;
 }
 #founder .founder-grid {
@@ -763,11 +763,13 @@
 }
 #founder .founder-tshirt {
   display: block;
-  width: 100%;
-  max-width: 420px;
-  height: auto;
+  width: 72%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: center;
   border: 1px solid rgb(58 49 43 / 0.16);
-  margin-bottom: 24px;
+  border-radius: 6px;
+  margin-bottom: 28px;
 }
 #founder .founder-tag-rule {
   width: 28px;
@@ -790,11 +792,8 @@
     padding-right: 0;
     border-right: none;
   }
-  #founder .founder-tshirt {
-    max-width: none;
-  }
 }
-@media (max-width: 767px) {
+@media (max-width: 1099px) {
   #founder .founder-mono {
     display: none;
   }
