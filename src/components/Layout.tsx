@@ -462,60 +462,55 @@ export function Header() {
 /* ------------------------------------------------------------------ */
 
 /**
- * Footer (owner revision spec §6/§12): pine-dark band (#14332D) with warm
- * neutral text. Brand + first-person tagline, a nav column mirroring the
- * header plus the outline Score CTA, and a contact column with the direct
- * mailto line + the Book GTM Sprint button (onBook). A legal strip holds
- * the copyright, Privacy Policy, Terms, and the standing notice line.
- * No pricing appears here.
+ * Footer: warm-dark band (#1F1A16) with warm neutral text. Brand tagline, a
+ * nav column with the outline Score CTA (nav links hidden, retained for one-
+ * class restore), an icon-only LinkedIn link, and a contact column with the
+ * cal.com "Book a Call" CTA + the mailto line. A legal strip holds the
+ * copyright, Privacy Policy, Terms, and the standing notice line.
+ * onBook is deliberately retained (unused) so the 17 existing call sites
+ * compile unchanged; drop the prop and the call sites in a follow-up if desired.
  */
-export function Footer({ onBook }: { onBook: () => void }) {
+export function Footer({ onBook: _onBook }: { onBook: () => void }) {
   const year = new Date().getFullYear();
   return (
     <footer className="bg-[#1F1A16] text-[#F5F0E8]">
       {/* Main footer body */}
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[2fr_1fr_1fr] md:py-16">
-        {/* Brand + mission */}
+      <div className="mx-auto grid max-w-6xl items-start gap-10 px-5 pt-14 pb-7 sm:px-8 md:grid-cols-[2fr_1fr_1fr] md:pt-16 md:pb-8">
+        {/* Brand + tagline */}
         <div className="max-w-sm">
           <Wordmark tone="dark" />
           <p className="mt-4 text-sm leading-relaxed text-mist">
-            Are You MarketReady? I diagnose where your GTM is breaking,
-            prescribe the highest-impact fixes, and activate them in 14 days.
-            Wasani, Founder
+            Turn your GTM engine into a growth engine. Get MarketReady.
           </p>
         </div>
 
-        {/* Mirror of the top navigation + Score CTA */}
+        {/* Score CTA + (hidden, restore-able) nav links + icon-only LinkedIn */}
         <nav aria-label="Footer" className="flex flex-col items-start gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-fog">
-            Navigate
-          </span>
-          <a
-            href="/services/diagnostic"
-            className={FOOTER_CTA_OUTLINE}
-          >
+          <a href="/services/diagnostic" className={FOOTER_CTA_OUTLINE}>
             Check my score
           </a>
-          <a href="/#how-it-works" className={FOOTER_LINK}>
-            How It Works
-          </a>
-          <a href="/services" className={FOOTER_LINK}>
-            Services
-          </a>
-          <a href="/resources" className={FOOTER_LINK}>
-            Resources
-          </a>
-          <a href="/about" className={FOOTER_LINK}>
-            About
-          </a>
+          <div className="hidden">
+            <a href="/#how-it-works" className={FOOTER_LINK}>
+              How It Works
+            </a>
+            <a href="/services" className={FOOTER_LINK}>
+              Services
+            </a>
+            <a href="/resources" className={FOOTER_LINK}>
+              Resources
+            </a>
+            <a href="/about" className={FOOTER_LINK}>
+              About
+            </a>
+          </div>
           <a
             href="https://www.linkedin.com/in/wasanip/"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Wasani on LinkedIn"
             className={`${FOOTER_LINK} inline-flex items-center gap-2`}
           >
             <LinkedInIcon className="h-3.5 w-3.5" />
-            Wasani on LinkedIn
           </a>
         </nav>
 
@@ -524,19 +519,23 @@ export function Footer({ onBook }: { onBook: () => void }) {
           <span className="text-xs font-semibold uppercase tracking-wider text-fog">
             Get started
           </span>
-          <button
-            type="button"
-            onClick={onBook}
+          <a
+            href="https://cal.com/wasani-probasco"
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn-electric w-auto whitespace-nowrap"
           >
-            Book GTM Sprint
-          </button>
-          <a
-            href="mailto:hello@getmarketready.co"
-            className="mt-1 text-sm text-mist underline decoration-[#F2EDE6]/40 underline-offset-2 transition-colors hover:text-white hover:decoration-white/60"
-          >
-            Have questions? Email us at hello@getmarketready.co
+            Book a Call
           </a>
+          <p className="mt-1 text-sm text-mist">
+            Have questions? Email me at{" "}
+            <a
+              href="mailto:hello@getmarketready.co"
+              className="underline decoration-[#F2EDE6]/40 underline-offset-2 transition-colors hover:text-white hover:decoration-white/60"
+            >
+              hello@getmarketready.co
+            </a>
+          </p>
         </div>
       </div>
 
@@ -562,7 +561,7 @@ export function Footer({ onBook }: { onBook: () => void }) {
           </nav>
         </div>
         <p className="border-t border-white/10 px-5 pb-6 pt-3 text-center text-xs text-[#F2EDE6]/50 sm:px-8">
-          MarketReady Strategy Group: Go-To-Market Enablement &amp; Positioning.
+          MarketReady: Go-To-Market Enablement &amp; Positioning.
         </p>
       </div>
     </footer>
