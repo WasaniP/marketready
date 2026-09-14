@@ -763,7 +763,9 @@
 }
 #founder .founder-tshirt {
   display: block;
-  width: 72%;
+  /* Owner follow-up 2026-09-14 ("headshot way too big"): 72% →
+     55% of the grid column — an understated portrait, not a statement. */
+  width: 55%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
   object-position: center;
