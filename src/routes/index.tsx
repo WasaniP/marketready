@@ -28,31 +28,33 @@ const HOW_IT_WORKS_STEPS = [
   },
 ] as const;
 
-/* Friction observations: first-person rows, compact warm-dark layout     */
-/* (owner rework 2026-09-10): shortened intro, cited JOLT Effect stat    */
-/* block in the left column, hover-lift rows (bg/numeral/header/tag),   */
-/* sticky left column (overflow: clip on the section). Stacked-row        */
-/* layout: ghosted serif numerals, sand headers, consequence tags.        */
+/* Friction observations: three warm-dark cards, compact layout.        */
+/* Owner rework copy 2026-09-16: upstream-problems headline, intro,     */
+/* three friction cards (distinct card surfaces, hairline border, 6px   */
+/* radius, 12px stack gap). Left column keeps the cited JOLT Effect     */
+/* stat block; sticky left column via overflow: clip on the section.    */
+/* Card hover = understated surface/border tone shift only (no glow,    */
+/* no shadow, no lift).                                                  */
 /* ------------------------------------------------------------------ */
 function FrictionObservations() {
   const rows = [
     {
       n: "01",
-      header: "Explaining, not selling",
-      body: "If the first 30 minutes of a demo are spent explaining the category instead of selling the product, your positioning isn't doing enough work.",
-      tag: "The cost \u2192 Longer sales cycles",
+      header: "The value isn't obvious",
+      body: "If buyers have to work to understand why your product matters, they won't do the work for you.",
+      tag: "The cost \u2192 Weak conversion",
     },
     {
       n: "02",
-      header: "The ads were never the problem",
-      body: "If visitors are bouncing before they understand your value, more paid traffic won't fix it. You're just paying to send more people to the wrong message.",
-      tag: "The cost \u2192 Wasted paid spend",
+      header: "Sales has to do too much work",
+      body: "If every deal requires a custom explanation, lengthy demo, or heavy discount to close, your product's value isn't doing enough of the selling.",
+      tag: "The cost \u2192 Longer sales cycles",
     },
     {
       n: "03",
-      header: "Discounting to close",
-      body: "When buyers can't clearly see why you're different, price becomes the easiest lever to pull.",
-      tag: "The cost \u2192 Lower margins",
+      header: "Growth activity isn't translating",
+      body: "More traffic, more launches, and more campaigns can't fix a weak commercial foundation. They just put more money behind the same friction.",
+      tag: "The cost \u2192 Wasted growth spend",
     },
   ];
   return (
@@ -76,10 +78,10 @@ function FrictionObservations() {
           <div className="friction-left">
             <p className="friction-eyebrow">Where growth gets stuck</p>
             <h2 className="friction-headline">
-              Three patterns that quietly hold back growth
+              Small problems upstream create expensive problems downstream.
             </h2>
             <p className="friction-intro">
-              If any of these sound familiar, your positioning may be the problem, not your product.
+              The product isn't always the problem. Sometimes the friction is in how it's positioned, understood, sold, or brought to market.
             </p>
             <div className="friction-stat">
               <p className="friction-stat-figure">40–60%</p>
