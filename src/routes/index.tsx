@@ -257,15 +257,22 @@ function HowItWorks() {
 
 /* ------------------------------------------------------------------ */
 /* ScoreCondensed (#score-condensed): condensed, non-interactive        */
-/* homepage summary of the Diagnostic Engine. Full-bleed #1F1A16 with   */
-/* the 28px grid overlay (no paper grain) and hairline top/bottom       */
-/* rules. The full click-to-expand engine moved to /services/diagnostic */
-/* (src/components/DiagnosticEngine.tsx) — this row summary is pure     */
-/* presentation: no chevrons, no accordion, no gauge, no brackets.      */
+/* homepage summary of the Diagnostic Engine. Full-bleed #1F1A16 band   */
+/* (slightly lighter than the Method band above) with the 28px grid     */
+/* overlay at a reduced presence and hairline top/bottom rules. Two-    */
+/* column composition (5/12 copy, 7/12 pillar cards, stacked below      */
+/* 900px). The three pillars are DISTINCT static cards in the Method/   */
+/* Friction card language: 2px pillar-colour accent bar across the      */
+/* card top, mono counter + status flag row, Fraunces title + 10-       */
+/* segment meter, ghosted numeral. Pure presentation: no hover, no      */
+/* chevrons, no accordion, no gauge, no brackets. Upgraded copy of the  */
+/* scoring behaviour lives on /services/diagnostic                      */
+/* (src/components/DiagnosticEngine.tsx).                               */
 /* ------------------------------------------------------------------ */
 function ScoreCondensed() {
   const rows = [
     {
+      n: "01",
       counter: "PILLAR 01 / 03",
       name: "Core Positioning",
       flag: "◆ CRITICAL GAP",
@@ -273,6 +280,7 @@ function ScoreCondensed() {
       lit: 3,
     },
     {
+      n: "02",
       counter: "PILLAR 02 / 03",
       name: "Messaging & Value Prop",
       flag: "◆ NEEDS REFINEMENT",
@@ -280,6 +288,7 @@ function ScoreCondensed() {
       lit: 4,
     },
     {
+      n: "03",
       counter: "PILLAR 03 / 03",
       name: "GTM & Launch Velocity",
       flag: "◆ NEEDS REFINEMENT",
@@ -326,18 +335,22 @@ function ScoreCondensed() {
           </div>
           <div className="sc-pillars">
             {rows.map((row) => (
-              <div key={row.counter} className="sc-row">
+              <article
+                key={row.counter}
+                className="sc-card"
+                style={{ borderTopColor: row.color }}
+              >
+                <span className="sc-numeral" aria-hidden="true">
+                  {row.n}
+                </span>
                 <div className="sc-label">
                   <span className="sc-counter">{row.counter}</span>
                   <span className="sc-status" style={{ color: row.color }}>
                     {row.flag}
                   </span>
                 </div>
-                <div
-                  className="sc-panel"
-                  style={{ borderLeftColor: row.color }}
-                >
-                  <span className="sc-panel-title">{row.name}</span>
+                <div className="sc-title-meter">
+                  <span className="sc-card-title">{row.name}</span>
                   <span className="sc-meter" aria-hidden="true">
                     {Array.from({ length: 10 }, (_, i) => (
                       <span
@@ -350,7 +363,7 @@ function ScoreCondensed() {
                     ))}
                   </span>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         </div>
