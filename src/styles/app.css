@@ -1625,11 +1625,20 @@
 
 /* ------------------------------------------------------------------ */
 /* ScoreCondensed (#score-condensed): homepage condensed summary of    */
-/* the Diagnostic Engine. Full-bleed #1F1A16 + 28px grid (no paper     */
-/* grain), hairline rules top + bottom, 2-col layout (1-col below      */
-/* 900px). Rows are PURELY PRESENTATIONAL — no chevrons, no accordion  */
-/* behavior, no cursor/hover affordance, no gauge, no brackets. All    */
-/* classes are sc-* so they can never collide with the moved engine's  */
+/* the Diagnostic Engine. Full-bleed #1F1A16 surface (slightly lighter */
+/* than the Method band's #16120F above) + the 28px grid at a reduced  */
+/* presence (opacity 0.3, was 0.5), hairline rules top + bottom. Two-  */
+/* column composition — copy left (5/12), pillar cards right (7/12),   */
+/* 32px gap — stacked below 900px. The three pillars are DISTINCT      */
+/* static cards in the Method/Friction card language: 1px #3A312B      */
+/* border, 6px radius, 2px accent bar across the card top in the       */
+/* pillar's own colour (borderTopColor inline, default rust), mono     */
+/* counter + status flag row, Fraunces card title + 10-segment meter   */
+/* (6x14 segments, lit pillar colour / unlit #2A2320), ghosted card    */
+/* numeral bottom-right. Cards are PURELY PRESENTATIONAL — strictly    */
+/* no hover effect this round, no chevrons, no accordion, no gauge,    */
+/* no brackets, no shadows, no glows, no transforms. All classes are   */
+/* sc-* so they can never collide with the moved engine's              */
 /* .engine-section styles on /services/diagnostic.                     */
 /* ------------------------------------------------------------------ */
 #score-condensed {
@@ -1647,15 +1656,15 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.3;
 }
 #score-condensed .sc-content {
   position: relative;
 }
 #score-condensed .sc-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: 34px;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 32px;
   align-items: center;
 }
 #score-condensed .sc-left {
@@ -1663,31 +1672,34 @@
 }
 #score-condensed .sc-eyebrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.14em;
   color: #e8c9a0;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 #score-condensed .sc-headline {
   font-family: var(--font-display);
-  font-size: 25px;
-  line-height: 1.12;
+  font-size: 30px;
+  line-height: 1.14;
+  letter-spacing: -0.01em;
   color: #f5f0e8;
-  margin-bottom: 12px;
-}
-#score-condensed .sc-intro {
-  font-size: 12px;
-  line-height: 1.6;
-  color: #b8aea3;
+  text-wrap: balance;
   margin-bottom: 14px;
 }
+#score-condensed .sc-intro {
+  font-size: 15px;
+  line-height: 1.55;
+  color: #b8aea3;
+  margin-bottom: 16px;
+}
 #score-condensed .sc-callout {
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.55;
   color: #b8aea3;
   border-left: 2px solid #c96a42;
-  padding-left: 12px;
-  margin-bottom: 18px;
+  padding-left: 14px;
+  margin-bottom: 20px;
 }
 #score-condensed .sc-link {
   display: inline-block;
@@ -1709,59 +1721,87 @@
   gap: 14px;
   min-width: 0;
 }
-#score-condensed .sc-row {
+/* Pillar card — STATIC, non-interactive: no hover, no transition. The
+   2px top accent colour is set inline (borderTopColor) per pillar. */
+#score-condensed .sc-card {
+  position: relative;
   min-width: 0;
+  background-color: #1f1a16;
+  border: 1px solid #3a312b;
+  border-top: 2px solid #c96a42;
+  border-radius: 6px;
+  padding: 18px 20px 20px;
+  overflow: hidden;
+}
+/* Ghosted pillar numeral (Friction-style but kept subtle): sits in the
+   card's bottom-right at #2A2320 so it reads as a faint watermark; the
+   label/title rows paint above it via z-index. */
+#score-condensed .sc-numeral {
+  position: absolute;
+  right: 14px;
+  bottom: 6px;
+  z-index: 0;
+  font-family: var(--font-display);
+  font-size: 54px;
+  font-weight: 700;
+  line-height: 1;
+  color: #2a2320;
+  user-select: none;
+  pointer-events: none;
 }
 #score-condensed .sc-label {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 #score-condensed .sc-counter {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.12em;
   color: #7d736a;
 }
 #score-condensed .sc-status {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.1em;
   white-space: nowrap;
 }
-#score-condensed .sc-panel {
+#score-condensed .sc-title-meter {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  background: #1c1714;
-  border: 1px solid #3a312b;
-  border-left: 3px solid;
-  border-radius: 2px;
-  padding: 13px 15px;
+  gap: 12px;
+  min-width: 0;
 }
-#score-condensed .sc-panel-title {
+#score-condensed .sc-card-title {
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 600;
   line-height: 1.25;
   color: #f5f0e8;
   min-width: 0;
 }
 #score-condensed .sc-meter {
   display: inline-flex;
-  gap: 2px;
+  gap: 3px;
   flex-shrink: 0;
 }
 #score-condensed .sc-meter-seg {
-  width: 4px;
-  height: 11px;
+  width: 6px;
+  height: 14px;
   border-radius: 0;
 }
 @media (max-width: 900px) {
   #score-condensed .sc-layout {
     grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
   }
 }
 @media (max-width: 768px) {
