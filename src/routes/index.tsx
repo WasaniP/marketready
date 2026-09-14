@@ -11,13 +11,14 @@ import { Header, Footer, ChevronDown } from "~/components/Layout";
 
 /** Method timeline (owner spec 2026-09-17): one column per offer tier,
  *  each mapped to its stage. Labels/timelines/stage copy EXACTLY as the
- *  owner wrote them (em-dashes included) — do not normalize. Col 3 has
- *  no link (no Product Launch page exists). */
+ *  owner wrote them (em-dashes included) — do not normalize.
+ *  Owner follow-up 2026-09-14: ALL three columns are plain (no links) —
+ *  the Audit and Sprint columns previously linked to their service pages. */
 const HOW_IT_WORKS_TIERS = [
   {
     label: "MarketReady Audit",
     days: "5 DAYS",
-    href: "/services/audit",
+    href: null,
     stage: {
       n: "01",
       name: "Diagnose",
@@ -27,7 +28,7 @@ const HOW_IT_WORKS_TIERS = [
   {
     label: "GTM Engine Sprint",
     days: "14 DAYS",
-    href: "/services/sprint",
+    href: null,
     stage: {
       n: "02",
       name: "Rebuild",
