@@ -21,7 +21,7 @@ const HOW_IT_WORKS_TIERS = [
     stage: {
       n: "01",
       name: "Diagnose",
-      body: "I audit your positioning, messaging, and funnel metrics to isolate exactly where you are losing clarity, authority, and buyer conversion.",
+      body: "I audit your positioning, messaging, and funnel metrics to identify exactly where you are losing clarity, authority, and buyer conversion.",
     },
   },
   {
@@ -231,7 +231,20 @@ function HowItWorks() {
             $2,000 fee fully credits toward the Sprint or Launch.
           </p>
           <div className="text-center">
-            <a href="/assessment" className="hiw-cta">
+            <a
+              href="#calculator"
+              className="hiw-cta"
+              onClick={(e) => {
+                e.preventDefault();
+                const anchor =
+                  document.getElementById("calculator") ??
+                  document.getElementById("calc-url");
+                anchor?.scrollIntoView({ behavior: "smooth", block: "start" });
+                window.setTimeout(() => {
+                  document.getElementById("calc-url")?.focus({ preventScroll: true });
+                }, 650);
+              }}
+            >
               Get Your MarketReady Score →
             </a>
           </div>

@@ -1098,7 +1098,7 @@
 /* the understated hover (bg/border tone shift only, 150ms, no         */
 /* lift/glow/shadow); col 3 is plain (no Product Launch page).         */
 /* Closing: centered 14px italic Fraunces credit (40px above) + 44px   */
-/* solid-rust CTA -> /assessment. 1 col stacked below 900px.           */
+/* solid-rust CTA scrolls to the homepage diagnostic section (#calculator + focus #calc-url, per owner follow-up). 1 col stacked below 900px.           */
 /* ------------------------------------------------------------------ */
 #how-it-works {
   position: relative;
