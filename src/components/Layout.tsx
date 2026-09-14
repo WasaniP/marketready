@@ -480,7 +480,7 @@ export function Footer({ onBook: _onBook }: { onBook: () => void }) {
         <div className="max-w-sm">
           <Wordmark tone="dark" />
           <p className="mt-4 text-sm leading-relaxed text-mist">
-            Turn your GTM engine into a growth engine. Get MarketReady.
+            Turn your go-to-market into a growth engine. Get MarketReady.
           </p>
         </div>
 
