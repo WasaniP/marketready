@@ -9,22 +9,40 @@ import { Header, Footer, ChevronDown } from "~/components/Layout";
 /* Constants                                                           */
 /* ------------------------------------------------------------------ */
 
-/** Diagnose → Prescribe → Activate, in the founder's voice. */
-const HOW_IT_WORKS_STEPS = [
+/** Method timeline (owner spec 2026-09-17): one column per offer tier,
+ *  each mapped to its stage. Labels/timelines/stage copy EXACTLY as the
+ *  owner wrote them (em-dashes included) — do not normalize. Col 3 has
+ *  no link (no Product Launch page exists). */
+const HOW_IT_WORKS_TIERS = [
   {
-    n: "01",
-    name: "Diagnose",
-    body: "I assess your positioning, messaging, and market presence to identify where you're losing clarity, trust, and conversion.",
+    label: "MarketReady Audit",
+    days: "5 DAYS",
+    href: "/services/audit",
+    stage: {
+      n: "01",
+      name: "Diagnose",
+      body: "I audit your positioning, messaging, and funnel metrics to isolate exactly where you are losing clarity, authority, and buyer conversion.",
+    },
   },
   {
-    n: "02",
-    name: "Prescribe",
-    body: "I turn those gaps into a focused action plan: what to fix, what to say, and which assets actually need to change.",
+    label: "GTM Engine Sprint",
+    days: "14 DAYS",
+    href: "/services/sprint",
+    stage: {
+      n: "02",
+      name: "Rebuild",
+      body: "I fix the GTM engine in a focused 14-day sprint—rewriting your narrative architecture, homepage copy, sales deck, and core GTM assets.",
+    },
   },
   {
-    n: "03",
-    name: "Activate",
-    body: "I put the fixes into market through a focused sprint, turning strategy into work that gets shipped.",
+    label: "Product Launch",
+    days: "60–90 DAYS",
+    href: null,
+    stage: {
+      n: "03",
+      name: "Orchestrate",
+      body: "I execute end-to-end GTM rollouts for major product drops or market pivots—equipping sales teams, managing launch timelines, and optimizing live campaigns.",
+    },
   },
 ] as const;
 
@@ -132,15 +150,22 @@ function FrictionObservations() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Methodology: linked offer groups (label + track segments + columns) */
-/* + closing CTA. Step copy lives in HOW_IT_WORKS_STEPS (unchanged).   */
+/* Methodology / "The MarketReady Method" (owner spec 2026-09-17):     */
+/* warm-dark #16120F surface w/ paper grain + hairline top border,     */
+/* centered header (sand eyebrow / Fraunces headline / mist intro),    */
+/* 3-column offer timeline mapping each offer tier to its stage        */
+/* (MarketReady Audit 5 DAYS/01 Diagnose, GTM Engine Sprint            */
+/* 14 DAYS/02 Rebuild, Product Launch 60–90 DAYS/03 Orchestrate).      */
+/* Cols 1-2 wrap in links to their offer pages (understated hover:     */
+/* surface/border tone shift only, no lift/glow — friction pattern);   */
+/* col 3 is plain (no Product Launch page). Closing italic credit +    */
+/* 44px solid-rust CTA → /assessment.                                  */
 /* ------------------------------------------------------------------ */
 function HowItWorks() {
-  const [stepDiagnose, stepPrescribe, stepActivate] = HOW_IT_WORKS_STEPS;
   return (
     <section
       id="how-it-works"
-      className="relative scroll-mt-24 overflow-hidden border-t border-hairline bg-cream py-10 sm:py-12"
+      className="relative scroll-mt-24 border-t border-hairline"
     >
       {/* Paper grain overlay (above the bg, below everything else). */}
       <div className="hiw-grain" aria-hidden="true">
@@ -159,73 +184,54 @@ function HowItWorks() {
       <div className="relative mx-auto w-full max-w-[1200px] px-6 sm:px-12">
         <div className="text-center">
           <p className="hiw-eyebrow">The MarketReady Method</p>
-          <h2 className="hiw-headline font-display">
+          <h2 className="hiw-headline">
             When the positioning is wrong, everything downstream costs more.
           </h2>
-          <p className="hiw-intro-2">
-            Most teams jump straight to execution. I start by finding the
-            problem worth fixing.
+          <p className="hiw-intro">
+            Most teams jump straight to expensive campaigns. I start by
+            pinpointing what&apos;s broken, rebuilding your core engine, and
+            orchestrating the rollout.
           </p>
         </div>
 
-        {/* Offer groups: each offer is ONE hover target wrapping its label
-            row, its track segment(s), and its column(s). Audit wraps
-            Diagnose + Prescribe (segments 1-2); Sprint wraps Activate
-            (segment 3). The outer grid's empty 2% column is the gap. */}
-        <div className="hiw-groups">
-          <a href="/services/audit" className="hiw-group hiw-group-audit">
-            <div className="hiw-group-label">
-              <span className="hiw-band-label">MarketReady Audit</span>
-              <span className="hiw-band-days">3–5 DAYS</span>
-            </div>
-            <div className="hiw-group-track" aria-hidden="true">
-              <span className="hiw-track-seg hiw-track-1" />
-              <span className="hiw-track-seg hiw-track-2" />
-            </div>
-            <div className="hiw-group-cols">
-              <div className="hiw-step hiw-step-01">
-                <div className="hiw-step-head">
-                  <span className="hiw-numeral">{stepDiagnose.n}</span>
-                  <h3 className="hiw-title">{stepDiagnose.name}</h3>
+        <div className="hiw-grid">
+          {HOW_IT_WORKS_TIERS.map((tier) => {
+            const card = (
+              <>
+                <div className="hiw-col-head">
+                  <span className="hiw-col-label">{tier.label}</span>
+                  <span className="hiw-col-days">{tier.days}</span>
                 </div>
-                <p className="hiw-body">{stepDiagnose.body}</p>
-              </div>
-              <div className="hiw-step hiw-step-02">
-                <div className="hiw-step-head">
-                  <span className="hiw-numeral">{stepPrescribe.n}</span>
-                  <h3 className="hiw-title">{stepPrescribe.name}</h3>
+                <div className="hiw-stage">
+                  <div className="hiw-stage-head">
+                    <span className="hiw-stage-numeral" aria-hidden="true">
+                      {tier.stage.n}
+                    </span>
+                    <h3 className="hiw-stage-title">{tier.stage.name}</h3>
+                  </div>
+                  <p className="hiw-stage-body">{tier.stage.body}</p>
                 </div>
-                <p className="hiw-body">{stepPrescribe.body}</p>
+              </>
+            );
+            return tier.href ? (
+              <a key={tier.stage.n} href={tier.href} className="hiw-col">
+                {card}
+              </a>
+            ) : (
+              <div key={tier.stage.n} className="hiw-col hiw-col-plain">
+                {card}
               </div>
-            </div>
-          </a>
-          <a href="/services/sprint" className="hiw-group hiw-group-sprint">
-            <div className="hiw-group-label">
-              <span className="hiw-band-label">GTM Sprint</span>
-              <span className="hiw-band-days">14 DAYS</span>
-            </div>
-            <div className="hiw-group-track" aria-hidden="true">
-              <span className="hiw-track-seg hiw-track-3" />
-            </div>
-            <div className="hiw-group-cols">
-              <div className="hiw-step hiw-step-03">
-                <div className="hiw-step-head">
-                  <span className="hiw-numeral">{stepActivate.n}</span>
-                  <h3 className="hiw-title">{stepActivate.name}</h3>
-                </div>
-                <p className="hiw-body">{stepActivate.body}</p>
-              </div>
-            </div>
-          </a>
+            );
+          })}
         </div>
 
         <div className="hiw-closing">
           <p className="hiw-credit">
-            Start with the Audit. The fee credits toward the Sprint if you keep
-            going.
+            Start with the Audit to uncover your highest-leverage fixes. The
+            $2,000 fee fully credits toward the Sprint or Launch.
           </p>
           <div className="text-center">
-            <a href="/services/diagnostic" className="hiw-cta">
+            <a href="/assessment" className="hiw-cta">
               Get Your MarketReady Score →
             </a>
           </div>
