@@ -311,13 +311,18 @@ export function Header() {
           >
             How It Works
           </a>
-          <ServicesDropdown />
-          <a href="/resources" className="nav-link">
-            Resources
-          </a>
-          <a href="/about" className="nav-link">
-            About
-          </a>
+          {/* Owner spec 2026-09-14: Services/Resources/About hidden (one
+              `hidden` class restores them — same pattern as the footer's
+              hidden nav links; markup + hrefs intact). */}
+          <div className="hidden">
+            <ServicesDropdown />
+            <a href="/resources" className="nav-link">
+              Resources
+            </a>
+            <a href="/about" className="nav-link">
+              About
+            </a>
+          </div>
           <a
             href="https://www.linkedin.com/in/wasanip/"
             target="_blank"
@@ -332,9 +337,15 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           {/* Owner spec §10: nav CTA is outline; only the in-hero CTA is
-              solid rust. "Check my score" varies the audit-button microcopy. */}
-          <a href="/services/diagnostic" className={`${NAV_CTA_OUTLINE} hidden sm:inline-flex`}>
-            Check my score
+              solid rust. "Book a Call" links to the owner's Cal.com
+              scheduling page (same link the footer uses). */}
+          <a
+            href="https://cal.com/wasani-probasco"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${NAV_CTA_OUTLINE} hidden sm:inline-flex`}
+          >
+            Book a Call
           </a>
           <button
             type="button"
@@ -369,7 +380,9 @@ export function Header() {
           className="border-t border-hairline bg-cream/95 px-5 py-4 backdrop-blur-xl md:hidden"
         >
           <ul className="flex flex-col gap-1">
-            <li>
+            {/* Owner spec 2026-09-14: Services/Resources/About hidden in the
+                mobile drawer too (one `hidden` class each restores them). */}
+            <li className="hidden">
               <button
                 type="button"
                 onClick={() => setServicesOpen((v) => !v)}
@@ -418,7 +431,7 @@ export function Header() {
                 How It Works <span className="text-xs text-fog">(on this page ↓)</span>
               </a>
             </li>
-            <li>
+            <li className="hidden">
               <a
                 href="/resources"
                 onClick={() => setMenuOpen(false)}
@@ -427,7 +440,7 @@ export function Header() {
                 Resources
               </a>
             </li>
-            <li>
+            <li className="hidden">
               <a
                 href="/about"
                 onClick={() => setMenuOpen(false)}
@@ -437,17 +450,22 @@ export function Header() {
               </a>
             </li>
             <li className="mt-2 flex flex-col gap-2">
-              <a href="/services/diagnostic" className={`${NAV_CTA_OUTLINE} w-full`}>
-                Check my score
+              <a
+                href="https://cal.com/wasani-probasco"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${NAV_CTA_OUTLINE} w-full`}
+              >
+                Book a Call
               </a>
               <a
                 href="https://www.linkedin.com/in/wasanip/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-mist transition-colors hover:text-ember"
+                aria-label="Wasani on LinkedIn"
+                className="inline-flex items-center justify-center rounded-lg px-3 py-2.5 text-mist transition-colors hover:text-ember"
               >
                 <LinkedInIcon className="h-4 w-4" />
-                Wasani on LinkedIn
               </a>
             </li>
           </ul>
