@@ -329,7 +329,22 @@ function ScoreCondensed() {
               30 minutes go to explaining the category, the ad spend that
               bounces, and the deal that closes at a discount.
             </p>
-            <a href="/services/diagnostic" className="sc-link">
+            <a
+              href="#calculator"
+              className="sc-link"
+              onClick={(e) => {
+                e.preventDefault();
+                const anchor =
+                  document.getElementById("calculator") ??
+                  document.getElementById("calc-url");
+                anchor?.scrollIntoView({ behavior: "smooth", block: "start" });
+                window.setTimeout(() => {
+                  document.getElementById("calc-url")?.focus({
+                    preventScroll: true,
+                  });
+                }, 650);
+              }}
+            >
               SEE HOW THE SCORING WORKS →
             </a>
           </div>
@@ -477,7 +492,7 @@ function FounderStory() {
 /* so it is NOT adjacent to the founder note (#founder). Full-bleed    */
 /* 22px grid overlay (rhymes with the engine's 28px grid), hairline    */
 /* #3A312B rules top + bottom, 2-col card grid (1-col below 900px).    */
-/* The entire card is one clickable anchor to its /work/* case page.   */
+/* Cards are static showcases (no /work/* URLs — owner 2026-09-15).    */
 /* ------------------------------------------------------------------ */
 function SelectedWork() {
   return (
@@ -514,7 +529,7 @@ function SelectedWork() {
         </p>
         <div className="sw-grid-cards">
           {WORK_CASES.map((c) => (
-            <a key={c.slug} href={`/work/${c.slug}`} className="sw-card">
+            <div key={c.slug} className="sw-card">
               <p className="sw-card-label">{c.caseLabel}</p>
               <h3 className="sw-card-headline">{c.headline}</h3>
               <div className="sw-card-metrics">
@@ -526,8 +541,7 @@ function SelectedWork() {
                 ))}
               </div>
               <p className="sw-card-desc">{c.description}</p>
-              <p className="sw-card-link">READ THE CASE STUDY →</p>
-            </a>
+            </div>
           ))}
         </div>
       </div>
