@@ -2011,11 +2011,18 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Work With Me (#services): dark section. #1F1A16 bg,                 */
-/* feTurbulence grain at overlay/28%, 1px #3A312B hairlines top +      */
-/* bottom, full-width header, 3 editorial columns (1-col below 900px), */
-/* CTA pinned to column bottom. All section colors hard-coded +        */
-/* scoped here (global tokens remap to dark). No box-shadows.          */
+/* Work With Me (#services): 3-card offer matrix + fractional banner  */
+/* (owner spec 2026-09-14). Warm-dark #1F1A16 section w/ feTurbulence  */
+/* grain at 28% overlay, 1px #3A312B hairlines top + bottom,           */
+/* left-aligned header. Matrix: repeat(3, 1fr), 24px gap, max-w        */
+/* 1140px, 1 col below 900px. Each card: #1F1A16 surface, 1px #3A312B  */
+/* border, 6px radius, 32px/24px padding, flex column (CTA pinned to   */
+/* the bottom). Featured (col 2) carries a 3px rust #C96A42 top accent */
+/* line plus the MOST POPULAR badge; its CTA is solid while cols 1 + 3 */
+/* are outline. Fractional/retainer banner sits below the grid         */
+/* (#1C1714, 1px hairline). Radius 6px everywhere; strictly NO         */
+/* shadows, NO glows, NO transforms or lifts. Section colors           */
+/* hard-coded + scoped here (global tokens remap to dark).             */
 /* ------------------------------------------------------------------ */
 #services.wwm-section {
   position: relative;
@@ -2074,80 +2081,112 @@
   max-width: 62ch;
   margin-top: 10px;
 }
+/* ---- the 3-card offer matrix ---- */
 #services .wwm-cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
+  gap: 24px;
   align-items: stretch;
-  margin-top: 24px;
+  max-width: 1140px;
+  margin: 32px auto 0 auto;
 }
 #services .wwm-col {
+  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 14px 0 0;
+  min-width: 0;
+  background-color: #1F1A16;
+  border: 1px solid #3A312B;
+  border-radius: 6px;
+  padding: 32px 24px;
 }
-#services .wwm-col-1 {
-  border-top: 3px solid #C96A42;
-  padding-right: 22px;
-  padding-left: 0;
-  border-right: 1px solid #3A312B;
-}
+/* Featured tier: 3px rust accent line on top of the 1px hairline. */
 #services .wwm-col-2 {
-  border-top: 3px solid #A8502F;
-  padding-left: 22px;
-  padding-right: 22px;
-  border-right: 1px solid #3A312B;
+  border-top: 3px solid #C96A42;
 }
-#services .wwm-col-3 {
-  border-top: 3px solid #C4A57A;
-  padding-right: 0;
-  padding-left: 22px;
+/* MOST POPULAR badge: top-right, in the empty right half of the
+   timeframe row so it can never collide with the "14 DAYS" label. */
+#services .wwm-badge {
+  position: absolute;
+  top: 11px;
+  right: 12px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  background-color: rgba(201, 106, 66, 0.15);
+  color: #C96A42;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
 }
 #services .wwm-timeframe-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
 }
 #services .wwm-timeframe {
+  font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
   color: #7D736A;
+  white-space: nowrap;
+}
+/* Tier pills: identical geometry; START HERE keeps the rust treatment
+   (rust text + rust-tinted hairline), END-TO-END is muted. */
+#services .wwm-starthere,
+#services .wwm-starthere-muted {
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 #services .wwm-starthere {
-  font-size: 9px;
-  letter-spacing: 0.08em;
+  border: 1px solid rgba(201, 106, 66, 0.45);
   color: #C96A42;
-  white-space: nowrap;
+}
+#services .wwm-starthere-muted {
+  border: 1px solid #3A312B;
+  color: #7D736A;
 }
 #services .wwm-name {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 20px;
+  line-height: 1.2;
   color: #F5F0E8;
-  margin-top: 8px;
+  margin-top: 16px;
 }
 #services .wwm-price {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
   color: #C96A42;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 #services .wwm-per {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 13px;
   color: #7D736A;
 }
 #services .wwm-subprice {
-  font-size: 11px;
-  color: #7D736A;
-  margin-top: 2px;
-}
-#services .wwm-for {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   color: #B8AEA3;
-  margin-top: 10px;
-  padding-bottom: 12px;
+  margin-top: 6px;
+}
+#services .wwm-for {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #B8AEA3;
+  margin-top: 12px;
+  padding-bottom: 14px;
   border-bottom: 1px solid #3A312B;
 }
 #services .wwm-for strong {
@@ -2157,81 +2196,126 @@
 #services .wwm-list {
   list-style: none;
   margin: 0;
-  margin-top: 10px;
-  margin-bottom: 14px;
-  padding: 10px 0 0;
+  margin-top: 12px;
+  margin-bottom: 18px;
+  padding: 12px 0 0;
   border-top: 1px solid #3A312B;
-  font-size: 12px;
-  line-height: 1.75;
+  font-size: 13px;
+  line-height: 1.7;
   color: #B8AEA3;
   flex: 1;
 }
-#services .wwm-cta-solid {
-  display: inline-block;
-  flex: 0 0 auto;
-  align-self: flex-start;
+#services .wwm-list li + li {
+  margin-top: 2px;
+}
+/* ---- CTAs: col 2 solid, cols 1 + 3 outline; both full width, 44px ---- */
+#services .wwm-cta-solid,
+#services .wwm-cta-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
   margin-top: auto;
-  padding-top: 9px;
-  padding-bottom: 9px;
-  padding-left: 16px;
-  padding-right: 16px;
+  padding: 10px 16px;
   border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
   text-align: center;
   cursor: pointer;
-  background: #C96A42;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+#services .wwm-cta-solid {
+  background-color: #C96A42;
   border: 1px solid #C96A42;
-  color: #16120F;
-  transition: background-color 0.2s, color 0.2s;
+  color: #F5F0E8;
 }
 #services .wwm-cta-solid:hover {
-  background: #A8502F;
+  background-color: #A8502F;
+  border-color: #A8502F;
 }
 #services .wwm-cta-link {
-  align-self: flex-start;
-  flex: 0 0 auto;
-  margin-top: auto;
-  padding: 0 0 2px;
-  border: none;
-  border-bottom: 1px solid #C96A42;
-  border-radius: 0;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 500;
+  background-color: transparent;
+  border: 1px solid #C96A42;
   color: #C96A42;
-  cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
 }
 #services .wwm-cta-link:hover {
+  border-color: #A8502F;
   color: #A8502F;
-  border-bottom-color: #A8502F;
 }
+/* ---- fractional / retainer banner (below the grid) ---- */
+#services .wwm-banner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1140px;
+  margin: 48px auto 0 auto;
+  padding: 24px 32px;
+  background-color: #1C1714;
+  border: 1px solid #3A312B;
+  border-radius: 6px;
+}
+#services .wwm-banner-left {
+  min-width: 0;
+}
+#services .wwm-banner-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #F5F0E8;
+}
+#services .wwm-banner-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #B8AEA3;
+}
+#services .wwm-banner-cta {
+  flex: 0 0 auto;
+  padding: 10px 20px;
+  border: 1px solid #C96A42;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #C96A42;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+#services .wwm-banner-cta:hover {
+  background-color: rgba(201, 106, 66, 0.08);
+  border-color: #A8502F;
+  color: #A8502F;
+}
+/* ---- stacked below 900px ---- */
 @media (max-width: 900px) {
   #services .wwm-cards {
     grid-template-columns: minmax(0, 1fr);
   }
-  #services .wwm-col-1,
-  #services .wwm-col-2 {
-    border-right: none;
+  #services .wwm-banner {
+    flex-direction: column;
+    align-items: flex-start;
   }
-  #services .wwm-col-1,
-  #services .wwm-col-2,
-  #services .wwm-col-3 {
-    padding-left: 0;
-    padding-right: 0;
-  }
-  #services .wwm-col-2,
-  #services .wwm-col-3 {
-    border-top: 1px solid #3A312B;
-    margin-top: 28px;
-    padding-top: 26px;
+  #services .wwm-banner-cta {
+    width: 100%;
+    white-space: normal;
+    text-align: center;
   }
 }
 @media (max-width: 768px) {
   #services .wwm-inner {
     padding-top: 48px;
     padding-bottom: 48px;
+  }
+  #services .wwm-banner {
+    padding: 20px;
   }
 }
 

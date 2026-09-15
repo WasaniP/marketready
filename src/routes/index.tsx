@@ -546,62 +546,61 @@ const WORK_CARDS = [
     pill: "START HERE",
     name: "MarketReady Audit",
     price: "$2,000",
-    subPrice: "Credited toward a GTM Sprint booked within 30 days.",
+    subPrice: "Credited toward a Sprint booked within 30 days.",
     forBody:
-      "growing companies ready to scale who need to stress-test their GTM system before accelerating spend.",
+      "growing companies ready to scale who need to stress-test their GTM system and pinpoint friction before accelerating spend.",
     points: [
-      "Scored multi-dimensional breakdown",
+      "Scored 9-point GTM diagnostic",
       "Positioning leak identification",
-      "Conversion friction points",
-      "Sales narrative disconnects",
-      "Prioritized fix sequence",
-      "Live strategic walkthrough",
+      "Conversion friction roadmap",
+      "Sales narrative audit",
+      "Live 1-on-1 strategic walkthrough",
     ],
     cta: "Book the Audit →",
     service: "MarketReady Audit",
-    variant: "solid" as const,
+    variant: "outline" as const,
     cardClass: "wwm-col-1",
   },
   {
     timeframe: "14 DAYS",
     pill: null,
-    name: "GTM Sprint",
+    featured: true,
+    name: "GTM Engine Sprint",
     price: "$7,500",
-    subPrice: null,
+    subPrice: "Complete positioning overhaul and core messaging assets.",
     forBody:
-      "growth-stage companies hitting pipeline friction, where traffic or spend is flowing but the core narrative is failing to convert.",
+      "growth-stage teams hitting pipeline friction, where traffic or spend is flowing but the core narrative fails to convert.",
     points: [
-      "Positioning architecture and market differentiation",
+      "Full positioning architecture & category definition",
       "Complete messaging framework",
-      "Rewritten homepage copy",
-      "Sales deck and core messaging assets",
-      "Go-to-market launch plan",
-      "Before-and-after scorecard delta",
+      "Rewritten homepage & landing page copy",
+      "Sales deck narrative & core collateral",
+      "Go-to-market launch playbook",
     ],
     cta: "Book the Sprint →",
-    service: "GTM Sprint",
-    variant: "outline" as const,
+    service: "GTM Engine Sprint",
+    variant: "solid" as const,
     cardClass: "wwm-col-2",
   },
   {
-    timeframe: "RETAINER",
-    pill: null,
-    name: "Fractional GTM Partner",
-    price: "From $6,000",
-    per: " /mo",
-    subPrice: null,
+    timeframe: "60–90 DAYS",
+    pill: "END-TO-END",
+    pillMuted: true,
+    name: "Product Launch / Re-Launch",
+    price: "From $12,000",
+    subPrice:
+      "End-to-end GTM orchestration for major releases, pivots, or new product drops.",
     forBody:
-      "companies that need ongoing, senior-level product marketing leadership without a full-time hire.",
+      "pre-seed to Series A founders launching a new product, rolling out major features, or repositioning the brand.",
     points: [
-      "Dedicated GTM strategy and roadmap execution",
-      "Continuous positioning and messaging refinement",
-      "Sales enablement and collateral development",
-      "Launch management for new features and products",
-      "Messaging and pipeline friction audits",
-      "Regular performance reporting and strategic alignment",
+      "Everything in GTM Engine Sprint",
+      "Full launch sequence & timeline orchestration",
+      "Multi-channel asset production & launch copy",
+      "Complete sales enablement & battle cards",
+      "Pre-launch prep & post-launch war room support",
     ],
-    cta: "Book a Call →",
-    service: "Fractional GTM Partner",
+    cta: "Scope Your Launch →",
+    service: "Product Launch / Re-Launch",
     variant: "outline" as const,
     cardClass: "wwm-col-3",
   },
@@ -634,21 +633,32 @@ function ServicesStack({
         </svg>
       </div>
       <div className="wwm-inner">
-        <p className="wwm-eyebrow">WORK WITH ME</p>
+        <p className="wwm-eyebrow">● ENGAGEMENT MODELS</p>
         <h2 className="wwm-headline">Three ways I can help your product land.</h2>
         <p className="wwm-intro">
-          Start with the free diagnostic if you want to see where you stand.
-          When you&rsquo;re ready to fix what&rsquo;s broken, here&rsquo;s how
-          we work together. You work directly with me on every deliverable. No
-          account managers, no junior hand-offs.
+          Start with the diagnostic to see where you stand. When you&rsquo;re
+          ready to fix what&rsquo;s broken, here&rsquo;s how we work together.
+          You work directly with me on every deliverable&mdash;no account
+          managers, no junior hand-offs.
         </p>
         <div className="wwm-cards">
           {WORK_CARDS.map((c) => (
             <div key={c.name} className={`wwm-col ${c.cardClass}`}>
+              {"featured" in c && c.featured ? (
+                <span className="wwm-badge">Most Popular</span>
+              ) : null}
               <div className="wwm-timeframe-row">
                 <p className="wwm-timeframe">{c.timeframe}</p>
                 {"pill" in c && c.pill ? (
-                  <span className="wwm-starthere">{c.pill}</span>
+                  <span
+                    className={
+                      "pillMuted" in c && c.pillMuted
+                        ? "wwm-starthere-muted"
+                        : "wwm-starthere"
+                    }
+                  >
+                    {c.pill}
+                  </span>
                 ) : null}
               </div>
               <h3 className="wwm-name">{c.name}</h3>
@@ -678,6 +688,25 @@ function ServicesStack({
               </button>
             </div>
           ))}
+        </div>
+        <div className="wwm-banner">
+          <div className="wwm-banner-left">
+            <p className="wwm-banner-title">
+              Need a custom project scope or ongoing leadership?
+            </p>
+            <p className="wwm-banner-desc">
+              In addition to fixed-scope sprints, I partner with select teams
+              on a fractional, monthly retainer, or bespoke project basis for
+              ongoing product marketing and GTM leadership.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="wwm-banner-cta"
+            onClick={() => onBook("Fractional GTM Partner")}
+          >
+            Inquire About Fractional &amp; Retainers →
+          </button>
         </div>
       </div>
     </section>
