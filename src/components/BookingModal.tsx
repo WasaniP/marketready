@@ -31,14 +31,18 @@ import {
  CLIENT_ID_STORAGE_KEY,
 } from "~/lib/storage";
 
-/** The four services the booking modal lets a lead express interest in.
- * Short names (no pricing anywhere) : the checklist mirrors the nav dropdown. */
+/** The services the booking modal lets a lead express interest in.
+ * Short names (no pricing anywhere) : the checklist mirrors the nav dropdown.
+ * New entries are appended only : SERVICE_OPTIONS[2..4] are read by index
+ * below to adapt the header/submit copy per offer. */
 const SERVICE_OPTIONS = [
  { value: "MarketReady Diagnostic" },
  { value: "GTM Sprint" },
  { value: "Fractional GTM Partner" },
  { value: "MarketReady Audit" },
  { value: "Diagnostic Briefing" },
+ { value: "GTM Engine Sprint" },
+ { value: "Product Launch / Re-Launch" },
 ] as const;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -108,6 +112,9 @@ export function BookingModal({
  const isAdvisory = initialService === SERVICE_OPTIONS[2].value;
  const isAudit = initialService === SERVICE_OPTIONS[3].value;
  const isBriefing = initialService === SERVICE_OPTIONS[4].value;
+ // Product Launch is a distinct offer from the Sprint (the GTM Engine Sprint
+ // and plain GTM Sprint CTAs both keep the Sprint copy).
+ const isLaunch = initialService === "Product Launch / Re-Launch";
 
  // Only mounted while `open` : run prefill / focus / scroll-lock on mount and
  // undo them all on unmount (close restores scroll + focus).
@@ -319,7 +326,9 @@ export function BookingModal({
          ? "We'll reach out to schedule your audit."
          : isBriefing
           ? "We'll reach out to schedule your diagnostic briefing."
-          : "We'll reach out to schedule your Sprint kickoff."}
+          : isLaunch
+           ? "We'll reach out to schedule your launch kickoff."
+           : "We'll reach out to schedule your Sprint kickoff."}
       </p>
       <button type="button" onClick={onClose} className="btn-ghost mt-2 w-full">
        Done
@@ -331,10 +340,10 @@ export function BookingModal({
       <div className="flex items-start justify-between gap-4">
        <div>
         <span className="chip border-ember/40 text-ember">
-         {isAdvisory ? "Advisory" : isAudit ? "MarketReady Audit" : isBriefing ? "Diagnostic Briefing" : "GTM Sprint"}
+         {isAdvisory ? "Advisory" : isAudit ? "MarketReady Audit" : isBriefing ? "Diagnostic Briefing" : isLaunch ? "Product Launch" : "GTM Sprint"}
         </span>
         <h4 id="booking-modal-title" className="mt-3 text-xl font-bold tracking-tight text-ink">
-         {isAdvisory ? "Apply for Advisory Slot" : isAudit ? "Request Your MarketReady Audit" : isBriefing ? "Book a 15-Min Diagnostic Briefing" : "Book GTM Sprint"}
+         {isAdvisory ? "Apply for Advisory Slot" : isAudit ? "Request Your MarketReady Audit" : isBriefing ? "Book a 15-Min Diagnostic Briefing" : isLaunch ? "Scope Your Product Launch" : "Book GTM Sprint"}
         </h4>
         <p className="mt-1 text-sm text-mist">
          {isAdvisory
@@ -343,7 +352,9 @@ export function BookingModal({
            ? "Tell us where to reach you. We'll set up a short call to scope the audit."
            : isBriefing
             ? "Tell us where to reach you. We'll set up your 15-minute diagnostic briefing."
-            : "Tell us where to reach you. We'll set up a kickoff call to scope the Sprint."}
+            : isLaunch
+             ? "Tell us where to reach you. We'll set up a call to scope your launch."
+             : "Tell us where to reach you. We'll set up a kickoff call to scope the Sprint."}
         </p>
        </div>
        <button
@@ -484,11 +495,13 @@ export function BookingModal({
            ? "Request Your Audit"
            : isBriefing
             ? "Request a Briefing"
-            : "Request Sprint Kickoff"}
+            : isLaunch
+             ? "Scope My Product Launch"
+             : "Request Sprint Kickoff"}
        </button>
        <p className="text-center text-xs text-fog">
         No payment taken here. We'll reach out to schedule your{" "}
-        {isAdvisory ? "intro call" : isAudit ? "audit" : isBriefing ? "diagnostic briefing" : "Sprint kickoff"}.
+        {isAdvisory ? "intro call" : isAudit ? "audit" : isBriefing ? "diagnostic briefing" : isLaunch ? "launch kickoff" : "Sprint kickoff"}.
        </p>
       </form>
      </>
