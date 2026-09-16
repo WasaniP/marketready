@@ -31,13 +31,34 @@ export const BOOK_A_CALL_URL = "https://cal.com/wasani-probasco";
  * with blank-line paragraph breaks so the server and the client cannot render
  * different wording. */
 export const UNREADABLE_HEADING = "I couldn't read this site.";
-
-export const UNREADABLE_BODY = `Your site renders its content with JavaScript, so a plain page fetch returns an empty shell. My crawler pulled fewer than ${MIN_USABLE_CHARS} characters of readable text from it.
-
-That matters beyond this diagnostic. Search engines, AI tools, link previews, and social scrapers often read pages the same way I just did. If they're seeing what I saw, your positioning isn't reaching them either.
+/** BODY paragraph 1 when the `low_content` rule fired: a plain fetch returned
+ * an empty shell AND the total extracted text was under MIN_USABLE_CHARS, so
+ * the character count is the honest explanation. Owner copy, byte-identical to
+ * what shipped with Part D. */
+export const UNREADABLE_BODY_FIRST_LOW_CONTENT = `Your site renders its content with JavaScript, so a plain page fetch returns an empty shell. My crawler pulled fewer than ${MIN_USABLE_CHARS} characters of readable text from it.`;
+/** BODY paragraph 1 when the `identical_shell` rule fired: every fetched page
+ * returned byte-identical content, so there was no page-specific content to
+ * read at all. The character-count sentence would be factually wrong here (a
+ * shell that clears MIN_USABLE_CHARS still trips this rule), so the reason gets
+ * its own opening line. Owner copy. */
+export const UNREADABLE_BODY_FIRST_IDENTICAL_SHELL = `Every page I fetched returned the same empty shell, which is what a JavaScript-rendered app looks like to a plain page fetch. There was no page-specific content to read.`;
+/** BODY paragraphs 2 and 3: shared verbatim by both reasons (owner copy). */
+export const UNREADABLE_BODY_REST = `That matters beyond this diagnostic. Search engines, AI tools, link previews, and social scrapers often read pages the same way I just did. If they're seeing what I saw, your positioning isn't reaching them either.
 
 Worth checking directly: run your homepage through Google's URL Inspection tool in Search Console and look at the rendered HTML.`;
-
+/** The full unreadable body for a reason: the reason-specific first paragraph
+ * followed by the two shared paragraphs. Single definition site, so the server
+ * route and every client fallback cannot drift. */
+export function unreadableBody(reason: UnreadableReason): string {
+  const first =
+    reason === "identical_shell"
+      ? UNREADABLE_BODY_FIRST_IDENTICAL_SHELL
+      : UNREADABLE_BODY_FIRST_LOW_CONTENT;
+  return `${first}\n\n${UNREADABLE_BODY_REST}`;
+}
+/** The body for the default (`low_content`) rule, kept as the shared fallback
+ * constant. Prefer unreadableBody(reason) wherever the reason is known. */
+export const UNREADABLE_BODY = unreadableBody("low_content");
 export const UNREADABLE_CTA_LABEL = "Book a Call";
 
 /** The wire shape of the unreadable response (HTTP 200, `readable: false`).
@@ -70,7 +91,7 @@ export function buildUnreadablePayload(input: {
     usableChars: input.usableChars,
     shellDetected: input.shellDetected,
     heading: UNREADABLE_HEADING,
-    body: UNREADABLE_BODY,
+    body: unreadableBody(input.reason),
     cta: { label: UNREADABLE_CTA_LABEL, href: BOOK_A_CALL_URL },
     pages: input.pages,
   };
