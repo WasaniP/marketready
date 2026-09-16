@@ -23,8 +23,8 @@ export interface AssessmentInput {
   submittedAt: string;
 }
 
-/** Fixed status vocabulary for a scored parameter (matches the homepage
- * Diagnostic Engine labels: scores below 40, 40 to 74, and 75+). */
+/** Fixed status vocabulary for a scored parameter (thresholds: below 45, 45 to
+ * 69, and 70+; see src/lib/audit/thresholds.ts). */
 export type Status = "CRITICAL GAP" | "NEEDS REFINEMENT" | "STRONG";
 
 /** One scored or reserved PMM parameter. */

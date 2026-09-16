@@ -66,8 +66,8 @@ import { triggerResultsEmail } from "~/lib/knockEmail";
 /* table yet. They are included in this map anyway so rows flow the moment */
 /* they are added: toAirtableFields() whitelists its output against the    */
 /* live table schema and drops unknown columns instead of failing the      */
-/* whole write. "Revenue Leakage ($)" stays unmapped until a leakage value */
-/* exists in the client payload.                                           */
+/* whole write. There is no revenue-leakage column: the diagnostic does    */
+/* not estimate leakage at all (removed 2026-09-15).                       */
 /* ------------------------------------------------------------------ */
 const AIRTABLE_FIELD_MAP = {
   firstName: "First Name",

@@ -26,10 +26,6 @@ const METHODOLOGY_COPY: Record<string, { measures: string; why: string }> = {
     measures: "Whether the hero promise names a quantified, time-bound outcome for a named beneficiary.",
     why: "Numbers make a promise credible; capability statements leave the buyer to guess the payoff.",
   },
-  pricing: {
-    measures: "How easily a buyer can evaluate fit and self-qualify: packaging tied to value, not opacity.",
-    why: "Hidden pricing stalls evaluation and drags inbound quality down; clear packaging shortens the sale.",
-  },
   gtm: {
     measures: "Whether a concrete, repeatable channel-to-customer path exists, with an offer at the end.",
     why: "Acquisition without a motion depends on luck; a named channel with an offer compounds.",
@@ -77,7 +73,10 @@ type Pillar = {
   params: { id: string; tag: string }[];
 };
 
-/** The 9 parameters grouped into 3 evaluation pillars. */
+/** The 8 parameters grouped into 3 evaluation pillars: 6 scored live from the
+ * public site + 2 RESERVED (GTM Readiness, Launch Readiness) that require
+ * internal materials and are assessed by hand in the paid MarketReady Audit.
+ * Pricing & Packaging is not scored at all. */
 const PILLARS: Pillar[] = [
   {
     id: "pillar-positioning",
@@ -95,23 +94,22 @@ const PILLARS: Pillar[] = [
     id: "pillar-messaging",
     num: "02",
     title: "Messaging & Value Prop",
-    summary: "Messaging, Value Proposition, Pricing & Packaging",
+    summary: "Messaging, Value Proposition",
     accent: "indigo",
     params: [
       { id: "messaging", tag: "Messaging" },
       { id: "value-prop", tag: "Value Proposition" },
-      { id: "pricing", tag: "Pricing & Packaging" },
     ],
   },
   {
     id: "pillar-gtm",
     num: "03",
     title: "GTM & Launch Velocity",
-    summary: "GTM Readiness, Launch Readiness, Conversion Readiness",
+    summary: "GTM Readiness (Reserved), Launch Readiness (Reserved), Conversion Readiness",
     accent: "electric",
     params: [
-      { id: "gtm", tag: "GTM Readiness" },
-      { id: "launch", tag: "Launch Readiness" },
+      { id: "gtm", tag: "GTM Readiness (Reserved)" },
+      { id: "launch", tag: "Launch Readiness (Reserved)" },
       { id: "conversion", tag: "Conversion Readiness" },
     ],
   },
@@ -125,9 +123,8 @@ const CELL_LINES: Record<string, string> = {
   messaging: "Headlines lead with the buyer's outcome, not the technology.",
   "value-prop": "The hero promise names a quantified, time-bound outcome for a named beneficiary.",
   conversion: "One clear CTA per page, proof beneath it, a frictionless next step.",
-  pricing: "Buyers can evaluate fit and self-qualify, with packaging tied to value, not opacity.",
-  gtm: "A concrete, repeatable channel-to-customer path with an offer at the end.",
-  launch: "A dated launch kit: narrative, assets, targets, and owners.",
+  gtm: "Reserved: needs internal materials (channel plan, owners), so it is assessed in the MarketReady Audit.",
+  launch: "Reserved: a dated launch kit (narrative, assets, targets, owners) is reviewed in the MarketReady Audit.",
 };
 
 function EngineCardRow({
@@ -254,7 +251,8 @@ const PILLAR_STATUS: Record<string, { label: string }> = {
 
 /**
  * Full Diagnostic Engine — the 3-pillar scoring methodology with
- * click-to-expand accordions, 9 dimension rows, and the demo gauge.
+ * click-to-expand accordions, 8 dimension rows (6 scored + 2 reserved), and
+ * the demo gauge.
  *
  * Purely presentational: expansion is click-only (never scroll-tied). The
  * IntersectionObserver below drives the entrance reveal + gauge sweep only.
@@ -370,7 +368,7 @@ export function DiagnosticEngine() {
               The MarketReady Diagnostic Engine
             </h2>
             <p className="engine-intro">
-              Nine dimensions, scored in seconds, grouped into three pillars: how you position, how you message, and how fast you launch.
+              Six dimensions scored in seconds from your public site, plus two reserved for a human review. All eight grouped into three pillars: how you position, how you message, and how fast you launch.
             </p>
             <p className="engine-callout">
               A low score isn&apos;t an abstraction. It&apos;s the demo where

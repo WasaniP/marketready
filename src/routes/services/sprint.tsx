@@ -489,7 +489,7 @@ function SprintPage() {
        </div>
       </div>
       <p className="mx-auto mt-10 max-w-2xl text-center text-sm leading-relaxed text-fog">
-       The Sprint targets the exact leakage points dragging down your score. You get a full
+       The Sprint targets the exact gaps dragging down your score. You get a full
        rescore at Day 14 to measure your positioning delta.
       </p>
      </div>
