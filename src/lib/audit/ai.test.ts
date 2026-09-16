@@ -6,7 +6,7 @@
  * unified status labels.
  */
 import { describe, test, expect } from "bun:test";
-import { toAIResult } from "./ai";
+import { toAIResult, toUnreadableResult } from "./ai";
 
 const dim = (id: string, score: number) => ({
   id,
@@ -101,5 +101,59 @@ describe("toAIResult", () => {
     expect(toAIResult(response({ primaryFriction: "" }))).toBeNull();
     expect(toAIResult(response({ recommendedFix: "   " }))).toBeNull();
     expect(toAIResult(null)).toBeNull();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Owner readability fix, Part D: the unreadable response is not a     */
+/* scorecard.                                                          */
+/* ------------------------------------------------------------------ */
+describe("toUnreadableResult", () => {
+  const UNREADABLE = {
+    readable: false,
+    reason: "identical_shell",
+    usableChars: 412,
+    shellDetected: true,
+    heading: "I couldn't read this site.",
+    body: "First paragraph.\n\nSecond paragraph.",
+    cta: { label: "Book a Call", href: "https://cal.com/wasani-probasco" },
+  };
+
+  test("normalizes the unreadable payload", () => {
+    const result = toUnreadableResult(UNREADABLE)!;
+    expect(result.readable).toBe(false);
+    expect(result.reason).toBe("identical_shell");
+    expect(result.usableChars).toBe(412);
+    expect(result.shellDetected).toBe(true);
+    expect(result.heading).toBe("I couldn't read this site.");
+    expect(result.body.split("\n\n")).toHaveLength(2);
+    expect(result.ctaHref).toBe("https://cal.com/wasani-probasco");
+    expect(result.ctaLabel).toBe("Book a Call");
+  });
+
+  test("a scorecard response is NOT the unreadable state", () => {
+    expect(toUnreadableResult(response())).toBeNull();
+    expect(toUnreadableResult(null)).toBeNull();
+    expect(toUnreadableResult({ readable: true })).toBeNull();
+    expect(toUnreadableResult({ readable: false, reason: "something_else" })).toBeNull();
+  });
+
+  test("toAIResult refuses to build a scorecard from the unreadable state", () => {
+    expect(toAIResult(UNREADABLE)).toBeNull();
+  });
+
+  test("missing copy falls back to the shared constants (never blank)", () => {
+    const result = toUnreadableResult({
+      readable: false,
+      reason: "low_content",
+      usableChars: "nonsense",
+    })!;
+    expect(result.usableChars).toBe(0);
+    expect(result.shellDetected).toBe(false);
+    expect(result.heading).toBe("I couldn't read this site.");
+    expect(result.body).toContain("renders its content with JavaScript");
+    expect(result.body).toContain("fewer than 300 characters");
+    expect(result.ctaLabel).toBe("Book a Call");
+    expect(result.ctaHref).toBe("https://cal.com/wasani-probasco");
   });
 });

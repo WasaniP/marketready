@@ -80,6 +80,11 @@ const AIRTABLE_FIELD_MAP = {
   prescription: "Prescription",
   breakdown: "Full Breakdown",
   source: "From Source",
+  /** Readability status of the submitted URL (owner readability fix, Part D):
+   * "unreadable" when the crawl could not read the site, so the row is
+   * markable in Airtable. Dropped by the schema whitelist until the owner adds
+   * the column. */
+  readability: "Readability",
   dateSubmitted: "Timestamp",
 } as const;
 
@@ -175,6 +180,11 @@ interface LeadRequestBody {
   scoreBreakdown?: unknown;
   /** Which surface submitted: "Homepage Calculator" | "Full Assessment". */
   source?: unknown;
+  /** Readability of the submitted URL. "unreadable" = the URL diagnostic could
+   * not read the site (JS-rendered shell / too little text), so there are no
+   * results: the row is marked unreadable in Airtable and the instant results
+   * email is NOT sent. */
+  readability?: unknown;
   diagnosticPayload?: unknown;
 }
 
@@ -282,6 +292,8 @@ interface NormalizedLead {
   domEvidence: string;
   answersBreakdown: string; // gated-assessment answers summary, when sent
   source: string;
+  /** Readability status of the submitted URL: "unreadable" or "" (Part D). */
+  readability: string;
   payload: DiagnosticPayload | null;
   capturedAt: string;
 }
@@ -318,6 +330,9 @@ function normalizeLead(b: LeadRequestBody): NormalizedLead {
     domEvidence: asString(b.domEvidence),
     answersBreakdown: asString(b.scoreBreakdown),
     source: sourceRaw || (payload ? "Homepage Calculator" : "Unknown"),
+    // Only the one known status is accepted, so an arbitrary client string can
+    // never reach (or auto-create an option in) the Airtable column.
+    readability: asString(b.readability).toLowerCase() === "unreadable" ? "unreadable" : "",
     payload,
     capturedAt: new Date().toISOString(),
   };
@@ -328,6 +343,9 @@ function normalizeLead(b: LeadRequestBody): NormalizedLead {
  * reference scores, observations, and raw evidence without extra columns. */
 function buildScoreBreakdown(lead: NormalizedLead): string {
   const lines: string[] = [];
+  if (lead.readability === "unreadable") {
+    lines.push("Readability: unreadable (the site could not be read, so it was not scored)");
+  }
   if (Number.isFinite(lead.score)) {
     lines.push(
       `Score: ${lead.score}/100${lead.readiness ? ` (${lead.readiness})` : ""}`,
@@ -397,12 +415,20 @@ function toAirtableFields(lead: NormalizedLead): Record<string, unknown> {
     [m.prescription]: lead.prescription,
     [m.breakdown]: buildScoreBreakdown(lead),
     [m.source]: lead.source,
+    [m.readability]: lead.readability,
     [m.dateSubmitted]: lead.capturedAt,
   };
   if (Number.isFinite(lead.score)) fields[m.score] = lead.score;
   return Object.fromEntries(
     Object.entries(fields).filter(([, v]) => v !== undefined && v !== null && v !== ""),
   );
+}
+
+/** No-op email outcome for an unreadable lead: the results email is skipped
+ * because there are no results. Logged once, with no PII. */
+function skipUnreadableEmail(): Promise<void> {
+  console.warn("[leads] Unreadable site: results email skipped (no results).");
+  return Promise.resolve();
 }
 
 /** Best-effort JSONL append (never throws). Consistent with intake.ts. */
@@ -436,7 +462,14 @@ export const Route = createFileRoute("/api/leads")({
             { status: 400 },
           );
         }
-        if (!Number.isFinite(lead.score) && !lead.payload && !lead.answersBreakdown) {
+        // An unreadable lead is a legitimate capture with no score: the site
+        // could not be read, so there is nothing to score (Part D).
+        if (
+          !Number.isFinite(lead.score) &&
+          !lead.payload &&
+          !lead.answersBreakdown &&
+          lead.readability !== "unreadable"
+        ) {
           return Response.json(
             { ok: false, error: "A diagnostic score or breakdown is required." },
             { status: 400 },
@@ -463,7 +496,14 @@ export const Route = createFileRoute("/api/leads")({
         // within the ~8s send bound. The trigger NEVER throws and its outcome
         // never alters the lead response (fail-open, src/lib/knockEmail.ts).
         // `fullBreakdown` mirrors the Airtable "Full Breakdown" column exactly.
-        const emailPromise = triggerResultsEmail(lead, buildScoreBreakdown(lead));
+        //
+        // NO RESULTS EMAIL for an unreadable lead: there are no results to send
+        // (the site could not be read), so the instant-results workflow must not
+        // fire. The lead still reaches Airtable, marked Readability=unreadable.
+        const emailPromise: Promise<unknown> =
+          lead.readability === "unreadable"
+            ? skipUnreadableEmail()
+            : triggerResultsEmail(lead, buildScoreBreakdown(lead));
         const result = await writeAirtable(fields);
         // Wait for the bounded email trigger so it survives the response
         // (up to ~8s; fail-open with a console.warn on timeout/failure).
@@ -492,6 +532,7 @@ export const Route = createFileRoute("/api/leads")({
           recommendedPrescription: lead.prescription,
           scoreBreakdown: lead.answersBreakdown || buildScoreBreakdown(lead),
           source: lead.source,
+          readability: lead.readability || undefined,
           capturedAt: lead.capturedAt,
           diagnostic: lead.payload,
           airtable: "failed",

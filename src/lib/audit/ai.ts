@@ -19,6 +19,14 @@
 import { PARAMETER_IDS, PARAMETER_NAMES, LOCKED_PARAMETER_IDS, PILLAR_OF } from "./engine";
 import { paramStatus, overallBandFor, STRONG_MIN } from "./thresholds";
 import { snapToBand } from "./scoring";
+import {
+  BOOK_A_CALL_URL,
+  UNREADABLE_BODY,
+  UNREADABLE_CTA_LABEL,
+  UNREADABLE_HEADING,
+  isUnreadablePayload,
+} from "./readability";
+import type { UnreadableReason } from "./readability";
 
 export interface AIDimension {
   id: string;
@@ -179,6 +187,9 @@ function coerceDimensions(raw: unknown): AIDimension[] {
 
 /** Normalize whatever /api/diagnose returned, or null if it isn't usable. */
 export function toAIResult(raw: unknown): AIResult | null {
+  // The unreadable state is NOT a scorecard: it must be handled by
+  // toUnreadableResult() before this runs (no score, no dimensions).
+  if (isUnreadablePayload(raw)) return null;
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   const rawScore = typeof r.score === "number" && Number.isFinite(r.score) ? r.score : null;
@@ -196,5 +207,57 @@ export function toAIResult(raw: unknown): AIResult | null {
     primaryFriction,
     recommendedFix,
     dimensions: coerceDimensions(r.dimensions),
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Unreadable site (owner readability fix, Part D)                     */
+/* ------------------------------------------------------------------ */
+
+/** The distinct state the diagnostic returns when the crawl could not read the
+ * site: NO score, no band, no dimensions, no friction and no fix. The UI
+ * renders this instead of a scorecard (never a scorecard of zeroes). */
+export interface UnreadableResult {
+  readable: false;
+  /** Which rule fired: low_content (< MIN_USABLE_CHARS) or identical_shell. */
+  reason: UnreadableReason;
+  /** Total usable extracted characters across the crawled pages. */
+  usableChars: number;
+  /** True when every fetched page returned byte-identical content. */
+  shellDetected: boolean;
+  heading: string;
+  body: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
+/**
+ * Normalize the unreadable response, or null when the response is not the
+ * unreadable state. Defensive: any missing copy field falls back to the shared
+ * constant, so a slightly older/newer server can never render a blank state.
+ */
+export function toUnreadableResult(raw: unknown): UnreadableResult | null {
+  if (!isUnreadablePayload(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  const str = (v: unknown, fallback: string): string =>
+    typeof v === "string" && v.trim() ? stripDashes(v.trim()) : fallback;
+  const cta = (r.cta ?? {}) as Record<string, unknown>;
+  const usableChars =
+    typeof r.usableChars === "number" && Number.isFinite(r.usableChars)
+      ? Math.max(0, Math.round(r.usableChars))
+      : 0;
+  return {
+    readable: false,
+    reason: r.reason as UnreadableReason,
+    usableChars,
+    shellDetected: r.shellDetected === true,
+    heading: str(r.heading, UNREADABLE_HEADING),
+    // The body is multi-paragraph copy: keep its paragraph breaks.
+    body:
+      typeof r.body === "string" && r.body.trim()
+        ? r.body.trim()
+        : UNREADABLE_BODY,
+    ctaLabel: str(cta.label, UNREADABLE_CTA_LABEL),
+    ctaHref: str(cta.href, BOOK_A_CALL_URL),
   };
 }
