@@ -7,6 +7,11 @@
  */
 import { describe, test, expect } from "bun:test";
 import { toAIResult, toUnreadableResult } from "./ai";
+import {
+  UNREADABLE_BODY_FIRST_IDENTICAL_SHELL,
+  UNREADABLE_BODY_FIRST_LOW_CONTENT,
+  unreadableBody,
+} from "./readability";
 
 const dim = (id: string, score: number) => ({
   id,
@@ -151,9 +156,41 @@ describe("toUnreadableResult", () => {
     expect(result.usableChars).toBe(0);
     expect(result.shellDetected).toBe(false);
     expect(result.heading).toBe("I couldn't read this site.");
+    // low_content: the character-count explanation is the honest one.
     expect(result.body).toContain("renders its content with JavaScript");
     expect(result.body).toContain("fewer than 300 characters");
+    expect(result.body).toBe(unreadableBody("low_content"));
+    expect(result.body).not.toContain(UNREADABLE_BODY_FIRST_IDENTICAL_SHELL);
     expect(result.ctaLabel).toBe("Book a Call");
     expect(result.ctaHref).toBe("https://cal.com/wasani-probasco");
+  });
+  /* The first paragraph branches by reason: a shell that cleared the character
+     threshold must NOT be told its text was under 300 characters. */
+  test("the body fallback branches by reason", () => {
+    const low = toUnreadableResult({
+      readable: false,
+      reason: "low_content",
+      usableChars: 12,
+    })!;
+    expect(low.body.startsWith(UNREADABLE_BODY_FIRST_LOW_CONTENT)).toBe(true);
+    expect(low.body).toContain("fewer than 300 characters");
+    expect(low.body).not.toContain(UNREADABLE_BODY_FIRST_IDENTICAL_SHELL);
+
+    const shell = toUnreadableResult({
+      readable: false,
+      reason: "identical_shell",
+      usableChars: 888,
+      shellDetected: true,
+    })!;
+    expect(shell.body.startsWith(UNREADABLE_BODY_FIRST_IDENTICAL_SHELL)).toBe(true);
+    expect(shell.body).toContain("Every page I fetched returned the same empty shell");
+    // The wrong sentence for this rule: usableChars is 888, not under 300.
+    expect(shell.body).not.toContain("fewer than 300 characters");
+    // Paragraphs 2 and 3 are byte-identical across both reasons.
+    expect(shell.body.slice(UNREADABLE_BODY_FIRST_IDENTICAL_SHELL.length)).toBe(
+      low.body.slice(UNREADABLE_BODY_FIRST_LOW_CONTENT.length),
+    );
+    expect(shell.body.split("\n\n")).toHaveLength(3);
+    expect(shell.body).toBe(unreadableBody("identical_shell"));
   });
 });

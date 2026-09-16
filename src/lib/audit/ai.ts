@@ -21,10 +21,10 @@ import { paramStatus, overallBandFor, STRONG_MIN } from "./thresholds";
 import { snapToBand } from "./scoring";
 import {
   BOOK_A_CALL_URL,
-  UNREADABLE_BODY,
   UNREADABLE_CTA_LABEL,
   UNREADABLE_HEADING,
   isUnreadablePayload,
+  unreadableBody,
 } from "./readability";
 import type { UnreadableReason } from "./readability";
 
@@ -252,11 +252,14 @@ export function toUnreadableResult(raw: unknown): UnreadableResult | null {
     usableChars,
     shellDetected: r.shellDetected === true,
     heading: str(r.heading, UNREADABLE_HEADING),
-    // The body is multi-paragraph copy: keep its paragraph breaks.
+    // The body is multi-paragraph copy: keep its paragraph breaks. The fallback
+    // is reason-dependent (identical_shell and low_content open differently), so
+    // a payload that arrives without a body still gets the copy that matches the
+    // rule that fired.
     body:
       typeof r.body === "string" && r.body.trim()
         ? r.body.trim()
-        : UNREADABLE_BODY,
+        : unreadableBody(r.reason as UnreadableReason),
     ctaLabel: str(cta.label, UNREADABLE_CTA_LABEL),
     ctaHref: str(cta.href, BOOK_A_CALL_URL),
   };

@@ -15,6 +15,11 @@
 import { describe, test, expect, beforeEach, beforeAll, afterAll } from "bun:test";
 import { Route, seedFromOrigin } from "./diagnose";
 import { clearCrawlCache } from "~/lib/audit/crawl";
+import {
+  UNREADABLE_BODY_FIRST_IDENTICAL_SHELL,
+  UNREADABLE_BODY_FIRST_LOW_CONTENT,
+  unreadableBody,
+} from "~/lib/audit/readability";
 
 const POST = Route.options.server.handlers.POST;
 
@@ -378,10 +383,19 @@ describe("Part D: refuse to score what was not read", () => {
     expect(body.dimensions).toBeUndefined();
     expect(body.primaryFriction).toBeUndefined();
     expect(body.recommendedFix).toBeUndefined();
-    // The exact copy + CTA travel with the response.
+    // The exact copy + CTA travel with the response. The first paragraph is the
+    // identical_shell variant: every route returned the same shell, so the
+    // character-count sentence would be wrong here (this shell is OVER the
+    // 300-character threshold, see the usableChars assertion below).
     expect(body.heading).toBe("I couldn't read this site.");
-    expect(String(body.body)).toContain("renders its content with JavaScript");
-    expect(String(body.body)).toContain("fewer than 300 characters");
+    expect(String(body.body)).toContain(
+      UNREADABLE_BODY_FIRST_IDENTICAL_SHELL,
+    );
+    expect(String(body.body)).toContain("Every page I fetched returned the same empty shell");
+    expect(String(body.body)).not.toContain("fewer than 300 characters");
+    expect(String(body.body)).not.toContain(UNREADABLE_BODY_FIRST_LOW_CONTENT);
+    expect(String(body.body)).toBe(unreadableBody("identical_shell"));
+    expect(String(body.body).split("\n\n")).toHaveLength(3);
     expect(body.cta).toEqual({
       label: "Book a Call",
       href: "https://cal.com/wasani-probasco",
@@ -422,6 +436,13 @@ describe("Part D: refuse to score what was not read", () => {
     expect(body.usableChars as number).toBeLessThan(300);
     expect(body.dimensions).toBeUndefined();
     expect(body.score).toBeUndefined();
+    // The OTHER branch of the first paragraph: under the threshold, so the
+    // character count is the honest explanation, and the shell sentence (which
+    // would be wrong: these pages are distinct) must not appear.
+    expect(String(body.body)).toContain("renders its content with JavaScript");
+    expect(String(body.body)).toContain("fewer than 300 characters");
+    expect(String(body.body)).not.toContain(UNREADABLE_BODY_FIRST_IDENTICAL_SHELL);
+    expect(String(body.body)).toBe(unreadableBody("low_content"));
   });
 
   test("the unreadable payload never invents a score, band or dimension", async () => {
