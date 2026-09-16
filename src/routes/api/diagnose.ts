@@ -39,6 +39,17 @@
  *       { id, name, pillar, locked: true }                               // x2
  *     ] }
  *
+ * Owner readability fix (Parts C + D, 2026-09-16):
+ *   - Static-text fallback (C): every page block now carries a STATIC METADATA
+ *     section (meta description captured ALWAYS, og:/twitter: fields, JSON-LD,
+ *     noscript), and those characters count toward the usable-text threshold.
+ *   - Refuse to score what was not read (D): if the crawl is an identical shell
+ *     on every route (identical_shell) or yields fewer than MIN_USABLE_CHARS
+ *     usable characters (low_content), the route makes NO model call and
+ *     returns a distinct state instead:
+ *     { readable: false, reason, usableChars, shellDetected, heading, body, cta }
+ *     with no score, band, dimensions, primaryFriction or recommendedFix.
+ *
  * Each scored dimension ships a two-part diagnostic synthesis shown in the UI:
  * `keyObservation` (a direct 1-sentence observation of what was FOUND or MISSING
  * on the page) and `commercialRisk` (a 1-sentence business impact the UI labels
@@ -72,7 +83,8 @@ import {
   STRONG_MIN,
 } from "~/lib/audit/thresholds";
 import { BANDED_SCORES, snapToBand, computeOverall } from "~/lib/audit/scoring";
-import { crawlSite, buildCrawlBlock } from "~/lib/audit/crawl";
+import { crawlSite, buildCrawlBlock, assessReadability } from "~/lib/audit/crawl";
+import { buildUnreadablePayload, MIN_USABLE_CHARS } from "~/lib/audit/readability";
 
 /* ------------------------------------------------------------------ */
 /* Exact, strict-JSON PMM system prompt (verbatim, incl. the no-dash   */
@@ -92,6 +104,8 @@ DETERMINISTIC SCORING RUBRIC (apply exactly; score each of the 6 parameters belo
 BANDED SCORING (mandatory): choose the band that best fits the evidence, then return that band's SINGLE representative value. The ONLY permitted values are ${BANDED_SCORES.join(", ")}. Never return any other number.
 
 PRICING & PACKAGING IS NOT SCORED. There is NO Pricing & Packaging Logic parameter in this assessment. Public pricing pages are unreliable across B2B/enterprise, and pricing depends on internal unit economics and deal context a scraper cannot access. Do NOT return a "pricing" dimension at all: do not score it, do not return it as N/A, insufficient data, or 0. It simply does not exist in this output. You may still read the /pricing page content in the crawl for context, but it must never drive a scored dimension.
+
+STATIC METADATA (WEAKER EVIDENCE, STILL VALID): each page block may carry a "STATIC METADATA:" section holding the page's static, non-rendered text: meta name=description, og:title, og:description, og:site_name, twitter:title, twitter:description, JSON-LD name / description / slogan / applicationCategory, and any <noscript> content. This is the text the page ships in its HTML head and no-JS fallback, so it is exactly what a search engine, an AI tool, a link preview or a social scraper reads when it does not run JavaScript. These fields ARE valid evidence for Category Positioning, ICP & Audience Alignment, and Differentiation Anchor: a meta description that names the product category or the buyer type is real evidence about how the company describes itself. They are WEAKER evidence than rendered page copy, because a visitor does not necessarily see them on the page. So when a dimension is supported ONLY by static metadata, score it on that metadata rather than abstaining, and say plainly in "keyObservation" that the signal comes from the page's static metadata rather than its visible copy. Never invent fields that are not in the crawl block.
 
 RESERVED PARAMETERS (never scored from the crawl; they require internal materials the crawler cannot access):
 - GTM Readiness (pillar: GTM & Launch Velocity): always return { "id": "gtm", "name": "GTM Readiness", "pillar": "GTM & Launch Velocity", "locked": true } with NO score, status, or synthesis.
@@ -388,10 +402,45 @@ export const Route = createFileRoute("/api/diagnose")({
           const pages = await crawlSite(origin, controller.signal);
           const crawlBlock = buildCrawlBlock(pages);
 
+          // REFUSE TO SCORE WHAT WAS NOT READ (owner readability fix, Part D).
+          // Pre-flight, BEFORE the model call: if the crawl is an identical
+          // shell on every route, or yielded fewer than MIN_USABLE_CHARS of
+          // usable text in total, the site was not actually read. Returning a
+          // scorecard here would report "unclear category / no named buyer"
+          // about a site we never saw, so no model call is made at all and the
+          // caller gets the distinct unreadable state instead.
+          const readability = assessReadability(pages);
+          if (!readability.readable) {
+            // Server-side, one line, no PII: the character count, which rule
+            // fired, and the per-page numbers, so the threshold can be tuned.
+            console.warn(
+              `[diagnose] unreadable site: origin=${origin} reason=${readability.reason} ` +
+              `shellDetected=${readability.shellDetected} usableChars=${readability.total} ` +
+              `threshold=${MIN_USABLE_CHARS} ` +
+              `(rendered=${readability.rendered} static=${readability.static}) ` +
+                `identicalPaths=${readability.identicalPaths.join(",") || "none"} ` +
+                `pages=${readability.perPage
+                  .map((p) => `${p.path}:${p.kind}:${p.chars}`)
+                  .join(" ")}`,
+            );
+            return Response.json(
+              buildUnreadablePayload({
+                reason: readability.reason!,
+                usableChars: readability.total,
+                shellDetected: readability.shellDetected,
+                pages: readability.perPage.map((p) => ({
+                  path: p.path,
+                  kind: p.kind,
+                  chars: p.chars,
+                })),
+              }),
+            );
+          }
+
           const userMessage = `SITE URL UNDER EVALUATION: ${url}
 
 === STRUCTURED SITE CRAWL ===
-The following is real content fetched server-side from ${origin}. Each page is presented as its parsed DOM structure: title, hero H1, above-the-fold subtext, ordered heading hierarchy, body text, and CTAs. Pages listed as NOT FOUND / UNREACHABLE (or NON-HTML) have no indexed content: treat that as a hard structural gap.
+The following is real content fetched server-side from ${origin}. Each page is presented as its parsed DOM structure: title, hero H1, above-the-fold subtext, ordered heading hierarchy, body text, and CTAs, followed by a STATIC METADATA section (meta description, og:/twitter: fields, JSON-LD, noscript) where present. Static metadata is weaker evidence than rendered copy but is still valid evidence for Category Positioning, ICP & Audience Alignment, and Differentiation Anchor. Pages listed as NOT FOUND / UNREACHABLE (or NON-HTML) have no indexed content: treat that as a hard structural gap.
 ${crawlBlock}
 
 TASK:

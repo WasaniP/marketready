@@ -19,22 +19,36 @@ import { clearCrawlCache } from "~/lib/audit/crawl";
 const POST = Route.options.server.handlers.POST;
 
 const ORIGIN = "https://acme.example";
-const HTML = `<!doctype html><html><head><title>Acme widgets</title></head>
+const HTML = `<!doctype html><html><head><title>Acme widgets</title>
+<meta name="description" content="Acme is the widget platform for logistics teams."></head>
 <body><h1>Acme is the widget platform for logistics teams</h1><h2>Ship faster</h2>
 <p>Teams cut onboarding by 40%.</p><a class="btn" href="/signup">Start free</a></body></html>`;
 
-let openaiBody: Record<string, unknown> | null = null;
+/** Per-path HTML: the three crawled paths must NOT be byte-identical, or the
+ * crawl is an SPA shell and the route refuses to score it (Part D2). */
+function htmlForPath(path: string): string {
+  return HTML.replace("</body>", `<p>Path ${path} copy for logistics teams.</p></body>`);
+}
 
-/** Mock both the crawl and the model call. */
-function mock(modelPayload: unknown) {
+let openaiBody: Record<string, unknown> | null = null;
+let openaiCalls = 0;
+
+/** Mock both the crawl and the model call. `crawlHtml` overrides the per-path
+ * page HTML (used by the unreadable-state tests). */
+function mock(modelPayload: unknown, crawlHtml: (path: string) => string = htmlForPath) {
   globalThis.fetch = (async (url: string | URL, init?: RequestInit) => {
     if (String(url).startsWith("https://api.openai.com")) {
+      openaiCalls++;
       openaiBody = JSON.parse(String(init?.body ?? "{}"));
       return Response.json({
         choices: [{ message: { content: JSON.stringify(modelPayload) } }],
       });
     }
-    return new Response(HTML, { status: 200, headers: { "content-type": "text/html" } });
+    const path = new URL(String(url)).pathname;
+    return new Response(crawlHtml(path), {
+      status: 200,
+      headers: { "content-type": "text/html" },
+    });
   }) as unknown as typeof fetch;
 }
 
@@ -97,6 +111,7 @@ afterAll(() => {
 });
 beforeEach(() => {
   openaiBody = null;
+  openaiCalls = 0;
   clearCrawlCache();
 });
 
@@ -295,5 +310,126 @@ describe("abstain rather than guess (Part 6)", () => {
     const { res, body } = await post("not-a-url");
     expect(res.status).toBe(400);
     expect(typeof body.error).toBe("string");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Owner readability fix, Parts C + D                                  */
+/* ------------------------------------------------------------------ */
+
+/** A JS-rendered SPA shell: title, rich metadata, empty body. Byte-identical
+ * on every route (exactly what onyxx.app serves). */
+const SHELL = `<!doctype html><html lang="en"><head>
+<title>Onyxx</title>
+<meta name="description" content="Every creative deserves an agent. Onyxx is the AI booking manager for independent creatives.">
+<meta property="og:title" content="Onyxx: the AI booking manager">
+<meta property="og:description" content="Get booked, get paid, keep your independence.">
+<meta property="og:site_name" content="Onyxx">
+<meta name="twitter:description" content="The AI booking manager for independent creatives.">
+<script type="application/ld+json">{"@type":"SoftwareApplication","name":"Onyxx","slogan":"Every creative deserves an agent","applicationCategory":"BusinessApplication","description":"An AI booking manager for creatives."}</script>
+</head><body><div id="root"></div><noscript>You need to enable JavaScript to run this app.</noscript></body></html>`;
+
+describe("Part C: static metadata reaches the model", () => {
+  test("the meta description is in the crawl block alongside the title, in a labelled section", async () => {
+    mock(fullPayload());
+    await post();
+    const messages = (openaiBody?.messages ?? []) as { role: string; content: string }[];
+    const system = messages.find((m) => m.role === "system")?.content ?? "";
+    const user = messages.find((m) => m.role === "user")?.content ?? "";
+    expect(user).toContain("STATIC METADATA:");
+    expect(user).toContain('TITLE: "Acme widgets"');
+    expect(user).toContain('META DESCRIPTION: "Acme is the widget platform for logistics teams."');
+    // The system prompt states the evidence rule for the static fields.
+    expect(system).toContain("STATIC METADATA (WEAKER EVIDENCE, STILL VALID)");
+    expect(system).toContain("Category Positioning, ICP & Audience Alignment, and Differentiation Anchor");
+    expect(system).toContain("WEAKER evidence than rendered page copy");
+  });
+
+  test("a JS shell with rich metadata is not scored as an empty site when its pages differ", async () => {
+    // Same shell, but with a per-page marker so the pages are NOT identical:
+    // this is the Part C win (metadata alone can carry a scoreable crawl).
+    const paths: string[] = [];
+    mock(fullPayload(), (path) => {
+      paths.push(path);
+      return SHELL.replace("<div id=\"root\"></div>", `<div id="root" data-path="${path}"></div>`);
+    });
+    const { res, body } = await post();
+    expect(res.status).toBe(200);
+    expect(body.readable).toBeUndefined();
+    expect(typeof body.score).toBe("number");
+    const messages = (openaiBody?.messages ?? []) as { role: string; content: string }[];
+    const user = messages.find((m) => m.role === "user")?.content ?? "";
+    expect(user).toContain("Every creative deserves an agent.");
+    expect(paths).toHaveLength(3);
+  });
+});
+
+describe("Part D: refuse to score what was not read", () => {
+  test("identical pages on every route return the unreadable state (identical_shell)", async () => {
+    mock(fullPayload(), () => SHELL);
+    const { res, body } = await post();
+    expect(res.status).toBe(200);
+    expect(body.readable).toBe(false);
+    expect(body.reason).toBe("identical_shell");
+    expect(body.shellDetected).toBe(true);
+    // NO scorecard fields at all.
+    expect(body.score).toBeUndefined();
+    expect(body.overallBand).toBeUndefined();
+    expect(body.dimensions).toBeUndefined();
+    expect(body.primaryFriction).toBeUndefined();
+    expect(body.recommendedFix).toBeUndefined();
+    // The exact copy + CTA travel with the response.
+    expect(body.heading).toBe("I couldn't read this site.");
+    expect(String(body.body)).toContain("renders its content with JavaScript");
+    expect(String(body.body)).toContain("fewer than 300 characters");
+    expect(body.cta).toEqual({
+      label: "Book a Call",
+      href: "https://cal.com/wasani-probasco",
+    });
+    // The reported character count is real and the shell cleared the threshold.
+    expect(typeof body.usableChars).toBe("number");
+    expect(body.usableChars as number).toBeGreaterThanOrEqual(300);
+  });
+
+  test("NO model call is made for an unreadable site", async () => {
+    const originalWarn = console.warn;
+    const logs: string[] = [];
+    console.warn = (...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    };
+    try {
+      mock(fullPayload(), () => SHELL);
+      await post();
+      expect(openaiCalls).toBe(0);
+      expect(openaiBody).toBeNull();
+      // The count and which rule fired are logged server-side for tuning.
+      const line = logs.find((l) => l.includes("[diagnose] unreadable site"));
+      expect(line).toContain("reason=identical_shell");
+      expect(line).toContain("shellDetected=true");
+      expect(line).toContain("threshold=300");
+      expect(line).toMatch(/usableChars=\d+/);
+    } finally {
+      console.warn = originalWarn;
+    }
+  });
+
+  test("a thin crawl of DISTINCT pages returns low_content, with the real count", async () => {
+    mock(fullPayload(), (path) => `<html><head><title>App</title></head><body><div id="root" data-p="${path}"></div></body></html>`);
+    const { body } = await post();
+    expect(body.readable).toBe(false);
+    expect(body.reason).toBe("low_content");
+    expect(body.shellDetected).toBe(false);
+    expect(body.usableChars as number).toBeLessThan(300);
+    expect(body.dimensions).toBeUndefined();
+    expect(body.score).toBeUndefined();
+  });
+
+  test("the unreadable payload never invents a score, band or dimension", async () => {
+    mock(fullPayload(), () => SHELL);
+    const { body } = await post();
+    const keys = Object.keys(body).sort();
+    expect(keys).toEqual(
+      ["body", "cta", "heading", "pages", "readable", "reason", "shellDetected", "usableChars"].sort(),
+    );
   });
 });

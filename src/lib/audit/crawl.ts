@@ -11,7 +11,22 @@
  *   2.4 the parsed PageResult[] is cached per normalized origin for 24h, so a
  *       repeat submission of the same origin scores against the identical
  *       crawl block (a determinism source, not just a speed-up).
+ *
+ * Owner readability fix (Parts C + D):
+ *   C1/C2 static-text fallback: meta[name=description] is captured as a
+ *      FIRST-CLASS field on every page (it used to be only a title fallback, so
+ *      it was silently discarded on any page with a <title>: the onyxx bug).
+ *      og:title/description/site_name, twitter:title/description, JSON-LD
+ *      (name/description/slogan/applicationCategory) and <noscript> contents are
+ *      captured the same way and surfaced in a labelled STATIC METADATA section
+ *      of the crawl block (C3).
+ *   D1/D2 refuse to score what was not read: countUsableChars() + the
+ *      MIN_USABLE_CHARS threshold and assessReadability() (identical-page hash
+ *      detection) let the route return an unreadable state instead of a
+ *      scorecard. Both are pure and unit-tested here.
  */
+
+import { MIN_USABLE_CHARS, type UnreadableReason } from "./readability";
 
 /** Per-page request timeout. */
 export const PAGE_TIMEOUT_MS = 10000;
@@ -31,19 +46,67 @@ const UA =
 
 export type PageKind = "FOUND" | "NOT FOUND" | "UNREACHABLE" | "NON-HTML";
 
+/** Static (non-rendered) text sources: the head metadata and the `<noscript>`
+ * fallback. What a JS-rendered page actually ships in its HTML, and exactly
+ * what a search engine / link preview / social scraper sees when it does not
+ * run JavaScript. Part C: first-class fields, never dropped. */
+export interface StaticMetadata {
+  /** meta[name=description] (ALWAYS captured, even alongside a <title>). */
+  description: string;
+  ogTitle: string;
+  ogDescription: string;
+  ogSiteName: string;
+  twitterTitle: string;
+  twitterDescription: string;
+  jsonLdName: string;
+  jsonLdDescription: string;
+  jsonLdSlogan: string;
+  jsonLdApplicationCategory: string;
+  /** Visible text inside <noscript> blocks (the no-JS fallback copy). */
+  noscript: string;
+}
+
+/** An all-empty StaticMetadata (same shape everywhere, no undefined checks). */
+export function emptyStaticMetadata(): StaticMetadata {
+  return {
+    description: "",
+    ogTitle: "",
+    ogDescription: "",
+    ogSiteName: "",
+    twitterTitle: "",
+    twitterDescription: "",
+    jsonLdName: "",
+    jsonLdDescription: "",
+    jsonLdSlogan: "",
+    jsonLdApplicationCategory: "",
+    noscript: "",
+  };
+}
+
 export interface PageResult {
   path: string;
   status: number;
   kind: PageKind;
   title: string;
   metaTitle: string;
+  /** Static, non-rendered text sources (Part C). */
+  static: StaticMetadata;
   heroH1: string;
   heroSub: string;
   headings: { level: number; text: string }[];
   bodyText: string;
   ctas: string[];
   text: string;
+  /** Hash of the raw response body. Two pages with the same hash are the same
+   * document: a client-rendered SPA answers 200 on every route with one shell
+   * (Part D2). Empty for non-FOUND pages. */
+  htmlHash: string;
 }
+
+/** Everything the parser produces for one FOUND page (the route/crawler adds
+ * the path, status, kind and the raw-body hash). */
+export type ParsedPage = Omit<PageResult, "path" | "status" | "kind" | "htmlHash">;
+
 
 /* ------------------------------------------------------------------ */
 /* Structural DOM extraction (tolerant, zero-dependency HTML parser)    */
@@ -59,6 +122,106 @@ function stripDashes(s: string): string {
 }
 
 const clean = (s: string): string => stripDashes(s).slice(0, 240);
+
+/** Caps for the static metadata fields (Part C). */
+const META_DESC_CAP = 320;
+const SITE_NAME_CAP = 120;
+const JSON_LD_CAP = 240;
+const NOSCRIPT_CAP = 400;
+
+/** `<script type="application/ld+json">...</script>` blocks, however the type
+ * attribute is quoted/spaced. */
+const JSON_LD_RE =
+  /<script[^>]*\btype\s*=\s*(?:"application\/ld\+json"|'application\/ld\+json'|application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/gi;
+
+/** `<noscript>...</noscript>` blocks (the no-JS fallback copy). */
+const NOSCRIPT_BLOCK_RE = /<noscript[^>]*>([\s\S]*?)<\/noscript>/gi;
+
+/** Strip tags/comments from a fragment and collapse whitespace (no entity
+ * decoding, matching the structural parser's behaviour). */
+function tagsToText(fragment: string): string {
+  return stripDashes(
+    fragment
+      .replace(/<!--[\s\S]*?-->/g, " ")
+      .replace(/<[^>]+>/g, " "),
+  );
+}
+
+/** Pull a value from a JSON-LD node: the first non-empty string found for one
+ * of `keys`, searching the node and then one level of `@graph` / nested
+ * objects (schema.org allows both shapes). */
+function jsonLdField(node: unknown, keys: readonly string[], depth = 0): string {
+  if (!node || typeof node !== "object" || depth > 3) return "";
+  const obj = node as Record<string, unknown>;
+  for (const key of keys) {
+    const v = obj[key];
+    if (typeof v === "string" && v.trim()) return v;
+    if (Array.isArray(v)) {
+      const hit = v.find((x) => typeof x === "string" && x.trim());
+      if (typeof hit === "string") return hit;
+    }
+  }
+  const children: unknown[] = [];
+  if (Array.isArray(obj["@graph"])) children.push(...(obj["@graph"] as unknown[]));
+  for (const v of Object.values(obj)) {
+    if (v && typeof v === "object") children.push(v);
+  }
+  for (const child of children) {
+    const hit = jsonLdField(child, keys, depth + 1);
+    if (hit) return hit;
+  }
+  return "";
+}
+
+/** Extract the JSON-LD fields the rubric can use (name, description, slogan,
+ * applicationCategory) from every ld+json block on the page. */
+function extractJsonLd(html: string): Pick<
+  StaticMetadata,
+  "jsonLdName" | "jsonLdDescription" | "jsonLdSlogan" | "jsonLdApplicationCategory"
+> {
+  const out = {
+    jsonLdName: "",
+    jsonLdDescription: "",
+    jsonLdSlogan: "",
+    jsonLdApplicationCategory: "",
+  };
+  JSON_LD_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = JSON_LD_RE.exec(html))) {
+    const raw = (m[1] ?? "").trim();
+    if (!raw) continue;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      continue; // malformed JSON-LD is skipped, never fatal
+    }
+    const nodes = Array.isArray(parsed) ? parsed : [parsed];
+    for (const node of nodes) {
+      if (!out.jsonLdName) out.jsonLdName = clean(jsonLdField(node, ["name"]));
+      if (!out.jsonLdDescription) {
+        out.jsonLdDescription = jsonLdField(node, ["description"]).slice(0, JSON_LD_CAP).trim();
+      }
+      if (!out.jsonLdSlogan) out.jsonLdSlogan = clean(jsonLdField(node, ["slogan"]));
+      if (!out.jsonLdApplicationCategory) {
+        out.jsonLdApplicationCategory = clean(jsonLdField(node, ["applicationCategory"]));
+      }
+    }
+  }
+  return out;
+}
+
+/** Extract the visible text of every <noscript> block (Part C2). */
+function extractNoscript(html: string): string {
+  const parts: string[] = [];
+  NOSCRIPT_BLOCK_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = NOSCRIPT_BLOCK_RE.exec(html))) {
+    const text = tagsToText(m[1] ?? "");
+    if (text) parts.push(text);
+  }
+  return parts.join(" ").slice(0, NOSCRIPT_CAP);
+}
 
 /** Elements whose content is hidden from the rendered page. */
 const SKIP_TAGS = new Set([
@@ -139,10 +302,11 @@ const CTA_LINK_RE = /(^|\s)(btn|cta|button|primary|signup|sign-up)(\s|$)/i;
 const CTA_HREF_RE = /(signup|sign-up|buy|purchase|trial|demo|book|start|download-free|get-started)/i;
 
 /** Parse one HTML document into its structural parts. */
-export function parseDocument(html: string): Omit<PageResult, "path" | "status" | "kind"> {
-  const out: Omit<PageResult, "path" | "status" | "kind"> = {
+export function parseDocument(html: string): ParsedPage {
+  const out: ParsedPage = {
     title: "",
     metaTitle: "",
+    static: emptyStaticMetadata(),
     heroH1: "",
     heroSub: "",
     headings: [],
@@ -205,11 +369,23 @@ export function parseDocument(html: string): Omit<PageResult, "path" | "status" 
     }
 
     const attrs = parseAttrs(attrsStr);
-    // meta tags: read title/description at push time.
+    // meta tags: every static metadata field is captured FIRST-CLASS, alongside
+    // the <title> (Part C1/C2). Nothing here is order-dependent any more: the
+    // meta description used to be a title fallback and was discarded whenever a
+    // <title> came first in the head, which is how a site that names its own
+    // category and buyer in its meta description was reported as category-less.
     if (tag === "meta" && skipDepth === 0) {
       const name = (attrs.name || attrs.property || "").toLowerCase();
       const content = attrs.content || attrs.value || "";
-      if (name === "description" && !out.title) out.title = clean(content);
+      const st = out.static;
+      if (name === "description" && !st.description) st.description = content.trim().slice(0, META_DESC_CAP);
+      if (name === "og:title" && !st.ogTitle) st.ogTitle = clean(content);
+      if (name === "og:description" && !st.ogDescription) st.ogDescription = clean(content);
+      if (name === "og:site_name" && !st.ogSiteName) st.ogSiteName = content.trim().slice(0, SITE_NAME_CAP);
+      if (name === "twitter:title" && !st.twitterTitle) st.twitterTitle = clean(content);
+      if (name === "twitter:description" && !st.twitterDescription) {
+        st.twitterDescription = clean(content);
+      }
       if ((name === "og:title" || name === "twitter:title") && !out.metaTitle) {
         out.metaTitle = clean(content);
       }
@@ -226,16 +402,16 @@ export function parseDocument(html: string): Omit<PageResult, "path" | "status" 
   }
 
   if (!out.title && out.metaTitle) out.title = out.metaTitle;
+  // Static sources that live outside the element-stack walk (a <script>'s
+  // contents are skipped for rendering, but its JSON-LD is real, machine-
+  // readable positioning data; <noscript> is the site's own no-JS fallback).
+  out.static = { ...out.static, ...extractJsonLd(html), noscript: extractNoscript(html) };
   out.text = stripDashes(rootText).slice(0, FULL_TEXT_CAP);
   return out;
 }
 
 /** Collect a closed element's structured text into the page result. */
-function collectElement(
-  el: StackEl,
-  out: Omit<PageResult, "path" | "status" | "kind">,
-  chromeDepth: number,
-) {
+function collectElement(el: StackEl, out: ParsedPage, chromeDepth: number) {
   const tag = el.tag;
   const text = clean(el.text);
   if (!text) return;
@@ -286,6 +462,32 @@ function collectElement(
   }
 }
 
+/** Longest per-page block sent to the model (rendered copy first, then the
+ * STATIC METADATA section, so a long heading list can never truncate the
+ * metadata of a thin, metadata-only page which is exactly where it matters). */
+const PAGE_BLOCK_CAP = 4200;
+
+/** The labelled STATIC METADATA lines for one page (Part C3). Only the fields
+ * that actually carry text are emitted. */
+export function staticMetadataLines(st: StaticMetadata): string[] {
+  const lines: string[] = [];
+  const push = (label: string, value: string) => {
+    if (value) lines.push(`  ${label}: "${value}"`);
+  };
+  push("META DESCRIPTION", st.description);
+  push("OG TITLE", st.ogTitle);
+  push("OG DESCRIPTION", st.ogDescription);
+  push("OG SITE NAME", st.ogSiteName);
+  push("TWITTER TITLE", st.twitterTitle);
+  push("TWITTER DESCRIPTION", st.twitterDescription);
+  push("JSON-LD NAME", st.jsonLdName);
+  push("JSON-LD DESCRIPTION", st.jsonLdDescription);
+  push("JSON-LD SLOGAN", st.jsonLdSlogan);
+  push("JSON-LD APPLICATION CATEGORY", st.jsonLdApplicationCategory);
+  push("NOSCRIPT", st.noscript);
+  return lines;
+}
+
 /** Build the structured per-page block for the model prompt. */
 export function buildPageBlock(p: PageResult): string {
   if (p.kind !== "FOUND") {
@@ -311,8 +513,16 @@ export function buildPageBlock(p: PageResult): string {
   if (p.ctas.length) {
     lines.push(`CTAs: ${p.ctas.map((c) => `"${c}"`).join(" | ")}`);
   }
+  const meta = staticMetadataLines(p.static);
+  if (meta.length) {
+    lines.push(
+      "STATIC METADATA:",
+      "  (static page-head text and no-JS fallback: what a search engine, AI tool, link preview or social scraper reads when it does not run JavaScript)",
+      ...meta,
+    );
+  }
   const block = lines.join("\n");
-  return block.slice(0, 3200);
+  return block.slice(0, PAGE_BLOCK_CAP);
 }
 
 /** Fallback flat text (used only when a page yields no structured content). */
@@ -329,14 +539,16 @@ function extractText(html: string): string {
 }
 
 /** Parse page HTML into structured parts; fall back to flat text on failure. */
-function parsePageContent(html: string): Omit<PageResult, "path" | "status" | "kind"> {
+function parsePageContent(html: string): ParsedPage {
   try {
     return parseDocument(html);
   } catch {
-    // Parser failure must never kill the crawl: fall back to flat text.
+    // Parser failure must never kill the crawl: fall back to flat text, but
+    // still capture the static metadata (that is the whole point of Part C).
     return {
       title: "",
       metaTitle: "",
+      static: { ...emptyStaticMetadata(), ...extractJsonLd(html), noscript: extractNoscript(html) },
       heroH1: "",
       heroSub: "",
       headings: [],
@@ -345,6 +557,148 @@ function parsePageContent(html: string): Omit<PageResult, "path" | "status" | "k
       text: stripDashes(extractText(html)).slice(0, FULL_TEXT_CAP),
     };
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Readability: did we actually READ the site? (owner readability fix) */
+/* ------------------------------------------------------------------ */
+
+/** FNV-1a hash (32-bit, hex) of the raw response body, plus its length so two
+ * different documents are never conflated by a hash collision. */
+export function hashHtml(body: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < body.length; i++) {
+    h ^= body.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `${body.length.toString(36)}-${h.toString(16).padStart(8, "0")}`;
+}
+
+/** Usable-character accounting for one page. `rendered` is the text a browser
+ * would show (hero H1 + hero subtext + headings + body + CTA labels); `static`
+ * is the non-rendered text (title, meta/OG/Twitter head fields, JSON-LD,
+ * noscript). Both feed the threshold (Parts D1 + C4). */
+export interface PageCharCount {
+  path: string;
+  kind: PageKind;
+  chars: number;
+  rendered: number;
+  static: number;
+  htmlHash: string;
+}
+
+export interface UsableChars {
+  total: number;
+  rendered: number;
+  static: number;
+  perPage: PageCharCount[];
+}
+
+const len = (s: string | undefined): number => (s ? s.length : 0);
+
+/** Count the usable extracted characters of one page. */
+export function pageCharCount(p: PageResult): PageCharCount {
+  const st = p.static ?? emptyStaticMetadata();
+  const rendered =
+    len(p.heroH1) +
+    len(p.heroSub) +
+    p.headings.reduce((sum, h) => sum + len(h.text), 0) +
+    len(p.bodyText) +
+    p.ctas.reduce((sum, c) => sum + len(c), 0);
+  const staticChars =
+    len(p.title) +
+    len(p.metaTitle) +
+    len(st.description) +
+    len(st.ogTitle) +
+    len(st.ogDescription) +
+    len(st.ogSiteName) +
+    len(st.twitterTitle) +
+    len(st.twitterDescription) +
+    len(st.jsonLdName) +
+    len(st.jsonLdDescription) +
+    len(st.jsonLdSlogan) +
+    len(st.jsonLdApplicationCategory) +
+    len(st.noscript);
+  return {
+    path: p.path,
+    kind: p.kind,
+    chars: rendered + staticChars,
+    rendered,
+    static: staticChars,
+    htmlHash: p.htmlHash ?? "",
+  };
+}
+
+/** Total usable extracted characters across every crawled page, with the
+ * rendered/static split and the per-page numbers kept for the server log so
+ * the threshold can be tuned with real data. */
+export function countUsableChars(pages: PageResult[]): UsableChars {
+  const perPage = pages.map(pageCharCount);
+  return {
+    total: perPage.reduce((sum, p) => sum + p.chars, 0),
+    rendered: perPage.reduce((sum, p) => sum + p.rendered, 0),
+    static: perPage.reduce((sum, p) => sum + p.static, 0),
+    perPage,
+  };
+}
+
+export interface ReadabilityAssessment extends UsableChars {
+  /** True when the diagnostic may score this site. */
+  readable: boolean;
+  /** Why it may not (null when readable). identical_shell takes precedence
+   * over low_content: identical pages mean /pricing and /about were never
+   * actually read, whatever the shared document's character count. */
+  reason: UnreadableReason | null;
+  /** True when every FOUND page returned byte-identical content (a
+   * client-rendered SPA answers 200 on every route with the same shell). */
+  shellDetected: boolean;
+  /** The paths that shared one identical document (empty when none). */
+  identicalPaths: string[];
+}
+
+/**
+ * Decide whether the crawl read enough of the site to score it at all.
+ *
+ *  1. IDENTICAL SHELL (D2): every FOUND page returned the same bytes. A
+ *     client-rendered SPA rewrites unknown paths to one shell with HTTP 200, so
+ *     /pricing and /about were never really read. Distinct reason so it is
+ *     diagnosable which rule fired.
+ *  2. LOW CONTENT (D1): the pages yielded fewer than MIN_USABLE_CHARS usable
+ *     characters in total (rendered copy plus the Part C static fields).
+ *
+ * Either way the caller must NOT call the model and must return the unreadable
+ * state instead of a scorecard.
+ */
+export function assessReadability(pages: PageResult[]): ReadabilityAssessment {
+  const counts = countUsableChars(pages);
+  const found = pages.filter((p) => p.kind === "FOUND" && (p.htmlHash ?? ""));
+  const byHash = new Map<string, string[]>();
+  for (const p of found) {
+    const list = byHash.get(p.htmlHash);
+    if (list) list.push(p.path);
+    else byHash.set(p.htmlHash, [p.path]);
+  }
+  let identicalPaths: string[] = [];
+  for (const paths of byHash.values()) {
+    if (paths.length >= 2 && paths.length === found.length) {
+      identicalPaths = paths;
+      break;
+    }
+  }
+  const shellDetected = identicalPaths.length >= 2;
+  const lowContent = counts.total < MIN_USABLE_CHARS;
+  const reason: UnreadableReason | null = shellDetected
+    ? "identical_shell"
+    : lowContent
+      ? "low_content"
+      : null;
+  return {
+    ...counts,
+    readable: reason === null,
+    reason,
+    shellDetected,
+    identicalPaths,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -358,12 +712,14 @@ function emptyPage(path: string): PageResult {
     kind: "UNREACHABLE",
     title: "",
     metaTitle: "",
+    static: emptyStaticMetadata(),
     heroH1: "",
     heroSub: "",
     headings: [],
     bodyText: "",
     ctas: [],
     text: "",
+    htmlHash: "",
   };
 }
 
@@ -441,7 +797,18 @@ async function attemptPage(
     if (!type.includes("text/html") && !type.includes("text/plain")) {
       return { page: { ...base, status: res.status, kind: "NON-HTML" }, retry: false };
     }
-    return { page: { ...base, status: res.status, kind: "FOUND", ...parsePageContent(html) }, retry: false };
+    // The raw-body hash is what makes an identical SPA shell detectable
+    // (Part D2): every route answering 200 with the same document.
+    return {
+      page: {
+        ...base,
+        status: res.status,
+        kind: "FOUND",
+        htmlHash: hashHtml(html),
+        ...parsePageContent(html),
+      },
+      retry: false,
+    };
   } catch {
     // per-page timeout, network failure, or shared budget abort
     return { page: base, retry: true };

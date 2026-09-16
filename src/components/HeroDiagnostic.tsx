@@ -19,8 +19,8 @@ import trackonomicsLogo from "./hero-logos/trackonomics.svg?raw";
 import pressboardLogo from "./hero-logos/pressboard.svg?raw";
 import { scoreColor, PILLAR_OF, impactLabel, STRONG_MIN } from "~/lib/audit/engine";
 import { paramStatus } from "~/lib/audit/thresholds";
-import { toAIResult } from "~/lib/audit/ai";
-import type { AIResult } from "~/lib/audit/ai";
+import { toAIResult, toUnreadableResult } from "~/lib/audit/ai";
+import type { AIResult, UnreadableResult } from "~/lib/audit/ai";
 import { ASSESSMENT_STORAGE_KEY } from "~/lib/storage";
 import { apiUrl } from "~/lib/apiOrigin";
 
@@ -449,10 +449,12 @@ function normalizeTeaserDims(aiResult: AIResult | null): TeaserDim[] {
   return out.sort((a, b) => pillarySort(a.id) - pillarySort(b.id));
 }
 
-/** Scan lifecycle: idle -> loading -> success | error. There is NO local
- * fallback score: a failed live scan shows an explicit error state with a
- * Retry (owner spec Part 7). */
-type ScanStatus = "idle" | "loading" | "success" | "error";
+/** Scan lifecycle: idle -> loading -> success | unreadable | error. There is NO
+ * local fallback score: a failed live scan shows an explicit error state with a
+ * Retry (owner spec Part 7), and a site the crawler could not read shows the
+ * explicit unreadable state (owner readability fix, Part D) instead of a
+ * scorecard of zeroes. */
+type ScanStatus = "idle" | "loading" | "success" | "unreadable" | "error";
 
 function useAssessment() {
   const [url, setUrl] = useState("");
@@ -460,6 +462,7 @@ function useAssessment() {
   const [status, setStatus] = useState<ScanStatus>("idle");
   const [submittedUrl, setSubmittedUrl] = useState("");
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
+  const [unreadable, setUnreadable] = useState<UnreadableResult | null>(null);
   const [generatedAt, setGeneratedAt] = useState("");
   const [hydrated, setHydrated] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -473,6 +476,7 @@ function useAssessment() {
     const timer = window.setTimeout(() => controller.abort(), 45000);
     setStatus("loading");
     setAiResult(null);
+    setUnreadable(null);
     fetch(apiUrl("/api/diagnose"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -482,6 +486,15 @@ function useAssessment() {
       .then(async (res) => {
         const data = await res.json().catch(() => null);
         if (res.ok) {
+          // Unreadable FIRST: that response carries no score at all and must
+          // never fall through to the scorecard normalizer (Part D).
+          const unreadableResult = toUnreadableResult(data);
+          if (unreadableResult) {
+            setUnreadable(unreadableResult);
+            setGeneratedAt(new Date().toISOString());
+            setStatus("unreadable");
+            return;
+          }
           const normalized = toAIResult(data);
           if (normalized) {
             setAiResult(normalized);
@@ -547,6 +560,7 @@ function useAssessment() {
     setStatus("idle");
     setSubmittedUrl("");
     setAiResult(null);
+    setUnreadable(null);
     setGeneratedAt("");
     setUrl("");
     setError("");
@@ -559,6 +573,7 @@ function useAssessment() {
     status,
     submittedUrl,
     aiResult,
+    unreadable,
     generatedAt,
     hydrated,
     handleSubmit,
@@ -1098,6 +1113,62 @@ function HeroResults({
   );
 }
 
+/** UNREADABLE SITE (owner readability fix, Part D).
+ *
+ * The server refused to score because it could not read the site: a
+ * JavaScript-rendered page returns an empty shell to a plain fetch (JS-rendered
+ * SPAs answer 200 on every route with the same document), so there is nothing
+ * to score. This state renders the exact owner-specified copy and a "Book a
+ * Call" CTA, and it deliberately shows NO score, NO pillar averages, NO
+ * parameter cards, NO red flag and NO unlock/blur form: there is no breakdown
+ * to unlock. Re-running the scan stays available. */
+function UnreadableSite({
+  url,
+  result,
+  onRetry,
+  onReset,
+}: {
+  url: string;
+  result: UnreadableResult;
+  onRetry: () => void;
+  onReset: () => void;
+}) {
+  return (
+    <section id="results" className="scroll-mt-24" aria-live="polite">
+      <div className="glass-card px-6 py-8 sm:px-8">
+        <span className="chip">Diagnostic paused</span>
+        <h3 className="mt-3 font-display text-2xl tracking-tight text-ink sm:text-3xl">
+          {result.heading}
+        </h3>
+        {url && <p className="mt-1 max-w-2xl text-sm text-mist">{url}</p>}
+        <div className="mt-4 flex max-w-2xl flex-col gap-3">
+          {result.body.split("\n\n").map((paragraph, i) => (
+            <p key={i} className="text-sm leading-relaxed text-mist">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+        <div className="mt-6 flex flex-wrap items-center gap-5">
+          <a href={result.ctaHref} className="btn-electric h-[46px] px-6 text-[14px]">
+            {result.ctaLabel} →
+          </a>
+          <button type="button" onClick={onRetry} className="btn-ghost h-[46px] px-6 text-[14px] font-bold">
+            Re-run scan →
+          </button>
+          <button type="button" onClick={onReset} className="nav-link">
+            Try a different URL
+          </button>
+        </div>
+        <p className="mt-5 text-xs leading-relaxed text-fog">
+          No score is shown because there was nothing readable to score. Scoring it anyway would
+          describe a site that was never read. Re-running the scan is free and re-checks the live
+          page.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 /** Explicit scan-failure state (owner spec Part 7): an honest message and a
  * Retry that re-runs the live crawl. No local engine result, no invented score. */
 function ScanError({
@@ -1147,6 +1218,7 @@ export function HeroDiagnostic({
     status,
     submittedUrl,
     aiResult,
+    unreadable,
     generatedAt,
     handleSubmit,
     retry,
@@ -1191,6 +1263,14 @@ export function HeroDiagnostic({
           >
             <div className="flex flex-col gap-5">
               {status === "loading" && <CrawlScanner mode="loading" url={submittedUrl} />}
+              {status === "unreadable" && unreadable && (
+                <UnreadableSite
+                  url={submittedUrl}
+                  result={unreadable}
+                  onRetry={retry}
+                  onReset={reset}
+                />
+              )}
               {status === "error" && (
                 <ScanError url={submittedUrl} onRetry={retry} onReset={reset} />
               )}
