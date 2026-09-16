@@ -500,7 +500,10 @@ export function ResultsDashboard({
  aiPending?: boolean;
 }) {
  const isPreliminary = Boolean(aiPending) && !aiResult;
- const headlineScore = aiResult ? aiResult.score : result.overall;
+ // The live response can carry NO overall score (3+ dimensions with no
+ // evidence). The gated /assessment surface already renders a local
+ // AuditResult, so fall back to it rather than showing a blank number.
+ const headlineScore = aiResult?.score ?? result.overall;
  const overallBand = aiResult?.overallBand ?? result.riskLabel;
 
  // The 6 scored cards (locked gtm / launch are never built here).

@@ -321,7 +321,8 @@ function ScoreCondensed() {
             <p className="sc-eyebrow">MY SCORING SYSTEM</p>
             <h2 className="sc-headline">The MarketReady Diagnostic Engine</h2>
             <p className="sc-intro">
-              Nine dimensions, scored in seconds, grouped into three pillars:
+              Six dimensions scored in seconds from your public site, plus two
+              reserved for a human review. All eight grouped into three pillars:
               how you position, how you message, and how fast you launch.
             </p>
             <p className="sc-callout">

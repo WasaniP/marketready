@@ -17,8 +17,8 @@ import aewLogo from "./hero-logos/aew.svg?raw";
 import impactLogo from "./hero-logos/impact.svg?raw";
 import trackonomicsLogo from "./hero-logos/trackonomics.svg?raw";
 import pressboardLogo from "./hero-logos/pressboard.svg?raw";
-import { scoreAssessment, scoreColor, PILLAR_OF } from "~/lib/audit/engine";
-import type { AssessmentInput, AuditResult } from "~/lib/audit/types";
+import { scoreColor, PILLAR_OF, impactLabel, STRONG_MIN } from "~/lib/audit/engine";
+import { paramStatus } from "~/lib/audit/thresholds";
 import { toAIResult } from "~/lib/audit/ai";
 import type { AIResult } from "~/lib/audit/ai";
 import { ASSESSMENT_STORAGE_KEY } from "~/lib/storage";
@@ -354,11 +354,13 @@ function isValidUrl(value: string): boolean {
   }
 }
 
-/** Teaser pillar groups (restored prior build). */
+/** Teaser pillar groups (restored prior build). The two reserved (locked)
+ * parameters render as visible locked cards inside the GTM pillar so the
+ * 6 scored + 2 reserved structure is legible (owner spec Part 10). */
 const TEASER_PILLARS: { title: string; ids: string[] }[] = [
   { title: "Core Positioning", ids: ["positioning", "icp", "differentiation"] },
   { title: "Messaging & Value Prop", ids: ["messaging", "value-prop"] },
-  { title: "GTM & Launch Velocity", ids: ["conversion"] },
+  { title: "GTM & Launch Velocity", ids: ["gtm", "launch", "conversion"] },
 ];
 
 function pillarySort(id: string): number {
@@ -369,8 +371,9 @@ function pillarySort(id: string): number {
   return 99;
 }
 
+/** Score -> per-parameter status label (unified thresholds, no local copy). */
 function g2Status(score: number): string {
-  return score >= 75 ? "Strong" : score >= 40 ? "Needs Refinement" : "Critical Gap";
+  return paramStatus(score);
 }
 
 function m2Date(t?: string): string {
@@ -413,74 +416,67 @@ interface TeaserDim {
   isAI: boolean;
 }
 
-function normalizeTeaserDims(aiResult: AIResult | null, result: AuditResult): TeaserDim[] {
+/**
+ * Map the live diagnostic response onto the card model. Reserved parameters
+ * (gtm, launch) are KEPT and rendered as visible locked cards (owner spec
+ * Part 10) so the 6 scored + 2 reserved structure is legible; a dimension that
+ * abstained (insufficientData) renders as "Not enough signal to score" with no
+ * number. Nothing is computed locally: no local engine result is used any more.
+ */
+function normalizeTeaserDims(aiResult: AIResult | null): TeaserDim[] {
   const out: TeaserDim[] = [];
-  if (aiResult) {
-    for (const r of aiResult.dimensions) {
-      if (r.locked) continue;
-      out.push({
-        id: r.id,
-        name: r.name,
-        pillar: r.pillar || PILLAR_OF[r.id] || "GTM & Launch Velocity",
-        score: r.score,
-        status: r.status,
-        friction: r.friction,
-        frictionLabel: r.frictionLabel,
-        anchorLabel: r.anchorLabel,
-        keyObservation: r.keyObservation,
-        commercialRisk: r.commercialRisk,
-        evidenceSnippet: r.evidence_snippet,
-        insufficientData: r.insufficientData,
-        locked: false,
-        color: typeof r.score === "number" ? scoreColor(r.score) : undefined,
-        isAI: true,
-      });
-    }
-  } else {
-    for (const r of result.parameters) {
-      if (r.locked) continue;
-      out.push({
-        id: r.id,
-        name: r.name,
-        pillar: PILLAR_OF[r.id] || "GTM & Launch Velocity",
-        score: r.score,
-        status: r.status,
-        friction: r.diagnostic,
-        frictionLabel: r.frictionLabel,
-        anchorLabel: r.anchorLabel,
-        keyObservation: r.keyObservation,
-        commercialRisk: r.commercialRisk,
-        locked: false,
-        color: r.color,
-        isAI: false,
-      });
-    }
+  if (!aiResult) return out;
+  for (const r of aiResult.dimensions) {
+    const scored = typeof r.score === "number";
+    out.push({
+      id: r.id,
+      name: r.name,
+      pillar: r.pillar || PILLAR_OF[r.id] || "GTM & Launch Velocity",
+      score: r.score,
+      status: r.status,
+      friction: r.friction,
+      frictionLabel: r.frictionLabel,
+      anchorLabel: r.anchorLabel,
+      keyObservation: r.keyObservation,
+      commercialRisk: r.commercialRisk,
+      evidenceSnippet: r.evidence_snippet,
+      insufficientData: r.insufficientData,
+      locked: r.locked === true,
+      color: scored ? scoreColor(r.score as number) : undefined,
+      isAI: true,
+    });
   }
   return out.sort((a, b) => pillarySort(a.id) - pillarySort(b.id));
 }
 
+/** Scan lifecycle: idle -> loading -> success | error. There is NO local
+ * fallback score: a failed live scan shows an explicit error state with a
+ * Retry (owner spec Part 7). */
+type ScanStatus = "idle" | "loading" | "success" | "error";
+
 function useAssessment() {
   const [url, setUrl] = useState("");
   const [error, setError] = useState("");
-  const [phase, setPhase] = useState<"idle" | "done">("idle");
-  const [submitted, setSubmitted] = useState<AssessmentInput | null>(null);
-  const [result, setResult] = useState<AuditResult | null>(null);
-  const [hydrated, setHydrated] = useState(false);
-  const [aiStatus, setAiStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<ScanStatus>("idle");
+  const [submittedUrl, setSubmittedUrl] = useState("");
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
+  const [generatedAt, setGeneratedAt] = useState("");
+  const [hydrated, setHydrated] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const runCrawl = (cleanUrl: string) => {
     const controller = new AbortController();
     abortRef.current?.abort();
     abortRef.current = controller;
-    const timer = window.setTimeout(() => controller.abort(), 32000);
-    setAiStatus("loading");
+    // The server bounds crawl + model at ~40s, so the client abort sits above
+    // it (owner spec Part 2.3) instead of cutting the request short.
+    const timer = window.setTimeout(() => controller.abort(), 45000);
+    setStatus("loading");
     setAiResult(null);
     fetch(apiUrl("/api/diagnose"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: cleanUrl, heroCopy: "", icp: "" }),
+      body: JSON.stringify({ url: cleanUrl }),
       signal: controller.signal,
     })
       .then(async (res) => {
@@ -489,32 +485,27 @@ function useAssessment() {
           const normalized = toAIResult(data);
           if (normalized) {
             setAiResult(normalized);
-            setAiStatus("success");
+            setGeneratedAt(new Date().toISOString());
+            setStatus("success");
             return;
           }
         }
-        setAiStatus("error");
+        setStatus("error");
       })
-      .catch(() => setAiStatus("error"))
+      .catch(() => setStatus("error"))
       .finally(() => window.clearTimeout(timer));
   };
 
   useEffect(() => {
+    // Restore ONLY the submitted URL string into the form. The local fallback
+    // engine is never re-run (owner spec Part 7): a restored page shows the
+    // form again, and the visitor re-runs the live scan.
     try {
       const raw = window.localStorage.getItem(ASSESSMENT_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed.url === "string" && parsed.url) {
-          const restored: AssessmentInput = {
-            url: parsed.url,
-            businessModel: "",
-            launchStage: "",
-            icp: typeof parsed.icp === "string" ? parsed.icp : "",
-            submittedAt: parsed.submittedAt ?? new Date().toISOString(),
-          };
-          setSubmitted(restored);
-          setResult(scoreAssessment(restored));
-          setPhase("done");
+          setUrl(parsed.url);
         }
       }
     } catch {}
@@ -529,20 +520,22 @@ function useAssessment() {
       return;
     }
     setError("");
-    const assessment: AssessmentInput = {
-      url: cleanUrl,
-      businessModel: "",
-      launchStage: "",
-      icp: "",
-      submittedAt: new Date().toISOString(),
-    };
     try {
-      window.localStorage.setItem(ASSESSMENT_STORAGE_KEY, JSON.stringify(assessment));
+      window.localStorage.setItem(
+        ASSESSMENT_STORAGE_KEY,
+        JSON.stringify({ url: cleanUrl, submittedAt: new Date().toISOString() }),
+      );
     } catch {}
-    setSubmitted(assessment);
-    setResult(scoreAssessment(assessment));
-    setPhase("done");
+    setSubmittedUrl(cleanUrl);
     runCrawl(cleanUrl);
+  };
+
+  /** Re-run the live scan for the same URL after a failure. */
+  const retry = () => {
+    if (submittedUrl) {
+      setError("");
+      runCrawl(submittedUrl);
+    }
   };
 
   const reset = () => {
@@ -551,11 +544,10 @@ function useAssessment() {
     } catch {}
     abortRef.current?.abort();
     abortRef.current = null;
-    setPhase("idle");
-    setSubmitted(null);
-    setResult(null);
-    setAiStatus("idle");
+    setStatus("idle");
+    setSubmittedUrl("");
     setAiResult(null);
+    setGeneratedAt("");
     setUrl("");
     setError("");
   };
@@ -564,13 +556,13 @@ function useAssessment() {
     url,
     setUrl,
     error,
-    phase,
-    submitted,
-    result,
-    aiStatus,
+    status,
+    submittedUrl,
     aiResult,
+    generatedAt,
     hydrated,
     handleSubmit,
+    retry,
     reset,
   };
 }
@@ -643,11 +635,57 @@ function CrawlScanner({ mode = "demo", url }: { mode?: "demo" | "loading"; url?:
 }
 
 function DimCard({ card }: { card: TeaserDim }) {
+  const locked = card.locked === true;
+  const unscored = !locked && (card.insufficientData === true || card.score == null);
   const color = card.color ?? "#A1A1AA";
   const n = card.score ?? 0;
-  const strong = n >= 70;
+  const strong = n >= STRONG_MIN;
   const label = strong ? card.anchorLabel : card.frictionLabel;
-  const section = strong ? "Competitive Advantage" : "Commercial Risk";
+  // Single label flip, shared threshold (owner spec Part 4).
+  const section = impactLabel(n);
+
+  // Reserved parameter: visible, locked, and honest about where it is scored.
+  if (locked) {
+    return (
+      <div
+        className="glass-card flex flex-col gap-3 p-5"
+        style={{ borderColor: "rgba(125,115,106,0.45)", backgroundColor: "rgba(42,35,32,0.35)" }}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="text-sm font-semibold leading-snug text-ink">{card.name}</h4>
+          <span className="shrink-0 rounded-full border border-hairline bg-ink/[0.03] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-fog">
+            Reserved
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-ember">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <rect x="4" y="11" width="16" height="9" rx="2" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+          </svg>
+          <span className="text-[10px] font-bold uppercase tracking-wider">
+            Locked, not scored from your URL
+          </span>
+        </div>
+        <p className="text-sm leading-relaxed text-mist">
+          This parameter needs internal materials (channel plan, launch kit, owners) that a public
+          site cannot show, so it is assessed by hand in the paid MarketReady Audit.
+        </p>
+        <div className="rounded-lg border border-hairline bg-cream px-3 py-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-fog">Locked: </span>
+          <span className="text-xs text-mist">Requires internal review, assessed in the MarketReady Audit.</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="glass-card flex flex-col gap-3 p-5" style={{ borderColor: hexA(color, 0.3), backgroundColor: hexA(color, 0.05) }}>
       <div className="flex items-start justify-between gap-2">
@@ -658,20 +696,24 @@ function DimCard({ card }: { card: TeaserDim }) {
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color, borderColor: hexA(color, 0.35), backgroundColor: hexA(color, 0.1) }}>
-          {card.status ?? "Pending"}
+          {unscored ? "Not enough signal to score" : card.status ?? "Pending"}
         </span>
-        {label && (
+        {!unscored && label && (
           <span className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color, borderColor: hexA(color, 0.35), backgroundColor: hexA(color, 0.1) }}>
             {label}
           </span>
         )}
-        <span className="ml-auto font-mono text-lg font-bold tabular-nums" style={{ color }}>{card.score != null ? `${card.score}/100` : "—"}</span>
+        <span className="ml-auto font-mono text-lg font-bold tabular-nums" style={{ color }}>
+          {unscored ? "—" : `${card.score}/100`}
+        </span>
       </div>
       <p className="text-sm leading-relaxed text-mist">{card.keyObservation ?? card.friction}</p>
-      <div className="rounded-lg border border-hairline bg-cream px-3 py-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-fog">{section}: </span>
-        <span className="text-xs text-mist">{card.commercialRisk}</span>
-      </div>
+      {!unscored && card.commercialRisk && (
+        <div className="rounded-lg border border-hairline bg-cream px-3 py-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-fog">{section}: </span>
+          <span className="text-xs text-mist">{card.commercialRisk}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -700,19 +742,21 @@ function inferUnlockCompany(url: string): string {
 }
 
 function HomepageUnlock({
-  result,
-  submitted,
+  websiteUrl,
   headlineScore,
   overallBand,
+  recommendedFix,
   redFlag,
   dims,
+  generatedAt,
 }: {
-  result: AuditResult;
-  submitted: AssessmentInput | null;
+  websiteUrl: string;
   headlineScore: number;
   overallBand: string;
+  recommendedFix: string;
   redFlag: TeaserDim | undefined;
   dims: TeaserDim[];
+  generatedAt: string;
 }) {
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
@@ -734,7 +778,6 @@ function HomepageUnlock({
     setError("");
     setStatus("sending");
 
-    const websiteUrl = submitted?.url || result.url;
     const dimPayload = dims.map((d) => ({
       id: d.id,
       name: d.name,
@@ -754,9 +797,9 @@ function HomepageUnlock({
       workEmail: em,
       company: inferUnlockCompany(websiteUrl),
       websiteUrl,
-      icp: submitted?.icp ?? result.icp ?? "",
       overallScore: headlineScore,
       lowestParameter: redFlag?.name ?? null,
+      prescription: recommendedFix,
       keyObservation: redFlag?.keyObservation ?? "",
       commercialRisk: redFlag?.commercialRisk ?? "",
       frictionLabel: redFlag?.frictionLabel ?? "",
@@ -765,7 +808,7 @@ function HomepageUnlock({
       diagnosticPayload: {
         score: headlineScore,
         overallBand,
-        generatedAt: result.generatedAt,
+        generatedAt,
         url: websiteUrl,
         dimensions: dimPayload,
       },
@@ -880,35 +923,38 @@ function HomepageUnlock({
   );
 }
 
-/** Restored teaser results component (was A2 in the prior build). */
+/** Teaser results: overall score + pillars + the model's primary friction +
+ * the 6 scored cards and the 2 reserved (locked) cards. Rendered ONLY from the
+ * live diagnostic response (owner spec Part 7): there is no local fallback and
+ * no invented score. A response with no overall score (3 or more dimensions
+ * with no evidence) shows the "could not be read well enough" message. */
 function HeroResults({
-  result,
-  submitted,
+  aiResult,
+  url,
+  generatedAt,
   onReset,
   onBookBriefing,
-  aiResult,
-  aiPending,
 }: {
-  result: AuditResult;
-  submitted: AssessmentInput | null;
+  aiResult: AIResult;
+  url: string;
+  generatedAt: string;
   onReset: () => void;
   onBookBriefing: () => void;
-  aiResult: AIResult | null;
-  aiPending: boolean;
 }) {
-  const pending = !!aiPending && !aiResult;
-  const score = aiResult ? aiResult.score : result.overall;
-  const band = aiResult?.overallBand ?? result.riskLabel;
-  const dims = normalizeTeaserDims(aiResult, result);
-  const visible = dims.filter((d) => !d.insufficientData && d.score != null);
-  const withEvidence = visible.filter((d) => typeof d.evidenceSnippet === "string" && d.evidenceSnippet.trim().length > 0);
-  const redFlag = [...(withEvidence.length ? withEvidence : visible.length ? visible : dims)].sort((a, b) => {
-    const ra = a.score ?? 0;
-    const rb = b.score ?? 0;
-    return ra !== rb ? ra - rb : pillarySort(a.id) - pillarySort(b.id);
-  })[0];
+  const score = aiResult.score;
+  const band = aiResult.overallBand;
+  const dims = normalizeTeaserDims(aiResult);
+  const scoredDims = dims.filter(
+    (d) => !d.locked && d.insufficientData !== true && d.score != null,
+  );
+  // The lead record still names the LOWEST scored parameter: that keeps a
+  // mappable value in the Airtable "Primary Friction" single-select. The card
+  // the visitor sees is the model's own primary friction + fix (Part 8).
+  const lowest = [...scoredDims].sort(
+    (a, b) => (a.score ?? 0) - (b.score ?? 0) || pillarySort(a.id) - pillarySort(b.id),
+  )[0];
   const pillarAvgs = TEASER_PILLARS.map((p) => {
-    const hit = dims.filter((d) => p.ids.includes(d.id) && !d.insufficientData && d.score != null);
+    const hit = dims.filter((d) => p.ids.includes(d.id) && !d.locked && !d.insufficientData && d.score != null);
     const avg = hit.length ? Math.round(hit.reduce((sum, d) => sum + (d.score ?? 0), 0) / hit.length) : null;
     return { title: p.title, avg };
   });
@@ -917,38 +963,38 @@ function HeroResults({
     <section id="results" className="scroll-mt-24" aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <span className="chip">
-            {pending ? "Preliminary Diagnostic" : "Your results are in"}
-          </span>
+          <span className="chip">Your results are in</span>
           <h3 className="mt-3 font-display text-2xl tracking-tight text-ink sm:text-3xl">Your Market Readiness Score</h3>
-          <p className="mt-1 max-w-2xl text-sm text-mist">{result.url}</p>
-          {pending && (
-            <p className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-emberdeep">
-              <span aria-hidden="true" className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ember opacity-60" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ember" />
-              </span>
-              Reading your site... Your final score is on its way.
-            </p>
-          )}
+          <p className="mt-1 max-w-2xl text-sm text-mist">{url}</p>
         </div>
-        <p className="text-xs text-fog">Scored {m2Date(result.generatedAt)}</p>
+        <p className="text-xs text-fog">Scored {m2Date(generatedAt)}</p>
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <div className="glass-card flex flex-col justify-center gap-3 px-6 py-8">
           <h4 className="text-sm font-semibold uppercase tracking-wider text-mist">Overall Score</h4>
-          <div className="flex items-end gap-3">
-            <span className="text-6xl font-extrabold leading-none tabular-nums text-ink">{score}</span>
-            <span className="pb-1 text-sm font-medium text-fog">/100</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-mist">Status:</span>
-            <span className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: scoreColor(score), borderColor: hexA(scoreColor(score), 0.35), backgroundColor: hexA(scoreColor(score), 0.1) }}>
-              {g2Status(score)}
-            </span>
-          </div>
-          <p className="text-xs text-fog">{band}</p>
+          {score == null ? (
+            <p className="max-w-md text-sm leading-relaxed text-mist">
+              I could not read enough of this site to score it honestly. Too little of the public
+              crawl gave usable evidence, so there is no overall score here rather than an invented
+              one. If the site blocks crawlers or sits behind a login, try a public marketing page,
+              or book a call and I will review it by hand.
+            </p>
+          ) : (
+            <>
+              <div className="flex items-end gap-3">
+                <span className="text-6xl font-extrabold leading-none tabular-nums text-ink">{score}</span>
+                <span className="pb-1 text-sm font-medium text-fog">/100</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-mist">Status:</span>
+                <span className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: scoreColor(score), borderColor: hexA(scoreColor(score), 0.35), backgroundColor: hexA(scoreColor(score), 0.1) }}>
+                  {g2Status(score)}
+                </span>
+              </div>
+              <p className="text-xs text-fog">{band}</p>
+            </>
+          )}
         </div>
         <div className="flex flex-col justify-center gap-3">
           <h4 className="text-sm font-semibold uppercase tracking-wider text-mist">Pillars</h4>
@@ -965,25 +1011,30 @@ function HeroResults({
         </div>
       </div>
 
-      {redFlag && (
-        <div className="mt-8">
-          <div className="flex items-center gap-3">
-            <h4 className="font-display text-lg tracking-tight text-ink">The first thing I'd fix</h4>
-            <span aria-hidden="true" className="h-px flex-1 bg-hairline" />
+      <div className="mt-8">
+        <div className="flex items-center gap-3">
+          <h4 className="font-display text-lg tracking-tight text-ink">The first thing I&apos;d fix</h4>
+          <span aria-hidden="true" className="h-px flex-1 bg-hairline" />
+        </div>
+        <p className="mt-1 max-w-3xl text-sm text-mist">The single biggest drag on growth that I found on your public site.</p>
+        <div className="glass-card mt-4 max-w-2xl p-5">
+          <div className="rounded-lg border border-hairline bg-cream px-3 py-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-fog">Primary friction: </span>
+            <span className="text-xs text-mist">{aiResult.primaryFriction}</span>
           </div>
-          <p className="mt-1 max-w-3xl text-sm text-mist">The single lowest-scoring area I found on your public site.</p>
-          <div className="mt-4 max-w-md">
-            <DimCard card={redFlag} />
+          <div className="mt-3 rounded-lg border border-ember/30 bg-ambertint/50 px-3 py-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emberdeep">Recommended fix: </span>
+            <span className="text-xs text-mist">{aiResult.recommendedFix}</span>
           </div>
         </div>
-      )}
+      </div>
 
       <div className="mt-8">
         <div className="flex items-center gap-3">
           <h4 className="font-display text-lg tracking-tight text-ink">Full parameter breakdown</h4>
-          {aiResult && <span className="chip">Final assessment</span>}
+          <span className="chip">Final assessment</span>
         </div>
-        <p className="mt-1 max-w-3xl text-sm text-mist">Every scored area with what I noticed and why it matters, grouped by pillar.</p>
+        <p className="mt-1 max-w-3xl text-sm text-mist">Every scored area with what I noticed and why it matters, grouped by pillar. The two reserved parameters are locked until the paid Audit.</p>
         {TEASER_PILLARS.map((p) => {
           const cards = dims.filter((d) => p.ids.includes(d.id));
           return (
@@ -997,14 +1048,9 @@ function HeroResults({
                   <DimCard key={d.id} card={d} />
                 ))}
               </div>
-              {p.title === "Messaging & Value Prop" && (
-                <p className="mt-3 text-xs leading-relaxed text-fog">
-                  Pricing and packaging needs your internal numbers and deal context, so I review that with you directly in the MarketReady Audit.
-                </p>
-              )}
               {p.title === "GTM & Launch Velocity" && (
                 <p className="mt-3 text-xs leading-relaxed text-fog">
-                  Note: public scans cover conversion readiness. Your internal sales motion and launch mechanics are something I review with you directly in the MarketReady Audit.
+                  Conversion readiness is scored from your public site. GTM Readiness and Launch Readiness are reserved: they need internal materials (channel plan, launch kit, owners), so I assess them by hand in the paid MarketReady Audit.
                 </p>
               )}
             </div>
@@ -1028,26 +1074,62 @@ function HeroResults({
         </button>
       </div>
 
-      <HomepageUnlock
-        result={result}
-        submitted={submitted}
-        headlineScore={score}
-        overallBand={typeof band === "string" ? band : String(band)}
-        redFlag={redFlag}
-        dims={dims}
-      />
+      {typeof score === "number" && (
+        <HomepageUnlock
+          websiteUrl={url}
+          headlineScore={score}
+          overallBand={band ?? ""}
+          recommendedFix={aiResult.recommendedFix}
+          redFlag={lowest}
+          dims={dims}
+          generatedAt={generatedAt}
+        />
+      )}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-fog">
-          {aiResult
-            ? "My read of your site's core pages, plus a scan of how your market talks about the problem."
-            : "A quick snapshot from your public pages, not a full deep-dive. Your real score comes from running your URL."}
+          My live read of your homepage, pricing and about pages, scored against the MarketReady rubric.
         </p>
         <button type="button" onClick={onReset} className="nav-link">
           Re-run assessment
         </button>
       </div>
     </section>
+  );
+}
+
+/** Explicit scan-failure state (owner spec Part 7): an honest message and a
+ * Retry that re-runs the live crawl. No local engine result, no invented score. */
+function ScanError({
+  url,
+  onRetry,
+  onReset,
+}: {
+  url: string;
+  onRetry: () => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="glass-card px-6 py-8" role="alert" aria-live="assertive">
+      <span className="chip">Scan failed</span>
+      <h3 className="mt-3 font-display text-xl tracking-tight text-ink sm:text-2xl">
+        The scan could not complete.
+      </h3>
+      <p className="mt-2 max-w-xl text-sm leading-relaxed text-mist">
+        I could not read{" "}
+        <span className="font-semibold text-ink">{url || "that site"}</span> just now, so there is
+        no score to show you. Nothing here is guessed: run it again in a moment, or try a different
+        URL.
+      </p>
+      <div className="mt-5 flex flex-wrap items-center gap-5">
+        <button type="button" onClick={onRetry} className="btn-electric h-[46px] px-6 text-[14px]">
+          Retry scan →
+        </button>
+        <button type="button" onClick={onReset} className="nav-link">
+          Try a different URL
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -1062,17 +1144,17 @@ export function HeroDiagnostic({
     url,
     setUrl,
     error,
-    phase,
-    submitted,
-    result,
-    aiStatus,
+    status,
+    submittedUrl,
     aiResult,
+    generatedAt,
     handleSubmit,
+    retry,
     reset,
   } = useAssessment();
-  const showResult = phase === "done";
-  const aiLoading = aiStatus === "loading";
-  const aiResolved = aiStatus === "success" ? aiResult : null;
+  // The panel replaces the hero form as soon as a scan starts, and never shows
+  // a made-up score: loading -> results or an explicit error state with Retry.
+  const showPanel = status !== "idle";
   const centered = variant === "centered";
 
   return (
@@ -1102,24 +1184,24 @@ export function HeroDiagnostic({
         </svg>
       </div>
       <div className="hero-content relative mx-auto max-w-6xl px-5 sm:px-8">
-        {showResult ? (
+        {showPanel ? (
           <div
             id="calculator"
             className={centered ? "mt-6 scroll-mt-24 mx-auto max-w-[760px]" : "mt-6 scroll-mt-24"}
           >
             <div className="flex flex-col gap-5">
-              {submitted && result && (
-                <>
-                  {aiLoading && <CrawlScanner mode="loading" url={submitted.url} />}
-                  <HeroResults
-                    result={result}
-                    submitted={submitted}
-                    onReset={reset}
-                    onBookBriefing={onBookBriefing}
-                    aiResult={aiResolved}
-                    aiPending={aiLoading}
-                  />
-                </>
+              {status === "loading" && <CrawlScanner mode="loading" url={submittedUrl} />}
+              {status === "error" && (
+                <ScanError url={submittedUrl} onRetry={retry} onReset={reset} />
+              )}
+              {status === "success" && aiResult && (
+                <HeroResults
+                  aiResult={aiResult}
+                  url={submittedUrl}
+                  generatedAt={generatedAt}
+                  onReset={reset}
+                  onBookBriefing={onBookBriefing}
+                />
               )}
             </div>
           </div>
@@ -1176,7 +1258,7 @@ export function HeroDiagnostic({
             </p>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-              <span className="rounded-full border border-hairline bg-linen px-3 py-1 text-xs font-medium text-mist">Nine scored dimensions</span>
+              <span className="rounded-full border border-hairline bg-linen px-3 py-1 text-xs font-medium text-mist">Six scored dimensions, two reserved</span>
               <span className="rounded-full border border-hairline bg-linen px-3 py-1 text-xs font-medium text-mist">0 to 100 readiness score</span>
               <span className="rounded-full border border-hairline bg-linen px-3 py-1 text-xs font-medium text-mist">First red flag, free</span>
               <span className="rounded-full border border-hairline bg-linen px-3 py-1 text-xs font-medium text-mist">Full breakdown in your inbox</span>

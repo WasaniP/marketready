@@ -55,7 +55,7 @@ const TIERS: Tier[] = [
   id: "free",
   name: "Free Diagnostic Assessment",
   price: "Free",
-  scope: "Automated 9-Parameter Scorecard & Leakage Report",
+  scope: "Automated 6-Dimension Scorecard, 2 Reserved",
   speed: "< 60 SEC",
   pillClass: "text-fog border-hairline/60",
   bestFor: "Immediate Snapshot",

@@ -2,11 +2,18 @@
  * MarketReady audit engine: simulated crawl + scoring.
  *
  * Deterministic per input set: a stable pseudo-random seed is derived from the
- * submitted URL + business model + launch stage + ICP, so the same inputs always
+ * submitted URL + business model + launch stage, so the same inputs always
  * produce the same dashboard while different URLs produce visibly different
  * ones. The seed supplies a baseline score per parameter; heuristic adjustments
- * then encode the expected weak spots (empty ICP, pre-launch stage, business
- * model archetypes).
+ * then encode the expected weak spots (pre-launch stage, business model
+ * archetypes).
+ *
+ * IMPORTANT (owner spec 2026-09-15, Part 7): this engine is INTERNAL ONLY. The
+ * live user path is the server-side /api/diagnose crawl; the homepage never
+ * falls back to a locally invented score any more (it shows an explicit error
+ * state instead). scoreAssessment is still used for internal testing and for
+ * the sample report card, and its thresholds are the shared ones from
+ * ./thresholds so it agrees with the live path.
  *
  * Build #39 (value-first 6-parameter): the engine now mirrors the live
  * /api/diagnose contract shape: 6 scored parameters (positioning, icp,
@@ -23,46 +30,29 @@
  * without UI changes.
  */
 
-import type { AssessmentInput, AuditResult, ParamResult, Status } from "./types";
+import type { AssessmentInput, AuditResult, ParamResult } from "./types";
 import { COPY } from "./copy";
+import { scoreColor, statusFor, riskLabel, STRONG_MIN, REFINEMENT_MIN } from "./thresholds";
 
 /* ------------------------------------------------------------------ */
 /* Public thresholds + helpers                                         */
+/*                                                                     */
+/* ONE threshold set sitewide (owner spec 2026-09-15, Part 4): the      */
+/* cutoffs live in ./thresholds and are re-exported here so every       */
+/* existing importer of engine.ts (UI, PDF report, charts) keeps using  */
+/* the same values.                                                     */
 /* ------------------------------------------------------------------ */
 
-export const SCORE_COLORS = {
-  high: "#1F4A42", // 75 to 100, strong / passing (deep pine)
-  mid: "#8A6A1F", //  40 to 74, needs refinement (bronze olive)
-  low: "#A15C2B", //   0 to 39, needs work (warm sienna)
-} as const;
-
-/** Score → hex color, exact thresholds from the rubric status labels. */
-export function scoreColor(score: number): string {
-  if (score >= 75) return SCORE_COLORS.high;
-  if (score >= 40) return SCORE_COLORS.mid;
-  return SCORE_COLORS.low;
-}
-
-/** Score → status badge label (homepage Diagnostic Engine vocabulary). */
-export function statusFor(score: number): Status {
-  if (score >= 75) return "STRONG";
-  if (score >= 40) return "NEEDS REFINEMENT";
-  return "CRITICAL GAP";
-}
-
-/** Overall score → launch risk label. */
-export function riskLabel(overall: number): string {
-  if (overall >= 80) return "Low Launch Risk";
-  if (overall >= 60) return "Moderate Launch Risk";
-  return "High Launch Risk";
-}
+export * from "./thresholds";
 
 /* ------------------------------------------------------------------ */
 /* Deterministic PRNG (seeded from the input set)                      */
 /* ------------------------------------------------------------------ */
 
-/** cyrb53-style string hash → 53-bit int, stable across runs and platforms. */
-function hashString(str: string): number {
+/** cyrb53-style string hash → 53-bit int, stable across runs and platforms.
+ * Exported so /api/diagnose can derive its OpenAI `seed` from a stable hash of
+ * the normalized origin (the same input as the crawl cache key). */
+export function hashString(str: string): number {
   let h1 = 0xdeadbeef;
   let h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) {
@@ -175,7 +165,7 @@ const FRICTION_LABELS: Record<string, { high: string; mid: string; low: string }
 function frictionLabelFor(id: string, score: number): string {
   const band = FRICTION_LABELS[id];
   if (!band) return "Gap in the assessment";
-  return score >= 75 ? band.high : score >= 40 ? band.mid : band.low;
+  return score >= STRONG_MIN ? band.high : score >= REFINEMENT_MIN ? band.mid : band.low;
 }
 
 /** Pick the deterministic 2 to 4 word positive anchor label used when a score is
@@ -209,11 +199,8 @@ const LOCKED_COPY: Pick<ParamResult, "diagnostic" | "before" | "after" | "ration
  * Readiness are LOCKED (no score) in the result.
  */
 export function scoreAssessment(input: AssessmentInput): AuditResult {
-  const seedInput = [input.url.trim(), input.businessModel, input.launchStage, input.icp.trim()].join("|");
+  const seedInput = [input.url.trim(), input.businessModel, input.launchStage].join("|");
   const rand = mulberry32(hashString(seedInput));
-
-  const icpText = input.icp.trim();
-  const unfocusedIcp = /everyone|anyone|anybody|any company|all types|general audience|every company|everyone who/i.test(icpText);
 
   // Baseline: per-parameter random in a mid band, then heuristic deltas.
   const deltas: Record<string, number> = {};
@@ -224,15 +211,6 @@ export function scoreAssessment(input: AssessmentInput): AuditResult {
     for (const [id, d] of Object.entries(stageAdj)) {
       deltas[id] = (deltas[id] ?? 0) + d;
     }
-  }
-  if (!icpText) {
-    deltas.icp = (deltas.icp ?? 0) - 24; // no named buyer → severe ICP penalty
-    deltas.positioning = (deltas.positioning ?? 0) - 4;
-  } else if (unfocusedIcp) {
-    deltas.icp = (deltas.icp ?? 0) - 16;
-    deltas.positioning = (deltas.positioning ?? 0) - 6; // "everyone" ICP → fuzzy category
-  } else {
-    deltas.icp = (deltas.icp ?? 0) + 8; // articulated buyer → small lift
   }
 
   const parameters: ParamResult[] = PARAMETER_IDS.map((id) => {
@@ -295,8 +273,6 @@ export function scoreAssessment(input: AssessmentInput): AuditResult {
   let overall = weightSum > 0 ? Math.round(scoreSum / weightSum) : 0;
   if (input.launchStage === "Pre-Launch / MVP") overall -= 2;
   else if (input.launchStage === "Post-Seed Scaling") overall += 2;
-  else overall += 5; // Series A+ Growth: traction compounds readiness
-  if (icpText && !unfocusedIcp) overall += 2;
   overall = clamp(overall, 0, 100);
 
   const topGaps = [...scored].sort((a, b) => (a.score ?? 0) - (b.score ?? 0)).slice(0, 3);

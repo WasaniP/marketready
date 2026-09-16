@@ -1,0 +1,299 @@
+/**
+ * Owner spec 2026-09-15: POST /api/diagnose rework.
+ *
+ * Guards the route contract end to end with a mocked crawl + mocked OpenAI
+ * response:
+ *   Part 1: no estimatedLeakage anywhere (request or response)
+ *   Part 2: temperature 0, top_p 1, an origin-derived seed, one input (crawl)
+ *   Part 3: the overall score + band are COMPUTED IN CODE (model values ignored)
+ *   Part 5: every returned number is snapped to a permitted band
+ *   Part 6: abstain instead of guessing; 3+ abstains = no overall score at all
+ *
+ * Runs with `bun test`. No network: globalThis.fetch is mocked for both the
+ * crawl and the OpenAI call.
+ */
+import { describe, test, expect, beforeEach, beforeAll, afterAll } from "bun:test";
+import { Route, seedFromOrigin } from "./diagnose";
+import { clearCrawlCache } from "~/lib/audit/crawl";
+
+const POST = Route.options.server.handlers.POST;
+
+const ORIGIN = "https://acme.example";
+const HTML = `<!doctype html><html><head><title>Acme widgets</title></head>
+<body><h1>Acme is the widget platform for logistics teams</h1><h2>Ship faster</h2>
+<p>Teams cut onboarding by 40%.</p><a class="btn" href="/signup">Start free</a></body></html>`;
+
+let openaiBody: Record<string, unknown> | null = null;
+
+/** Mock both the crawl and the model call. */
+function mock(modelPayload: unknown) {
+  globalThis.fetch = (async (url: string | URL, init?: RequestInit) => {
+    if (String(url).startsWith("https://api.openai.com")) {
+      openaiBody = JSON.parse(String(init?.body ?? "{}"));
+      return Response.json({
+        choices: [{ message: { content: JSON.stringify(modelPayload) } }],
+      });
+    }
+    return new Response(HTML, { status: 200, headers: { "content-type": "text/html" } });
+  }) as unknown as typeof fetch;
+}
+
+function modelDim(id: string, name: string, pillar: string, score?: number, insufficientData?: boolean) {
+  return insufficientData
+    ? { id, name, pillar, insufficientData: true }
+    : {
+        id,
+        name,
+        pillar,
+        score,
+        status: "Strong",
+        friction_label: "Vague Category Naming",
+        anchor_label: "Clear Category Stake",
+        evidence_snippet: "Acme is the widget platform for logistics teams",
+        keyObservation: "The hero names the category and the buyer.",
+        commercialRisk: "Visitors classify the product instantly.",
+      };
+}
+
+/** 6 scored + the 2 locked reserved parameters, banded values. */
+function fullPayload() {
+  return {
+    primaryFriction: "The pricing page never states who the product is for.",
+    recommendedFix: "Add a named-buyer line above the fold on pricing.",
+    dimensions: [
+      modelDim("positioning", "Category Positioning", "Core Positioning", 75),
+      modelDim("icp", "ICP & Audience Alignment", "Core Positioning", 65),
+      modelDim("differentiation", "Differentiation Anchor", "Core Positioning", 55),
+      modelDim("messaging", "Hero Messaging & Speed", "Messaging & Value Prop", 85),
+      modelDim("value-prop", "Value Proposition Density", "Messaging & Value Prop", 45),
+      { id: "gtm", name: "GTM Readiness", pillar: "GTM & Launch Velocity", locked: true },
+      { id: "launch", name: "Launch Readiness", pillar: "GTM & Launch Velocity", locked: true },
+      modelDim("conversion", "Conversion & Friction Mechanics", "GTM & Launch Velocity", 75),
+    ],
+  };
+}
+
+async function post(url = ORIGIN) {
+  const res = await POST({
+    request: new Request("http://localhost/api/diagnose", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    }),
+  });
+  return { res, body: (await res.json()) as Record<string, unknown> };
+}
+
+const realFetch = globalThis.fetch;
+const realKey = process.env.OPENAI_API_KEY;
+
+beforeAll(() => {
+  process.env.OPENAI_API_KEY = "test-key";
+});
+afterAll(() => {
+  globalThis.fetch = realFetch;
+  if (realKey === undefined) delete process.env.OPENAI_API_KEY;
+  else process.env.OPENAI_API_KEY = realKey;
+});
+beforeEach(() => {
+  openaiBody = null;
+  clearCrawlCache();
+});
+
+describe("determinism knobs (Part 2)", () => {
+  test("temperature 0, top_p 1, and an origin-derived seed", async () => {
+    mock(fullPayload());
+    await post();
+    expect(openaiBody?.temperature).toBe(0);
+    expect(openaiBody?.top_p).toBe(1);
+    expect(openaiBody?.model).toBe("gpt-4o");
+    expect(openaiBody?.response_format).toEqual({ type: "json_object" });
+    expect(openaiBody?.seed).toBe(seedFromOrigin(ORIGIN));
+  });
+
+  test("the seed is stable for an origin and differs per origin", async () => {
+    expect(seedFromOrigin(ORIGIN)).toBe(seedFromOrigin(ORIGIN));
+    expect(seedFromOrigin(ORIGIN)).not.toBe(seedFromOrigin("https://other.example"));
+    expect(Number.isInteger(seedFromOrigin(ORIGIN))).toBe(true);
+
+    // The route normalises the submitted URL to its origin before seeding, so a
+    // deep link scores against the same seed as the bare origin.
+    mock(fullPayload());
+    await post(`${ORIGIN}/some/deep/path?utm_source=newsletter`);
+    expect(openaiBody?.seed).toBe(seedFromOrigin(ORIGIN));
+  });
+
+  test("the crawl is the ONLY input: no market intelligence, no ICP", async () => {
+    mock(fullPayload());
+    await post();
+    const messages = (openaiBody?.messages ?? []) as { role: string; content: string }[];
+    const system = messages.find((m) => m.role === "system")?.content ?? "";
+    const user = messages.find((m) => m.role === "user")?.content ?? "";
+    for (const prompt of [system, user]) {
+      expect(prompt).toContain("STRUCTURED SITE CRAWL");
+      expect(prompt).not.toContain("EXTERNAL MARKET INTELLIGENCE");
+      expect(prompt.toLowerCase()).not.toContain("user-submitted icp");
+      expect(prompt.toLowerCase()).not.toContain("leakage");
+      expect(prompt).not.toContain("DuckDuckGo");
+    }
+    // The crawl really happened, for exactly the 3 canonical paths.
+    expect(user).toContain("[/pricing] -> FOUND");
+    expect(user).toContain("[/about] -> FOUND");
+    expect(user).toContain("[Homepage ] -> FOUND");
+    // The rubric states the unified vocabulary.
+    expect(system).toContain('70 -> "Strong"');
+    expect(system).toContain('45 to 69 -> "Needs Refinement"');
+    expect(system).toContain("15, 25, 35, 45, 55, 65, 75, 85, 95");
+  });
+
+  test("the same URL + the same model output score identically on a repeat call", async () => {
+    mock(fullPayload());
+    const first = await post();
+    const second = await post();
+    expect(second.body.score).toBe(first.body.score);
+    expect(second.body.dimensions).toEqual(first.body.dimensions);
+  });
+});
+
+describe("overall score computed in code (Part 3)", () => {
+  test("serverside weighted mean, and model-supplied score/band are ignored", async () => {
+    mock({
+      ...fullPayload(),
+      score: 12,
+      overallBand: "Market Ready",
+      estimatedLeakage: "$500,000 to $900,000/yr",
+    });
+    const { body } = await post();
+    // 97.5 + 78 + 66 + 85 + 40.5 + 67.5 = 434.5 over weights 6.5 -> 66.8 -> 67
+    expect(body.score).toBe(67);
+    expect(body.overallBand).toBe("Needs Attention");
+    expect("estimatedLeakage" in body).toBe(false);
+    expect(JSON.stringify(body)).not.toContain("eakage");
+  });
+
+  test("the response contract is 6 scored + 2 locked, in canonical order", async () => {
+    mock(fullPayload());
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    expect(dims.map((d) => d.id)).toEqual([
+      "positioning",
+      "icp",
+      "messaging",
+      "differentiation",
+      "value-prop",
+      "gtm",
+      "launch",
+      "conversion",
+    ]);
+    const locked = dims.filter((d) => d.locked === true);
+    expect(locked).toHaveLength(2);
+    expect(locked.every((d) => d.score === undefined)).toBe(true);
+    expect(body.primaryFriction).toContain("pricing page");
+    expect(body.recommendedFix).toContain("named-buyer line");
+  });
+});
+
+describe("banded coercion (Part 5)", () => {
+  test("any number is snapped to the nearest permitted value", async () => {
+    mock({
+      ...fullPayload(),
+      dimensions: fullPayload().dimensions.map((d) =>
+        d.id === "positioning" ? { ...d, score: 88 } : d.id === "icp" ? { ...d, score: 20 } : d,
+      ),
+    });
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    const byId = Object.fromEntries(dims.map((d) => [d.id, d]));
+    expect(byId.positioning.score).toBe(85);
+    expect(byId.icp.score).toBe(15);
+    expect(byId.positioning.status).toBe("Strong");
+    expect(byId.icp.status).toBe("Critical Gap");
+  });
+
+  test("status labels always come from the unified thresholds", async () => {
+    mock({
+      ...fullPayload(),
+      dimensions: fullPayload().dimensions.map((d) =>
+        d.id === "messaging" ? { ...d, score: 65, status: "Strong" } : d,
+      ),
+    });
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    const messaging = dims.find((d) => d.id === "messaging") as Record<string, unknown>;
+    expect(messaging.score).toBe(65);
+    expect(messaging.status).toBe("Needs Refinement");
+  });
+});
+
+describe("abstain rather than guess (Part 6)", () => {
+  test("an insufficientData dimension carries NO score, and 2 abstains still score", async () => {
+    mock({
+      ...fullPayload(),
+      dimensions: fullPayload().dimensions.map((d) =>
+        d.id === "value-prop" || d.id === "conversion" ? { ...d, insufficientData: true } : d,
+      ),
+    });
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    const valueProp = dims.find((d) => d.id === "value-prop") as Record<string, unknown>;
+    expect(valueProp.insufficientData).toBe(true);
+    expect(valueProp.score).toBeUndefined();
+    // 97.5 + 78 + 66 + 85 = 326.5 over 4.7 -> 69.47 -> 69 (weights redistributed)
+    expect(body.score).toBe(69);
+    expect(body.overallBand).toBe("Needs Attention");
+  });
+
+  test("3 abstains mean NO overall score at all", async () => {
+    mock({
+      ...fullPayload(),
+      dimensions: fullPayload().dimensions.map((d) =>
+        ["differentiation", "messaging", "value-prop", "conversion"].includes(d.id)
+          ? { ...d, insufficientData: true }
+          : d,
+      ),
+    });
+    const { body } = await post();
+    expect(body.score).toBeNull();
+    expect(body.overallBand).toBeNull();
+  });
+
+  test("a dimension the model omits entirely abstains (never a default 20)", async () => {
+    const payload = fullPayload();
+    mock({
+      ...payload,
+      dimensions: payload.dimensions.filter((d) => d.id !== "differentiation"),
+    });
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    const differentiation = dims.find((d) => d.id === "differentiation") as Record<string, unknown>;
+    expect(differentiation.insufficientData).toBe(true);
+    expect(differentiation.score).toBeUndefined();
+  });
+
+  test("a stray pricing dimension is still dropped", async () => {
+    const payload = fullPayload();
+    mock({
+      ...payload,
+      dimensions: [
+        ...payload.dimensions,
+        { id: "pricing", name: "Pricing & Packaging", pillar: "Messaging & Value Prop", score: 95 },
+      ],
+    });
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    expect(dims.find((d) => d.id === "pricing")).toBeUndefined();
+  });
+
+  test("a missing primary friction or fix is rejected (clean 500, no invented score)", async () => {
+    mock({ ...fullPayload(), primaryFriction: "" });
+    const { res } = await post();
+    expect(res.status).toBe(500);
+  });
+
+  test("an invalid URL is a 400", async () => {
+    mock(fullPayload());
+    const { res, body } = await post("not-a-url");
+    expect(res.status).toBe(400);
+    expect(typeof body.error).toBe("string");
+  });
+});
