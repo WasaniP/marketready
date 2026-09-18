@@ -13,8 +13,22 @@
  * crawl and the OpenAI call.
  */
 import { describe, test, expect, beforeEach, beforeAll, afterAll } from "bun:test";
-import { Route, seedFromOrigin } from "./diagnose";
+import {
+  Route,
+  seedFromOrigin,
+  buildUserMessage,
+  diagnoseCacheKey,
+  sha256Hex,
+  DIAGNOSE_PROMPT_VERSION,
+} from "./diagnose";
 import { clearCrawlCache } from "~/lib/audit/crawl";
+import {
+  DIAGNOSE_CACHE_TTL_MS,
+  diagnoseResponseCacheSize,
+  clearDiagnoseResponseCache,
+  readDiagnoseResponse,
+  primeDiagnoseResponse,
+} from "~/lib/audit/diagnoseCache";
 import {
   UNREADABLE_BODY_FIRST_IDENTICAL_SHELL,
   UNREADABLE_BODY_FIRST_LOW_CONTENT,
@@ -47,6 +61,9 @@ function mock(modelPayload: unknown, crawlHtml: (path: string) => string = htmlF
       openaiBody = JSON.parse(String(init?.body ?? "{}"));
       return Response.json({
         choices: [{ message: { content: JSON.stringify(modelPayload) } }],
+        // Present on every real OpenAI response; the route logs both fields.
+        system_fingerprint: "fp_test",
+        usage: { total_tokens: 6107 },
       });
     }
     const path = new URL(String(url)).pathname;
@@ -118,6 +135,9 @@ beforeEach(() => {
   openaiBody = null;
   openaiCalls = 0;
   clearCrawlCache();
+  // The response cache is process-wide state (the point of it), so a test that
+  // mocks a different model payload for the same input must start from empty.
+  clearDiagnoseResponseCache();
 });
 
 describe("determinism knobs (Part 2)", () => {
@@ -452,5 +472,175 @@ describe("Part D: refuse to score what was not read", () => {
     expect(keys).toEqual(
       ["body", "cta", "heading", "pages", "readable", "reason", "shellDetected", "usableChars"].sort(),
     );
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Owner protocol Part 2.2: the response cache (the determinism fix)    */
+/* ------------------------------------------------------------------ */
+
+/** A payload no test expects: served only when the cache really hit. */
+function markerPayload(friction = "MARKER") {
+  return {
+    score: 12,
+    overallBand: null,
+    primaryFriction: friction,
+    recommendedFix: friction,
+    dimensions: [],
+  };
+}
+
+describe("Part 2.2: response cache", () => {
+  test("a repeat submission is served the stored payload with NO model call", async () => {
+    mock(fullPayload());
+    const first = await post();
+    expect(openaiCalls).toBe(1);
+    const firstJson = JSON.stringify(first.body);
+
+    // A second MODEL call would return THIS divergent completion (the exact
+    // failure the diagnosis measured: identical input, different output). The
+    // cache must never give the model that chance.
+    openaiCalls = 0;
+    mock({
+      ...fullPayload(),
+      primaryFriction: "A divergent second completion.",
+      dimensions: fullPayload().dimensions.map((d) =>
+        d.id === "positioning" ? { ...d, score: 15 } : d,
+      ),
+    });
+    const second = await post();
+    expect(openaiCalls).toBe(0);
+    expect(second.res.status).toBe(200);
+    expect(JSON.stringify(second.body)).toBe(firstJson);
+  });
+
+  test("the key is sha256(the request body) tagged with DIAGNOSE_PROMPT_VERSION", async () => {
+    mock(fullPayload());
+    await post();
+    expect(openaiCalls).toBe(1);
+    // Rebuild the key from the body the route actually sent on the wire.
+    const hash = await sha256Hex(JSON.stringify(openaiBody));
+    const key = diagnoseCacheKey(hash);
+    expect(key).toBe(`v${DIAGNOSE_PROMPT_VERSION}:${hash}`);
+    expect(diagnoseResponseCacheSize()).toBe(1);
+
+    // Overwrite exactly that key: the route must read it and skip the model,
+    // which is only possible if its derived key is identical.
+    clearDiagnoseResponseCache();
+    primeDiagnoseResponse(key, markerPayload("MARKER"));
+    openaiCalls = 0;
+    mock(fullPayload());
+    const marked = await post();
+    expect(openaiCalls).toBe(0);
+    expect(marked.body.primaryFriction).toBe("MARKER");
+
+    // An entry stored under the NEXT prompt version is a different key, so a
+    // stale-version entry is never served: the model runs again. This is how a
+    // future rubric/prompt edit invalidates cached results automatically.
+    clearDiagnoseResponseCache();
+    primeDiagnoseResponse(
+      `v${DIAGNOSE_PROMPT_VERSION + 1}:${hash}`,
+      markerPayload("STALE_VERSION"),
+    );
+    openaiCalls = 0;
+    mock(fullPayload());
+    const fresh = await post();
+    expect(openaiCalls).toBe(1);
+    expect(fresh.body.primaryFriction).not.toBe("STALE_VERSION");
+    expect(fresh.body.score).toBe(67);
+  });
+
+  test("a different site is a different key and is scored on its own", async () => {
+    mock(fullPayload());
+    await post(ORIGIN);
+    expect(openaiCalls).toBe(1);
+    mock({
+      ...fullPayload(),
+      primaryFriction: "The second site has its own friction.",
+    });
+    const other = await post("https://other.example");
+    expect(openaiCalls).toBe(2);
+    expect(other.body.primaryFriction).toContain("second site");
+  });
+
+  test("the TTL is 30 days (owner spec, not 24h) and an older entry is a miss", () => {
+    expect(DIAGNOSE_CACHE_TTL_MS).toBe(30 * 24 * 60 * 60 * 1000);
+    const t0 = 1_700_000_000_000;
+    clearDiagnoseResponseCache();
+    primeDiagnoseResponse("ttl-key", markerPayload(), t0);
+    expect(readDiagnoseResponse("ttl-key", t0 + DIAGNOSE_CACHE_TTL_MS)).not.toBeNull();
+    expect(readDiagnoseResponse("ttl-key", t0 + DIAGNOSE_CACHE_TTL_MS + 1)).toBeNull();
+  });
+
+  test("an unreadable site writes no cache entry (and never reaches the model)", async () => {
+    mock(fullPayload(), () => SHELL);
+    const { body } = await post();
+    expect(body.readable).toBe(false);
+    expect(openaiCalls).toBe(0);
+    expect(diagnoseResponseCacheSize()).toBe(0);
+  });
+
+  test("an error path is never cached", async () => {
+    // A malformed generation (no primary friction) is a clean 500 ...
+    mock({ ...fullPayload(), primaryFriction: "" });
+    const failed = await post();
+    expect(failed.res.status).toBe(500);
+    expect(diagnoseResponseCacheSize()).toBe(0);
+    // ... and the next submission still calls the model and succeeds.
+    openaiCalls = 0;
+    mock(fullPayload());
+    const ok = await post();
+    expect(openaiCalls).toBe(1);
+    expect(ok.res.status).toBe(200);
+    expect(typeof ok.body.score).toBe("number");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Owner protocol Part 2.1(a) + 1.3: origin hygiene + attribution log   */
+/* ------------------------------------------------------------------ */
+
+describe("Part 2.1(a) + 1.3: canonical origin and per-call attribution", () => {
+  test("the SITE URL UNDER EVALUATION line carries the canonical origin", () => {
+    const msg = buildUserMessage("https://acme.example", "CRAWL BLOCK");
+    expect(msg.startsWith("SITE URL UNDER EVALUATION: https://acme.example\n")).toBe(true);
+    expect(msg).not.toContain("acme.example/");
+    expect(msg).toContain("fetched server-side from https://acme.example");
+  });
+
+  test("a trailing slash or query string no longer changes the prompt", async () => {
+    mock(fullPayload());
+    await post(`${ORIGIN}/`);
+    const barePrompt = JSON.stringify(openaiBody);
+    clearDiagnoseResponseCache();
+    clearCrawlCache();
+    mock(fullPayload());
+    await post(`${ORIGIN}/?utm_source=newsletter`);
+    expect(JSON.stringify(openaiBody)).toBe(barePrompt);
+  });
+
+  test("ONE log line per model call: fingerprint, body hash, token usage", async () => {
+    const originalLog = console.log;
+    const lines: string[] = [];
+    console.log = (...args: unknown[]) => {
+      lines.push(args.map(String).join(" "));
+    };
+    try {
+      mock(fullPayload());
+      await post();
+      await post();
+    } finally {
+      console.log = originalLog;
+    }
+    const calls = lines.filter((l) => l.includes("[diagnose] model call"));
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toContain("system_fingerprint=fp_test");
+    expect(calls[0]).toMatch(/bodySha256=[0-9a-f]{64}/);
+    expect(calls[0]).toContain(`key=v${DIAGNOSE_PROMPT_VERSION}:`);
+    expect(calls[0]).toContain("total_tokens=6107");
+    expect(calls[0]).not.toContain("STRUCTURED SITE CRAWL"); // never the prompt
+    expect(calls[0].split("\n")).toHaveLength(1);
+    // The second submission is logged as a cache hit instead.
+    expect(lines.filter((l) => l.includes("response cache HIT"))).toHaveLength(1);
   });
 });
