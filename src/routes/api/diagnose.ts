@@ -62,6 +62,25 @@
  * Security: the API key is read ONLY from process.env.OPENAI_API_KEY (injected
  * at runtime from the project Secrets panel). Never hard-coded, never logged.
  *
+ * Owner protocol Part 2 (determinism fix, 2026-09-18), from the completed
+ * diagnosis in /home/team/shared/determinism-investigation/REPORT.md (§4, §8):
+ * `temperature 0` + `top_p 1` + a stable `seed` do NOT make this endpoint a
+ * pure function. With a byte-identical request body and an unchanged
+ * `system_fingerprint`, OpenAI still returned a different completion, moving one
+ * parameter by 30 points. So:
+ *   2.2 RESPONSE CACHE (the fix): the FINAL COERCED payload is cached under
+ *       sha256(the whole deterministic request body) x DIAGNOSE_PROMPT_VERSION
+ *       for 30 days (src/lib/audit/diagnoseCache.ts), and a repeat submission
+ *       of an unchanged site is served that stored payload with NO model call.
+ *       A divergent generation can never resurface.
+ *   2.1 INPUT HYGIENE (not the fix): the user message interpolates the canonical
+ *       `origin`, not the raw submitted string, so `/` and no-`/` no longer
+ *       produce two different prompts for the same crawl (buildUserMessage).
+ *   1.3 ATTRIBUTION: one server log line per model call carries
+ *       `system_fingerprint`, the request-body SHA-256 and `usage.total_tokens`.
+ * The rubric, band anchors, value-prop re-point and abstain/boilerplate paths are
+ * deliberately untouched by this change.
+ *
  * Failure handling: any error (missing key, expired key, network, timeout,
  * non-2xx from OpenAI) returns a clean 500 `{ error }` and the client shows its
  * explicit "scan could not complete" state; NO score is invented anywhere. One
@@ -85,6 +104,10 @@ import {
 import { BANDED_SCORES, snapToBand, computeOverall } from "~/lib/audit/scoring";
 import { crawlSite, buildCrawlBlock, assessReadability } from "~/lib/audit/crawl";
 import { buildUnreadablePayload, MIN_USABLE_CHARS } from "~/lib/audit/readability";
+import {
+  readDiagnoseResponse,
+  writeDiagnoseResponse,
+} from "~/lib/audit/diagnoseCache";
 
 /* ------------------------------------------------------------------ */
 /* Exact, strict-JSON PMM system prompt (verbatim, incl. the no-dash   */
@@ -150,6 +173,79 @@ const TIMEOUT_MS = 40000;
  * seed (and the same crawl, and therefore the same scores). */
 export function seedFromOrigin(origin: string): number {
   return Math.abs(Math.floor(hashString(origin)) % 2147483647);
+}
+
+/** Build the single user message sent to the model: PURE, its only inputs are
+ * the canonical origin and the crawl block, so the request body (and therefore
+ * the response-cache key) is a pure function of the site plus its crawl.
+ *
+ * Owner protocol Part 2.1(a) hygiene: the "SITE URL UNDER EVALUATION" line
+ * carries the canonical `origin`, not the raw submitted string. Before this,
+ * `https://linear.app/` and `https://linear.app` produced different prompts for
+ * the same crawl and the same seed (REPORT.md §5, last row). */
+export function buildUserMessage(origin: string, crawlBlock: string): string {
+  return `SITE URL UNDER EVALUATION: ${origin}
+
+=== STRUCTURED SITE CRAWL ===
+The following is real content fetched server-side from ${origin}. Each page is presented as its parsed DOM structure: title, hero H1, above-the-fold subtext, ordered heading hierarchy, body text, and CTAs, followed by a STATIC METADATA section (meta description, og:/twitter: fields, JSON-LD, noscript) where present. Static metadata is weaker evidence than rendered copy but is still valid evidence for Category Positioning, ICP & Audience Alignment, and Differentiation Anchor. Pages listed as NOT FOUND / UNREACHABLE (or NON-HTML) have no indexed content: treat that as a hard structural gap.
+${crawlBlock}
+
+TASK:
+Score the 6 URL-scorable parameters below using the banded rubric in the system prompt, and LOCK the 2 reserved parameters (GTM Readiness, Launch Readiness) with "locked": true and no score. There is NO Pricing & Packaging parameter: do not score or return one. For EACH scored parameter include: score (one of ${BANDED_SCORES.join(", ")} ONLY), the exact status label (Strong / Needs Refinement / Critical Gap), a 2 to 4 word "friction_label" naming that parameter's specific friction, a 2 to 4 word "anchor_label" naming that parameter's positive strength, an "evidence_snippet" that is a short VERBATIM DOM quote (5 to 25 words) from the STRUCTURED SITE CRAWL backing that score (empty string "" when none is usable), and the two-part diagnostic synthesis: a ONE-sentence "keyObservation" of what was FOUND or MISSING on the page (grounded in the detected messaging, never generic) plus a ONE-sentence "commercialRisk" explaining the business impact (which for high scores reads as a competitive advantage). If a scored parameter has NO representation anywhere in the crawl, return "insufficientData": true for it with NO score and NO status instead of guessing a number. Which parameter to treat as the primary friction is your judgment call.
+
+Do NOT return an overall score, a readiness band, or any revenue or dollar figure: the server computes the overall score and band from your parameter scores. Return the single primary friction (15 words max) and one recommended fix (25 words max).
+
+Respond with ONLY strict JSON matching this schema (dimensions in EXACTLY this order):
+{
+  "primaryFriction": "string (max 15 words)",
+  "recommendedFix": "string (max 25 words)",
+  "dimensions": [
+    { "id": "positioning", "name": "Category Positioning", "pillar": "Core Positioning", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "icp", "name": "ICP & Audience Alignment", "pillar": "Core Positioning", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "messaging", "name": "Hero Messaging & Speed", "pillar": "Messaging & Value Prop", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "differentiation", "name": "Differentiation Anchor", "pillar": "Core Positioning", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "value-prop", "name": "Value Proposition Density", "pillar": "Messaging & Value Prop", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "gtm", "name": "GTM Readiness", "pillar": "GTM & Launch Velocity", "locked": true },
+    { "id": "launch", "name": "Launch Readiness", "pillar": "GTM & Launch Velocity", "locked": true },
+    { "id": "conversion", "name": "Conversion & Friction Mechanics", "pillar": "GTM & Launch Velocity", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" }
+  ]
+}
+A parameter with no usable evidence still appears in the array in its slot, in this exact shape: { "id": "value-prop", "name": "Value Proposition Density", "pillar": "Messaging & Value Prop", "insufficientData": true }
+No text outside the JSON.`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Response-cache key (owner protocol Part 2.2 + 2.1b)                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Version of the system prompt / scoring rubric that produced a cached payload.
+ * ANY future edit to SYSTEM_PROMPT above (including the band anchors, the
+ * value-prop wording or the abstain rule it carries) MUST bump this number. It
+ * is baked into the response-cache key, so bumping it invalidates every cached
+ * result automatically and the next visit re-scores on the model.
+ */
+export const DIAGNOSE_PROMPT_VERSION = 1;
+
+/** The full response-cache key: rubric/prompt version + the SHA-256 of the
+ * ENTIRE deterministic request body (model, system prompt, user message and
+ * sampling params), i.e. a superset of model + prompt version + user-message
+ * hash. Nothing time-, run- or randomness-derived is in here, so two
+ * invocations over the same site and the same crawl produce the same key. */
+export function diagnoseCacheKey(requestBodyHash: string): string {
+  return `v${DIAGNOSE_PROMPT_VERSION}:${requestBodyHash}`;
+}
+
+/** SHA-256 of a string, lowercase hex. WebCrypto rather than `node:crypto` so
+ * this module stays safe in every bundle the route appears in. */
+export async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(input),
+  );
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 /* ------------------------------------------------------------------ */
@@ -437,34 +533,62 @@ export const Route = createFileRoute("/api/diagnose")({
             );
           }
 
-          const userMessage = `SITE URL UNDER EVALUATION: ${url}
+          // Built by a PURE helper from (origin, crawlBlock) only, so the
+          // request body is a pure function of the site + its crawl. Part 2.1(a):
+          // the "SITE URL UNDER EVALUATION" line carries the canonical origin,
+          // never the raw submitted string.
+          const userMessage = buildUserMessage(origin, crawlBlock);
 
-=== STRUCTURED SITE CRAWL ===
-The following is real content fetched server-side from ${origin}. Each page is presented as its parsed DOM structure: title, hero H1, above-the-fold subtext, ordered heading hierarchy, body text, and CTAs, followed by a STATIC METADATA section (meta description, og:/twitter: fields, JSON-LD, noscript) where present. Static metadata is weaker evidence than rendered copy but is still valid evidence for Category Positioning, ICP & Audience Alignment, and Differentiation Anchor. Pages listed as NOT FOUND / UNREACHABLE (or NON-HTML) have no indexed content: treat that as a hard structural gap.
-${crawlBlock}
+          /* ----------------------------------------------------------------
+           * RESPONSE CACHE (owner protocol Part 2.2: the determinism fix).
+           *
+           * The key is the SHA-256 of the WHOLE deterministic request body
+           * (model + system prompt + user message + sampling params), tagged
+           * with DIAGNOSE_PROMPT_VERSION. It carries no timestamp, run id or
+           * randomness, so two separate invocations over an unchanged site and
+           * an unchanged crawl produce the same key, and the SECOND one is
+           * served the stored payload with no model call at all.
+           *
+           * What is stored is the final COERCED payload: the exact JSON object
+           * returned to the client. Coercion, band snapping, status labels and
+           * abstain handling are therefore frozen at write time, so a later
+           * divergent raw completion can never resurface.
+           *
+           * 30-day TTL (owner spec; the parsed-crawl cache is 24h, this one is
+           * deliberately longer). In-process Map, cleared on restart; a changed
+           * crawl block changes the hash, so old entries simply age out by TTL.
+           * Reading happens AFTER the readability gate, so an unreadable site
+           * never reaches - and never writes - this cache. Concurrent misses on
+           * a serverless platform may each call the model before either writes;
+           * the first stored entry then fixes every subsequent read, so that
+           * window is one cold request per process.
+           * ---------------------------------------------------------------- */
+          const requestBody = {
+            model: MODEL,
+            response_format: { type: "json_object" },
+            // Determinism (owner spec 2026-09-15, Part 2.1): no sampling
+            // randomness and a seed derived from the normalized origin.
+            temperature: 0,
+            top_p: 1,
+            seed: seedFromOrigin(origin),
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: userMessage },
+            ],
+          };
+          // ONE serialisation, used for BOTH the key and the wire body, so the
+          // hash can never describe something other than what was sent.
+          const requestBodyJson = JSON.stringify(requestBody);
+          const requestBodyHash = await sha256Hex(requestBodyJson);
+          const cacheKey = diagnoseCacheKey(requestBodyHash);
 
-TASK:
-Score the 6 URL-scorable parameters below using the banded rubric in the system prompt, and LOCK the 2 reserved parameters (GTM Readiness, Launch Readiness) with "locked": true and no score. There is NO Pricing & Packaging parameter: do not score or return one. For EACH scored parameter include: score (one of ${BANDED_SCORES.join(", ")} ONLY), the exact status label (Strong / Needs Refinement / Critical Gap), a 2 to 4 word "friction_label" naming that parameter's specific friction, a 2 to 4 word "anchor_label" naming that parameter's positive strength, an "evidence_snippet" that is a short VERBATIM DOM quote (5 to 25 words) from the STRUCTURED SITE CRAWL backing that score (empty string "" when none is usable), and the two-part diagnostic synthesis: a ONE-sentence "keyObservation" of what was FOUND or MISSING on the page (grounded in the detected messaging, never generic) plus a ONE-sentence "commercialRisk" explaining the business impact (which for high scores reads as a competitive advantage). If a scored parameter has NO representation anywhere in the crawl, return "insufficientData": true for it with NO score and NO status instead of guessing a number. Which parameter to treat as the primary friction is your judgment call.
-
-Do NOT return an overall score, a readiness band, or any revenue or dollar figure: the server computes the overall score and band from your parameter scores. Return the single primary friction (15 words max) and one recommended fix (25 words max).
-
-Respond with ONLY strict JSON matching this schema (dimensions in EXACTLY this order):
-{
-  "primaryFriction": "string (max 15 words)",
-  "recommendedFix": "string (max 25 words)",
-  "dimensions": [
-    { "id": "positioning", "name": "Category Positioning", "pillar": "Core Positioning", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
-    { "id": "icp", "name": "ICP & Audience Alignment", "pillar": "Core Positioning", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
-    { "id": "messaging", "name": "Hero Messaging & Speed", "pillar": "Messaging & Value Prop", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
-    { "id": "differentiation", "name": "Differentiation Anchor", "pillar": "Core Positioning", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
-    { "id": "value-prop", "name": "Value Proposition Density", "pillar": "Messaging & Value Prop", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
-    { "id": "gtm", "name": "GTM Readiness", "pillar": "GTM & Launch Velocity", "locked": true },
-    { "id": "launch", "name": "Launch Readiness", "pillar": "GTM & Launch Velocity", "locked": true },
-    { "id": "conversion", "name": "Conversion & Friction Mechanics", "pillar": "GTM & Launch Velocity", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" }
-  ]
-}
-A parameter with no usable evidence still appears in the array in its slot, in this exact shape: { "id": "value-prop", "name": "Value Proposition Density", "pillar": "Messaging & Value Prop", "insufficientData": true }
-No text outside the JSON.`;
+          const cached = readDiagnoseResponse<DiagnoseResult>(cacheKey);
+          if (cached) {
+            console.log(
+              `[diagnose] response cache HIT: origin=${origin} key=${cacheKey} (no model call)`,
+            );
+            return Response.json(cached);
+          }
 
           const res = await fetch(OPENAI_URL, {
             method: "POST",
@@ -472,23 +596,12 @@ No text outside the JSON.`;
               "Content-Type": "application/json",
               Authorization: `Bearer ${key}`,
             },
-            body: JSON.stringify({
-              model: MODEL,
-              response_format: { type: "json_object" },
-              // Determinism (owner spec 2026-09-15, Part 2.1): no sampling
-              // randomness and a seed derived from the normalized origin.
-              temperature: 0,
-              top_p: 1,
-              seed: seedFromOrigin(origin),
-              messages: [
-                { role: "system", content: SYSTEM_PROMPT },
-                { role: "user", content: userMessage },
-              ],
-            }),
+            body: requestBodyJson,
             signal: controller.signal,
           });
 
           if (!res.ok) {
+            // An error path is NEVER cached: the next attempt calls the model.
             return Response.json(
               { error: "Live AI diagnosis failed. Please try again." },
               { status: 500 },
@@ -497,7 +610,25 @@ No text outside the JSON.`;
 
           const data = (await res.json()) as {
             choices?: Array<{ message?: { content?: unknown } }>;
+            system_fingerprint?: unknown;
+            usage?: { total_tokens?: unknown };
           };
+          // ONE-LINE server log per model call (owner protocol Part 1.3): the
+          // serving fingerprint, the request-body hash and the token usage make
+          // any future divergence attributable instead of anecdotal. The prompt
+          // itself is never logged.
+          const fingerprint =
+            typeof data?.system_fingerprint === "string"
+              ? data.system_fingerprint
+              : "none";
+          const totalTokens =
+            typeof data?.usage?.total_tokens === "number"
+              ? String(data.usage.total_tokens)
+              : "n/a";
+          console.log(
+            `[diagnose] model call: origin=${origin} key=${cacheKey} bodySha256=${requestBodyHash} system_fingerprint=${fingerprint} total_tokens=${totalTokens}`,
+          );
+
           const content = data?.choices?.[0]?.message?.content;
           let parsed: unknown = content;
           if (typeof content === "string") {
@@ -509,11 +640,16 @@ No text outside the JSON.`;
           }
           const result = coerceResult(parsed);
           if (!result) {
+            // A malformed or unparseable generation is NEITHER served as a
+            // scorecard nor cached: today's error behaviour is preserved and
+            // the next attempt calls the model again.
             return Response.json(
               { error: "Live AI diagnosis returned an invalid response." },
               { status: 500 },
             );
           }
+          // Store the FINAL COERCED payload, i.e. exactly what is returned here.
+          writeDiagnoseResponse(cacheKey, result);
           return Response.json(result);
         } catch {
           // Network failure or explicit abort (timeout/crawl budget) — clean 500.
