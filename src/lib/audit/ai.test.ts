@@ -1,9 +1,11 @@
 /**
- * Owner spec 2026-09-15: the client-side normalization contract.
+ * Owner spec 2026-09-15 + the owner's rubric calibration 2026-09-18 (Parts 1,
+ * 2, 4): the client-side normalization contract.
  *
  * Guards: no estimatedLeakage, a nullable overall score (no invented number),
- * banded snapping on the client mirror, abstain-instead-of-default-20, and the
- * unified status labels.
+ * five-value band snapping on the client mirror, abstain-instead-of-default-20,
+ * the unified 80 / 40 status labels, and NO code-generated abstain boilerplate
+ * (the model's own keyObservation survives untouched; an empty one stays empty).
  */
 import { describe, test, expect } from "bun:test";
 import { toAIResult, toUnreadableResult } from "./ai";
@@ -24,19 +26,19 @@ const dim = (id: string, score: number) => ({
 
 function response(overrides: Record<string, unknown> = {}) {
   return {
-    score: 67,
+    score: 61,
     overallBand: "Needs Attention",
     primaryFriction: "The pricing page never names the buyer.",
     recommendedFix: "Add a named-buyer line above the fold.",
     dimensions: [
-      dim("positioning", 75),
-      dim("icp", 65),
-      dim("differentiation", 55),
-      dim("messaging", 85),
-      dim("value-prop", 45),
+      dim("positioning", 80),
+      dim("icp", 60),
+      dim("differentiation", 60),
+      dim("messaging", 95),
+      dim("value-prop", 40),
       { id: "gtm", name: "GTM Readiness", locked: true },
       { id: "launch", name: "Launch Readiness", locked: true },
-      dim("conversion", 75),
+      dim("conversion", 80),
     ],
     ...overrides,
   };
@@ -46,7 +48,7 @@ describe("toAIResult", () => {
   test("parses the live contract, keeps locked dimensions, drops leakage", () => {
     const result = toAIResult(response({ estimatedLeakage: "$400,000/yr" }));
     expect(result).not.toBeNull();
-    expect(result!.score).toBe(67);
+    expect(result!.score).toBe(61);
     expect(result!.overallBand).toBe("Needs Attention");
     expect(result!.dimensions).toHaveLength(8);
     expect(result!.dimensions.filter((d) => d.locked).map((d) => d.id)).toEqual(["gtm", "launch"]);
@@ -60,12 +62,22 @@ describe("toAIResult", () => {
     expect(result!.overallBand).toBeNull();
   });
 
-  test("a numeric score snaps to the permitted bands", () => {
+  test("a numeric score snaps to the nearest of the FIVE permitted values", () => {
     expect(toAIResult(response({ score: 71 }))!.score).toBe(71); // overall is not banded
     const snapped = toAIResult(
       response({ dimensions: response().dimensions.map((d) => (d.id === "icp" ? dim("icp", 88) : d)) }),
     )!;
-    expect(snapped.dimensions.find((d) => d.id === "icp")!.score).toBe(85);
+    // 88 is past the 87.5 midpoint, so it snaps up to 95.
+    expect(snapped.dimensions.find((d) => d.id === "icp")!.score).toBe(95);
+    // 82 is nearer 80, and a tie (30) rounds up to 40.
+    const lower = toAIResult(
+      response({ dimensions: response().dimensions.map((d) => (d.id === "icp" ? dim("icp", 82) : d)) }),
+    )!;
+    expect(lower.dimensions.find((d) => d.id === "icp")!.score).toBe(80);
+    const tie = toAIResult(
+      response({ dimensions: response().dimensions.map((d) => (d.id === "icp" ? dim("icp", 30) : d)) }),
+    )!;
+    expect(tie.dimensions.find((d) => d.id === "icp")!.score).toBe(40);
   });
 
   test("a missing dimension abstains with no score (never a default 20)", () => {
@@ -85,7 +97,7 @@ describe("toAIResult", () => {
     const result = toAIResult({
       ...raw,
       dimensions: raw.dimensions.map((d) =>
-        d.id === "value-prop" ? { ...dim("value-prop", 45), insufficientData: true } : d,
+        d.id === "value-prop" ? { ...dim("value-prop", 40), insufficientData: true } : d,
       ),
     })!;
     const valueProp = result.dimensions.find((d) => d.id === "value-prop")!;
@@ -93,13 +105,56 @@ describe("toAIResult", () => {
     expect(valueProp.insufficientData).toBe(true);
   });
 
-  test("status labels follow the unified thresholds", () => {
+  test("status labels follow the unified thresholds (80 / 40)", () => {
     const result = toAIResult(response())!;
     const byId = Object.fromEntries(result.dimensions.map((d) => [d.id, d]));
-    expect(byId.positioning.status).toBe("Strong");
-    expect(byId.icp.status).toBe("Needs Refinement");
-    expect(byId["value-prop"].status).toBe("Needs Refinement");
-    expect(byId.conversion.status).toBe("Strong");
+    expect(byId.positioning.status).toBe("Strong"); // 80
+    expect(byId.icp.status).toBe("Needs Refinement"); // 60
+    expect(byId["value-prop"].status).toBe("Needs Refinement"); // 40
+    expect(byId.conversion.status).toBe("Strong"); // 80
+    // 65 snaps to 60 (a refinement) and 29 snaps to 20 (a critical gap).
+    expect(toAIResult(response({ dimensions: response().dimensions.map((d) => (d.id === "icp" ? dim("icp", 65) : d)) }))!.dimensions.find((d) => d.id === "icp")!.status).toBe("Needs Refinement");
+    expect(toAIResult(response({ dimensions: response().dimensions.map((d) => (d.id === "icp" ? dim("icp", 29) : d)) }))!.dimensions.find((d) => d.id === "icp")!.status).toBe("Critical Gap");
+  });
+
+  test("an abstained dimension keeps the MODEL's site-specific keyObservation", () => {
+    const raw = response();
+    const result = toAIResult({
+      ...raw,
+      dimensions: raw.dimensions.map((d) =>
+        d.id === "value-prop"
+          ? { id: "value-prop", insufficientData: true, keyObservation: "Looked for outcome claims in the H2s and CTA labels; found capability names only." }
+          : d,
+      ),
+    })!;
+    const valueProp = result.dimensions.find((d) => d.id === "value-prop")!;
+    expect(valueProp.insufficientData).toBe(true);
+    expect(valueProp.score).toBeUndefined();
+    expect(valueProp.keyObservation).toBe(
+      "Looked for outcome claims in the H2s and CTA labels; found capability names only.",
+    );
+  });
+
+  test("no code-generated abstain boilerplate anywhere in the payload (Part 4)", () => {
+    // Model omits the dimension entirely AND its sibling carries an empty string.
+    const raw = response();
+    const result = toAIResult({
+      ...raw,
+      dimensions: raw.dimensions
+        .filter((d) => d.id !== "differentiation")
+        .map((d) => (d.id === "value-prop" ? { ...dim("value-prop", 40), keyObservation: "" } : d)),
+    })!;
+    const differentiation = result.dimensions.find((d) => d.id === "differentiation")!;
+    const valueProp = result.dimensions.find((d) => d.id === "value-prop")!;
+    expect(differentiation.insufficientData).toBe(true);
+    expect(differentiation.keyObservation).toBeUndefined();
+    // No code-generated impact sentence on an abstain either.
+    expect(differentiation.commercialRisk).toBeUndefined();
+    expect(valueProp.keyObservation).toBeUndefined();
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain("not well represented");
+    expect(serialized).not.toContain("Not enough signal in the public crawl");
+    expect(serialized).not.toContain("clear strength on the public site");
   });
 
   test("a response without a friction or fix is rejected", () => {

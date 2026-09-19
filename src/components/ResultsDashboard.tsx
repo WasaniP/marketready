@@ -33,6 +33,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import type { AuditResult } from "~/lib/audit/types";
 import { PILLAR_OF, scoreColor } from "~/lib/audit/engine";
+import { impactLabel as impactLabelFor, paramStatus, STRONG_MIN } from "~/lib/audit/thresholds";
 import type { AIResult } from "~/lib/audit/ai";
 import { withAlpha } from "~/components/charts";
 import { downloadAuditReport } from "~/lib/report/generate";
@@ -49,10 +50,10 @@ export interface DimensionCardData {
  friction?: string;
  /** Short (2 to 4 word) dynamic diagnostic label, e.g. "Vague Category
   * Naming" or "Feature-Heavy: Low Outcome". Shown as the FRICTION label for
-  * scores below 70. */
+  * scores below 80. */
  frictionLabel?: string;
  /** Short (2 to 4 word) positive anchor label, e.g. "Clear Category Stake".
-  * Shown as the STRENGTH label for scores >= 70. */
+  * Shown as the STRENGTH label for scores >= 80. */
  anchorLabel?: string;
  /** Short literal DOM quote backing this card's score (server-side carry only,
   * never rendered). Drives the red-flag evidence guard and logs to Airtable. */
@@ -60,8 +61,8 @@ export interface DimensionCardData {
  /** Direct 1-sentence diagnostic observation of what was FOUND or MISSING on
   * the page, grounded in the messaging/patterning detected on the site. */
  keyObservation?: string;
- /** 1-sentence business impact: the commercial risk (score below 70) or the
-  * competitive advantage (score >= 70). Label picked at the 70 threshold. */
+ /** 1-sentence business impact: the commercial risk (score below 80) or the
+  * competitive advantage (score >= 80). Label picked at the 80 threshold. */
  commercialRisk?: string;
  color?: string;
  insufficientData?: boolean;
@@ -153,11 +154,11 @@ function StatusBadge({ status, color }: { status: string; color?: string }) {
  );
 }
 
-/** Overall readiness status label (exact vocabulary, no dashes). */
+/** Overall readiness status label: the shared vocabulary and cutoffs, so it can
+ * never disagree with the API's per-parameter statuses (owner rubric
+ * calibration Part 1: 80 / 40). */
 function overallStatus(score: number): string {
- if (score >= 75) return "Strong";
- if (score >= 40) return "Needs Refinement";
- return "Critical Gap";
+ return paramStatus(score);
 }
 
 function formatDate(iso: string): string {
@@ -181,10 +182,11 @@ function pickLowest(cards: DimensionCardData[]): DimensionCardData | undefined {
 function ScoredCard({ card }: { card: DimensionCardData }) {
  const color = card.color ?? "#A1A1AA";
  const score = card.score ?? 0;
- // FRICTION/STRENGTH threshold is 70: below 70 a friction, at 70+ a strength.
- const isStrength = score >= 70;
+ // FRICTION/STRENGTH threshold is STRONG_MIN (80), and the label flip comes
+ // from the shared impactLabel so it can never drift from the thresholds.
+ const isStrength = score >= STRONG_MIN;
  const statusLabel = isStrength ? card.anchorLabel : card.frictionLabel;
- const impactLabel = isStrength ? "Competitive Advantage" : "Commercial Risk";
+ const impactLabel = impactLabelFor(score);
  return (
   <div
    className="glass-card flex flex-col gap-3 p-5"
@@ -221,7 +223,7 @@ function ScoredCard({ card }: { card: DimensionCardData }) {
     />
    </div>
 
-   {/* Dynamic status label (subheader): FRICTION below 70, STRENGTH at 70+ */}
+   {/* Dynamic status label (subheader): FRICTION below 80, STRENGTH at 80+ */}
    {statusLabel && (
     <p className="text-xs leading-relaxed text-mist">
      <span className="font-semibold text-ink">

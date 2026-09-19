@@ -5,8 +5,10 @@
  * model no longer returns it), and this module is the single definition of the
  * weighted mean, the banded score values, and the abstain rules.
  *
- *  - Banded scoring: the model may only return one of BANDED_SCORES; anything
- *    else is snapped to the nearest permitted value.
+ *  - Banded scoring (owner rubric calibration 2026-09-18, Part 1): the scale
+ *    collapsed from nine values to FIVE wide bands [20, 40, 60, 80, 95]; the
+ *    model must return one of BANDED_SCORES, and anything else is snapped to
+ *    the nearest permitted value (ties round UP, so 30 -> 40 and 70 -> 80).
  *  - Weighted mean: overall = round( Σ(score_i × w_i) / Σ(w_i) ) over the
  *    SCORED dimensions only, so a dimension that abstains (insufficientData)
  *    has its weight redistributed proportionally across the others.
@@ -35,15 +37,19 @@ export const DIMENSION_WEIGHTS: Record<string, number> = {
   conversion: 0.9,
 };
 
-/** The only score values the rubric permits. */
-export const BANDED_SCORES = [15, 25, 35, 45, 55, 65, 75, 85, 95] as const;
+/** The only score values the rubric permits (owner spec 2026-09-18, Part 1:
+ * five wide bands instead of nine, because only four of the nine were ever
+ * assigned on real sites and 95 never once in 114 scored cells). */
+export const BANDED_SCORES = [20, 40, 60, 80, 95] as const;
 
 /** At or above this many unscored dimensions there is no overall score. */
 export const MAX_INSUFFICIENT_BEFORE_NO_SCORE = 3;
 
 /**
- * Snap any number to the nearest permitted band value. Ties snap DOWN (e.g.
- * 20 -> 15, 70 -> 65) so the result is deterministic for every input.
+ * Snap any number to the nearest permitted band value. Ties snap UP (e.g.
+ * 30 -> 40, 50 -> 60, 70 -> 80, 87.5 -> 95) so the result is deterministic for
+ * every input and no value can fall between two bands. The midpoint of
+ * [20, 40, 60, 80, 95] is 87.5, so 88 also snaps up to 95.
  */
 export function snapToBand(n: number): number {
   if (!Number.isFinite(n)) return BANDED_SCORES[0];
@@ -52,7 +58,9 @@ export function snapToBand(n: number): number {
   let bestDistance = Infinity;
   for (const band of BANDED_SCORES) {
     const distance = Math.abs(band - clamped);
-    if (distance < bestDistance) {
+    // `<=` (not `<`) with an ascending band list: an exact tie keeps the
+    // HIGHER band, which is the documented tie rule.
+    if (distance <= bestDistance) {
       bestDistance = distance;
       best = band;
     }

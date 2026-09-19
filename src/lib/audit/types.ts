@@ -23,8 +23,8 @@ export interface AssessmentInput {
   submittedAt: string;
 }
 
-/** Fixed status vocabulary for a scored parameter (thresholds: below 45, 45 to
- * 69, and 70+; see src/lib/audit/thresholds.ts). */
+/** Fixed status vocabulary for a scored parameter (thresholds: below 40, 40 to
+ * 79, and 80+; see src/lib/audit/thresholds.ts). */
 export type Status = "CRITICAL GAP" | "NEEDS REFINEMENT" | "STRONG";
 
 /** One scored or reserved PMM parameter. */
@@ -47,16 +47,16 @@ export interface ParamResult {
    * NOT a generic textbook definition. */
   keyObservation?: string;
   /** 1-sentence explanation of the business impact: the commercial risk the
-   * score creates (shown as "Commercial Risk" for scores below 70) or, for
-   * scores >= 70, the competitive advantage the current site framing buys the
+   * score creates (shown as "Commercial Risk" for scores below 80) or, for
+   * scores >= 80, the competitive advantage the current site framing buys the
    * company (shown as "Competitive Advantage"). Single statement, relabeled by
-   * the UI at the 70 threshold. */
+   * the UI at the 80 threshold. */
   commercialRisk?: string;
-  /** Short (2 to 4 word) diagnostic friction label used for scores below 70,
+  /** Short (2 to 4 word) diagnostic friction label used for scores below 80,
    * e.g. "Vague Category Naming" or "Feature-Heavy: Low Outcome". Dynamic,
    * per-parameter. */
   frictionLabel?: string;
-  /** Short (2 to 4 word) positive anchor label used for scores >= 70, e.g.
+  /** Short (2 to 4 word) positive anchor label used for scores >= 80, e.g.
    * "Clear Category Stake" or "Outcome-Led Headline". Dynamic, per-parameter. */
   anchorLabel?: string;
   /** Representative "what the site says today" template line. */

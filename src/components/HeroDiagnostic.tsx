@@ -658,6 +658,10 @@ function DimCard({ card }: { card: TeaserDim }) {
   const label = strong ? card.anchorLabel : card.frictionLabel;
   // Single label flip, shared threshold (owner spec Part 4).
   const section = impactLabel(n);
+  // The card body: the model's own observation when it gave one; for a scored
+  // parameter with nothing to show, the legacy friction line. An ABSTAINED
+  // parameter with no model text renders nothing at all (Part 4).
+  const bodyText = card.keyObservation || (unscored ? "" : card.friction ?? "");
 
   // Reserved parameter: visible, locked, and honest about where it is scored.
   if (locked) {
@@ -722,7 +726,13 @@ function DimCard({ card }: { card: TeaserDim }) {
           {unscored ? "—" : `${card.score}/100`}
         </span>
       </div>
-      <p className="text-sm leading-relaxed text-mist">{card.keyObservation ?? card.friction}</p>
+      {/*
+        Owner rubric calibration Part 4: the card body is the MODEL's own
+        site-specific observation. An abstained parameter with no usable model
+        text shows ONLY the "Not enough signal to score" label above, never a
+        code-generated boilerplate sentence.
+      */}
+      {bodyText && <p className="text-sm leading-relaxed text-mist">{bodyText}</p>}
       {!unscored && card.commercialRisk && (
         <div className="rounded-lg border border-hairline bg-cream px-3 py-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-fog">{section}: </span>

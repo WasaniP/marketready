@@ -22,8 +22,9 @@
  *   - The overall score and readiness band are COMPUTED IN CODE (weighted mean
  *     over the scored dimensions, src/lib/audit/scoring.ts); the model returns
  *     only primaryFriction, recommendedFix and dimensions[].
- *   - Banded scoring: the model picks one of 9 permitted values; any other
- *     number is snapped to the nearest permitted value here.
+ *   - Banded scoring: the model picks one of the five permitted values
+ *     [20, 40, 60, 80, 95]; any other number is snapped to the nearest
+ *     permitted value here (ties round up).
  *   - Abstain rather than guess: a dimension with no evidence is
  *     `insufficientData: true` with NO score (no default of 20), it is excluded
  *     from the weighted mean, and with 3 or more such dimensions there is no
@@ -53,7 +54,7 @@
  * Each scored dimension ships a two-part diagnostic synthesis shown in the UI:
  * `keyObservation` (a direct 1-sentence observation of what was FOUND or MISSING
  * on the page) and `commercialRisk` (a 1-sentence business impact the UI labels
- * "Commercial Risk" below 70 and "Competitive Advantage" at 70 or above via the
+ * "Commercial Risk" below 80 and "Competitive Advantage" at 80 or above via the
  * shared impactLabel). It ALSO carries a server-side `evidence_snippet` (a short
  * literal DOM quote backing the score), carried in the API JSON and passed into
  * the Airtable lead record as "DOM Evidence" for Automations. It is never
@@ -79,12 +80,27 @@
  *   1.3 ATTRIBUTION: one server log line per model call carries
  *       `system_fingerprint`, the request-body SHA-256 and `usage.total_tokens`.
  * The rubric, band anchors, value-prop re-point and abstain/boilerplate paths are
- * deliberately untouched by this change.
+ * deliberately untouched by that change; they are replaced by the 2026-09-18
+ * rubric calibration immediately below.
  *
  * Failure handling: any error (missing key, expired key, network, timeout,
  * non-2xx from OpenAI) returns a clean 500 `{ error }` and the client shows its
  * explicit "scan could not complete" state; NO score is invented anywhere. One
  * AbortController (~40s) bounds the whole request (crawl + OpenAI).
+ *
+ * Owner rubric calibration (2026-09-18, Parts 1 to 5):
+ *   1. FIVE-VALUE SCALE: nine values became five [20, 40, 60, 80, 95], and the
+ *      status/band/UI cutoffs moved to 80 / 40 (one constant set in
+ *      src/lib/audit/thresholds.ts, interpolated into this prompt).
+ *   2. VALUE-PROP RE-POINT: Value Proposition Density is scored from body text,
+ *      heading hierarchy (H2 and below) and CTA labels, and static metadata is
+ *      now valid evidence for it too, so it no longer abstains by default.
+ *   3. BAND ANCHORS: all five bands, verbatim, for all six parameters.
+ *   4. NO ABSTAIN BOILERPLATE: an abstained parameter carries the MODEL's own
+ *      site-specific keyObservation; the code-generated sentence is deleted, and
+ *      with nothing usable the card shows only the "Not enough signal to score"
+ *      label.
+ *   5. CACHE INVALIDATION: DIAGNOSE_PROMPT_VERSION 1 -> 2.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -117,18 +133,62 @@ const SYSTEM_PROMPT = `You are an elite B2B Product Marketing Manager (PMM) and 
 You are evaluating a company from ONE complete dataset: the STRUCTURED SITE CRAWL. The target's core pages (Homepage, Pricing, About) are parsed into their DOM structure: title tags, hero H1 and above-the-fold subtext, ordered H1/H2/H3 heading hierarchy, body text, and call-to-action buttons. There is no external dataset: judge only what the crawl shows.
 
 DETERMINISTIC SCORING RUBRIC (apply exactly; score each of the 6 parameters below):
-1. Category Positioning (pillar: Core Positioning). DOM targets: hero H1, meta title tag. A buyer can name the product category instantly from the H1/title alone = full score. Deduct for abstract buzzwords (e.g. "the platform for growth") or category-less slogans.
-2. ICP & Audience Alignment (pillar: Core Positioning). DOM targets: subheaders, hero copy, "who it's for" sections. Written for a named buyer type = full score. Deduct when written for "everyone" rather than a named buyer type.
-3. Differentiation Anchor (pillar: Core Positioning). DOM targets: body copy, H2s, comparison tables. A specific mechanism or proof point (spec, benchmark, customer result, category) = full score. Deduct for generic adjectives ("fast", "easy", "powerful") with no mechanism or proof.
-4. Hero Messaging & Speed (pillar: Messaging & Value Prop). DOM targets: above-the-fold H1/H2/subtext. Evaluate through a DIFFERENT lens than Category Positioning: does the hero state the problem and the outcome, not just the category? Clear problem + outcome above the fold = full score.
-5. Value Proposition Density (pillar: Messaging & Value Prop). DOM targets: feature/benefit sections. Score the ratio of outcome statements (time, money, risk) to raw feature specs. Outcome-dense = full score; feature-spec-dense = low score.
+1. Category Positioning (pillar: Core Positioning). DOM targets: hero H1, meta title tag. Deduct for abstract buzzwords (e.g. "the platform for growth") or category-less slogans.
+2. ICP & Audience Alignment (pillar: Core Positioning). DOM targets: subheaders, hero copy, "who it's for" sections. Deduct when written for "everyone" rather than a named buyer type.
+3. Differentiation Anchor (pillar: Core Positioning). DOM targets: body copy, H2s, comparison tables. Deduct for generic adjectives ("fast", "easy", "powerful") with no mechanism or proof.
+4. Hero Messaging & Speed (pillar: Messaging & Value Prop). DOM targets: above-the-fold H1/H2/subtext. Evaluate through a DIFFERENT lens than Category Positioning: does the hero state the problem and the outcome, not just the category?
+5. Value Proposition Density (pillar: Messaging & Value Prop). DOM targets: body text, heading hierarchy (H2 and below), and CTA labels. Score the ratio of outcome statements (time, money, risk) to raw feature specs.
 6. Conversion & Friction Mechanics (pillar: GTM & Launch Velocity). DOM targets: primary CTA buttons, form fields, nearby trust signals. Score CTA clarity, commitment level, and the proximity of social proof to conversion points. This is the ONLY automatically scored parameter in this pillar.
 
-BANDED SCORING (mandatory): choose the band that best fits the evidence, then return that band's SINGLE representative value. The ONLY permitted values are ${BANDED_SCORES.join(", ")}. Never return any other number.
+BAND ANCHORS (every parameter uses the same five bands). Select the band whose description MOST CLOSELY matches the evidence, then return that band's exact value. Do not average bands, do not invent a value between bands, and do not default to a middle band when the evidence is unclear: pick the closest description and commit.
+
+Category Positioning
+- 20: No product noun anywhere above the fold. The headline is a slogan or a mission statement.
+- 40: You can tell it's software, but not what kind. Terms like "platform," "solution," or "operating system" with no category attached.
+- 60: The category is on the page but you have to scroll or infer it. The H1 gestures, the subhead explains.
+- 80: The H1 names the category plainly. A first-time visitor knows what this is in one read.
+- 95: Names the category and stakes a position inside it. Not just what it is, but which kind.
+
+ICP & Audience Alignment
+- 20: Written for everyone. No buyer, role, company type, or industry named anywhere.
+- 40: A vague audience gesture. "Modern teams," "growing companies," "businesses like yours."
+- 60: An audience is named but broadly. A segment rather than a buyer.
+- 80: A specific buyer type or role is named and the copy speaks to their situation.
+- 95: Names the buyer and shows it understands their day. The language is theirs, not the vendor's.
+
+Differentiation Anchor
+- 20: Nothing distinguishing. Swap the logo for a competitor's and nothing reads wrong.
+- 40: Generic adjectives only. Fast, easy, powerful, intuitive, with no mechanism behind them.
+- 60: A difference is claimed but not proven. The claim is there, the evidence isn't.
+- 80: A specific mechanism, spec, or proof point that a competitor can't say.
+- 95: The difference is named, proven, and structural. Hard to copy, not just hard to match.
+
+Hero Messaging & Speed
+- 20: No problem and no outcome. Abstract concepts or brand language only.
+- 40: States what the product is, never why it matters. Category without consequence.
+- 60: A problem or an outcome is present, but not both, and not quickly.
+- 80: Problem and outcome are both above the fold and land in one read.
+- 95: Problem and outcome in a single sentence a visitor could repeat to a colleague.
+
+Value Proposition Density
+- 20: Feature list only. Nothing connects any capability to a result.
+- 40: Mostly features, with occasional benefit language bolted onto specs.
+- 60: Benefits are present but soft. Better, faster, improved, with no direction or measure.
+- 80: Most claims tie to a concrete outcome. Time saved, money made, risk avoided.
+- 95: Outcomes lead and features support them, with specifics rather than adjectives.
+
+Conversion & Friction Mechanics
+- 20: No clear primary action, or the only path is a contact form with no context.
+- 40: A CTA exists but it's vague, buried, or competing with several others of equal weight.
+- 60: A clear primary CTA, but high commitment and no proof nearby to justify it.
+- 80: Clear primary CTA, appropriate commitment level, and trust signals near the conversion point.
+- 95: A low-friction path to value with proof adjacent, and the CTA matches where the buyer actually is.
+
+BANDED SCORING (mandatory): choose the band whose description best fits the evidence, then return that band's SINGLE representative value. The ONLY permitted values are ${BANDED_SCORES.join(", ")}. One of those five numbers and nothing else, ever. A score of ${BANDED_SCORES[BANDED_SCORES.length - 1]} is real and must be used whenever the evidence matches the top band.
 
 PRICING & PACKAGING IS NOT SCORED. There is NO Pricing & Packaging Logic parameter in this assessment. Public pricing pages are unreliable across B2B/enterprise, and pricing depends on internal unit economics and deal context a scraper cannot access. Do NOT return a "pricing" dimension at all: do not score it, do not return it as N/A, insufficient data, or 0. It simply does not exist in this output. You may still read the /pricing page content in the crawl for context, but it must never drive a scored dimension.
 
-STATIC METADATA (WEAKER EVIDENCE, STILL VALID): each page block may carry a "STATIC METADATA:" section holding the page's static, non-rendered text: meta name=description, og:title, og:description, og:site_name, twitter:title, twitter:description, JSON-LD name / description / slogan / applicationCategory, and any <noscript> content. This is the text the page ships in its HTML head and no-JS fallback, so it is exactly what a search engine, an AI tool, a link preview or a social scraper reads when it does not run JavaScript. These fields ARE valid evidence for Category Positioning, ICP & Audience Alignment, and Differentiation Anchor: a meta description that names the product category or the buyer type is real evidence about how the company describes itself. They are WEAKER evidence than rendered page copy, because a visitor does not necessarily see them on the page. So when a dimension is supported ONLY by static metadata, score it on that metadata rather than abstaining, and say plainly in "keyObservation" that the signal comes from the page's static metadata rather than its visible copy. Never invent fields that are not in the crawl block.
+STATIC METADATA (WEAKER EVIDENCE, STILL VALID): each page block may carry a "STATIC METADATA:" section holding the page's static, non-rendered text: meta name=description, og:title, og:description, og:site_name, twitter:title, twitter:description, JSON-LD name / description / slogan / applicationCategory, and any <noscript> content. This is the text the page ships in its HTML head and no-JS fallback, so it is exactly what a search engine, an AI tool, a link preview or a social scraper reads when it does not run JavaScript. These fields ARE valid evidence for Category Positioning, ICP & Audience Alignment, Differentiation Anchor, and Value Proposition Density: a meta description that names the product category, the buyer type, or the result the product delivers is real evidence about how the company describes itself. They are WEAKER evidence than rendered page copy, because a visitor does not necessarily see them on the page. So when a dimension is supported ONLY by static metadata, score it on that metadata rather than abstaining, and say plainly in "keyObservation" that the signal comes from the page's static metadata rather than its visible copy. Never invent fields that are not in the crawl block.
 
 RESERVED PARAMETERS (never scored from the crawl; they require internal materials the crawler cannot access):
 - GTM Readiness (pillar: GTM & Launch Velocity): always return { "id": "gtm", "name": "GTM Readiness", "pillar": "GTM & Launch Velocity", "locked": true } with NO score, status, or synthesis.
@@ -143,7 +203,8 @@ EVIDENCE SNIPPET MANDATE (REAL DOM QUOTE, SERVER-SIDE CARRY ONLY): for EVERY sco
 
 TWO-PART DIAGNOSTIC SYNTHESIS MANDATE (NEVER RAW DOM, NEVER GENERIC BOILERPLATE): for EVERY scored parameter, write two plain-spoken fields grounded in what the crawl actually shows:
 1. "keyObservation": ONE direct, 1-sentence diagnostic observation of what was FOUND or MISSING on the page, anchored to the actual messaging/patterning detected on the target site (e.g. its hero H1, subtext, differentiation, value-prop lineage, CTA path). Example: "The hero headline relies on broad process terms rather than defining an explicit software category." It must be a concrete statement about THIS site's copy, never a textbook definition and never a generic meta-summary.
-2. "commercialRisk": ONE 1-sentence explanation of the business impact that single observation creates. Write it so it reads correctly whether the score is low or high: for low scores it is a commercial risk, for high scores it is a competitive advantage. Example (low): "Visitors cannot quickly classify the product, driving up initial bounce rates." Example (high): "Visitors self-classify the product instantly, shortening the path from first visit to a qualified conversation." The UI labels this same field "Commercial Risk" below 70 and "Competitive Advantage" at 70 or above, so the sentence must already read as the appropriate one for the score you assign.
+2. "commercialRisk": ONE 1-sentence explanation of the business impact that single observation creates. Write it so it reads correctly whether the score is low or high: for low scores it is a commercial risk, for high scores it is a competitive advantage. Example (low): "Visitors cannot quickly classify the product, driving up initial bounce rates." Example (high): "Visitors self-classify the product instantly, shortening the path from first visit to a qualified conversation." The UI labels this same field "Commercial Risk" below ${STRONG_MIN} and "Competitive Advantage" at ${STRONG_MIN} or above, so the sentence must already read as the appropriate one for the score you assign.
+An ABSTAINED parameter (insufficientData) must STILL carry a site-specific "keyObservation": one sentence naming what you looked for and what you found instead on THIS site, e.g. "Looked for outcome claims across the body text, the H2s and the CTA labels; the copy names capabilities and never a result." Abstaining without that sentence is not acceptable. Omit "commercialRisk", "friction_label" and "anchor_label" for an abstained parameter.
 Do NOT echo raw H1 text, button copy, or pricing strings verbatim in either field. You may read the DOM, but the OUTPUT must be crisp PMM synthesis in simple, clear phrasing.
 
 WRITING GUARDRAIL: Write diagnostic feedback using simple, clear PMM phrasing. Always ground observations in the actual messaging pattern detected on the target site. Never output generic boilerplate explanations.
@@ -154,7 +215,7 @@ DYNAMIC FRICTION LABEL: for EVERY scored parameter, also return two short labels
 
 EVALUATION RULES:
 1. Be stage-aware: evaluate enterprise platforms (multi-product routing, integrations, trust signals) differently from early-stage self-serve tools.
-2. HARD GAP DETECTION (ABSTAIN, NEVER GUESS): if a scored dimension has no representation across the entire site crawl, you MUST return "insufficientData": true for that dimension and NO score, status, friction_label or anchor_label. Never assign an arbitrary middle or low score to fill the slot. Pricing is never scored regardless.
+2. HARD GAP DETECTION (ABSTAIN, NEVER GUESS): if a scored dimension has no representation across the entire site crawl, you MUST return "insufficientData": true for that dimension and NO score, status, friction_label or anchor_label, PLUS the site-specific "keyObservation" described above. Never assign an arbitrary middle or low score to fill the slot. WEAK IS NOT ABSENT: a parameter that reads badly on a page you can actually see is a LOW BAND, not an abstain. Copy that lists capabilities and never a result is Value Proposition Density 20 (feature list only) or 40 (mostly features), and a category-less slogan is Category Positioning 20 or 40. Abstaining because the evidence looks thin, vague or unpersuasive is a rubric violation. Abstain only when the site genuinely carries almost no body copy: Value Proposition Density in particular is evaluated from body text, heading hierarchy (H2 and below) and CTA labels, so it must be SCORED on that evidence rather than abstained by default. If you can quote any body copy, H2 or CTA label and it names a capability with no result, that IS a Value Proposition Density score: return "insufficientData": false and the low band (20 for a feature list only, 40 when benefit language occasionally appears). "insufficientData": true for Value Proposition Density is permitted only when the crawl block carries no body copy, no H2s and no CTA labels at all. Pricing is never scored regardless.
 3. PRIMARY FRICTION: exactly one parameter is the single biggest drag on growth. name it in "primaryFriction" (15 words max) and give the one highest-leverage fix in "recommendedFix" (25 words max).
 
 COPY CONSTRAINTS:
@@ -187,30 +248,30 @@ export function buildUserMessage(origin: string, crawlBlock: string): string {
   return `SITE URL UNDER EVALUATION: ${origin}
 
 === STRUCTURED SITE CRAWL ===
-The following is real content fetched server-side from ${origin}. Each page is presented as its parsed DOM structure: title, hero H1, above-the-fold subtext, ordered heading hierarchy, body text, and CTAs, followed by a STATIC METADATA section (meta description, og:/twitter: fields, JSON-LD, noscript) where present. Static metadata is weaker evidence than rendered copy but is still valid evidence for Category Positioning, ICP & Audience Alignment, and Differentiation Anchor. Pages listed as NOT FOUND / UNREACHABLE (or NON-HTML) have no indexed content: treat that as a hard structural gap.
+The following is real content fetched server-side from ${origin}. Each page is presented as its parsed DOM structure: title, hero H1, above-the-fold subtext, ordered heading hierarchy, body text, and CTAs, followed by a STATIC METADATA section (meta description, og:/twitter: fields, JSON-LD, noscript) where present. Static metadata is weaker evidence than rendered copy but is still valid evidence for Category Positioning, ICP & Audience Alignment, Differentiation Anchor, and Value Proposition Density. Pages listed as NOT FOUND / UNREACHABLE (or NON-HTML) have no indexed content: treat that as a hard structural gap.
 ${crawlBlock}
 
 TASK:
-Score the 6 URL-scorable parameters below using the banded rubric in the system prompt, and LOCK the 2 reserved parameters (GTM Readiness, Launch Readiness) with "locked": true and no score. There is NO Pricing & Packaging parameter: do not score or return one. For EACH scored parameter include: score (one of ${BANDED_SCORES.join(", ")} ONLY), the exact status label (Strong / Needs Refinement / Critical Gap), a 2 to 4 word "friction_label" naming that parameter's specific friction, a 2 to 4 word "anchor_label" naming that parameter's positive strength, an "evidence_snippet" that is a short VERBATIM DOM quote (5 to 25 words) from the STRUCTURED SITE CRAWL backing that score (empty string "" when none is usable), and the two-part diagnostic synthesis: a ONE-sentence "keyObservation" of what was FOUND or MISSING on the page (grounded in the detected messaging, never generic) plus a ONE-sentence "commercialRisk" explaining the business impact (which for high scores reads as a competitive advantage). If a scored parameter has NO representation anywhere in the crawl, return "insufficientData": true for it with NO score and NO status instead of guessing a number. Which parameter to treat as the primary friction is your judgment call.
+Score the 6 URL-scorable parameters below using the five-band rubric and the band anchors in the system prompt, and LOCK the 2 reserved parameters (GTM Readiness, Launch Readiness) with "locked": true and no score. There is NO Pricing & Packaging parameter: do not score or return one. For EACH scored parameter include: score (one of ${BANDED_SCORES.join(", ")} ONLY, i.e. the exact value of the band whose description most closely matches the evidence), the exact status label (Strong / Needs Refinement / Critical Gap), a 2 to 4 word "friction_label" naming that parameter's specific friction, a 2 to 4 word "anchor_label" naming that parameter's positive strength, an "evidence_snippet" that is a short VERBATIM DOM quote (5 to 25 words) from the STRUCTURED SITE CRAWL backing that score (empty string "" when none is usable), and the two-part diagnostic synthesis: a ONE-sentence "keyObservation" of what was FOUND or MISSING on the page (grounded in the detected messaging, never generic) plus a ONE-sentence "commercialRisk" explaining the business impact (which for high scores reads as a competitive advantage). If a scored parameter has NO representation anywhere in the crawl, return "insufficientData": true for it with NO score, NO status and NO labels, but you MUST still return its "keyObservation": one sentence naming what you looked for and what you found instead on this site. Value Proposition Density is scored from body text, H2-and-below headings and CTA labels, so it abstains only when the site genuinely has almost no body copy (capability-only copy that names no result is band 20 or 40, never abstain, and it may abstain only when there is no body copy, no H2s and no CTA labels at all). Which parameter to treat as the primary friction is your judgment call.
 
 Do NOT return an overall score, a readiness band, or any revenue or dollar figure: the server computes the overall score and band from your parameter scores. Return the single primary friction (15 words max) and one recommended fix (25 words max).
 
-Respond with ONLY strict JSON matching this schema (dimensions in EXACTLY this order):
+Respond with ONLY strict JSON matching this schema (dimensions in EXACTLY this order). "score" is a number, and it must be one of ${BANDED_SCORES.join(", ")}:
 {
   "primaryFriction": "string (max 15 words)",
   "recommendedFix": "string (max 25 words)",
   "dimensions": [
-    { "id": "positioning", "name": "Category Positioning", "pillar": "Core Positioning", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
-    { "id": "icp", "name": "ICP & Audience Alignment", "pillar": "Core Positioning", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
-    { "id": "messaging", "name": "Hero Messaging & Speed", "pillar": "Messaging & Value Prop", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
-    { "id": "differentiation", "name": "Differentiation Anchor", "pillar": "Core Positioning", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
-    { "id": "value-prop", "name": "Value Proposition Density", "pillar": "Messaging & Value Prop", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "positioning", "name": "Category Positioning", "pillar": "Core Positioning", "score": number (one of ${BANDED_SCORES.join(", ")}), "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "icp", "name": "ICP & Audience Alignment", "pillar": "Core Positioning", "score": number (one of ${BANDED_SCORES.join(", ")}), "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "messaging", "name": "Hero Messaging & Speed", "pillar": "Messaging & Value Prop", "score": number (one of ${BANDED_SCORES.join(", ")}), "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "differentiation", "name": "Differentiation Anchor", "pillar": "Core Positioning", "score": number (one of ${BANDED_SCORES.join(", ")}), "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
+    { "id": "value-prop", "name": "Value Proposition Density", "pillar": "Messaging & Value Prop", "score": number (one of ${BANDED_SCORES.join(", ")}), "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" },
     { "id": "gtm", "name": "GTM Readiness", "pillar": "GTM & Launch Velocity", "locked": true },
     { "id": "launch", "name": "Launch Readiness", "pillar": "GTM & Launch Velocity", "locked": true },
-    { "id": "conversion", "name": "Conversion & Friction Mechanics", "pillar": "GTM & Launch Velocity", "score": 75, "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" }
+    { "id": "conversion", "name": "Conversion & Friction Mechanics", "pillar": "GTM & Launch Velocity", "score": number (one of ${BANDED_SCORES.join(", ")}), "status": "string", "friction_label": "string (2 to 4 words)", "anchor_label": "string (2 to 4 words)", "evidence_snippet": "string (verbatim quote or \\"\\")", "keyObservation": "string (1 sentence)", "commercialRisk": "string (1 sentence)" }
   ]
 }
-A parameter with no usable evidence still appears in the array in its slot, in this exact shape: { "id": "value-prop", "name": "Value Proposition Density", "pillar": "Messaging & Value Prop", "insufficientData": true }
+A parameter with no usable evidence still appears in the array in its slot, in this exact shape: { "id": "value-prop", "name": "Value Proposition Density", "pillar": "Messaging & Value Prop", "insufficientData": true, "keyObservation": "string (1 sentence: what you looked for and what you found instead on this site)" }
 No text outside the JSON.`;
 }
 
@@ -224,8 +285,14 @@ No text outside the JSON.`;
  * value-prop wording or the abstain rule it carries) MUST bump this number. It
  * is baked into the response-cache key, so bumping it invalidates every cached
  * result automatically and the next visit re-scores on the model.
+ *
+ * v2 (2026-09-18): the owner's rubric calibration (Parts 1 to 5) — the scale
+ * collapsed to five values [20, 40, 60, 80, 95], a band anchor for every
+ * parameter, the value-prop re-point onto body text / H2-and-below / CTA
+ * labels, and the removal of the abstain boilerplate. Every v1 entry is
+ * therefore stale by definition and this bump retires all of them at once.
  */
-export const DIAGNOSE_PROMPT_VERSION = 1;
+export const DIAGNOSE_PROMPT_VERSION = 2;
 
 /** The full response-cache key: rubric/prompt version + the SHA-256 of the
  * ENTIRE deterministic request body (model, system prompt, user message and
@@ -263,14 +330,14 @@ interface DimScored {
   score?: number;
   status?: string;
   friction_label?: string;
-  /** 2 to 4 word positive anchor label, shown as the STRENGTH label at 70+. */
+  /** 2 to 4 word positive anchor label, shown as the STRENGTH label at 80+. */
   anchor_label?: string;
   /** Direct 1-sentence diagnostic observation of what was FOUND or MISSING on
    * the page, grounded in the messaging/patterning detected on the site. */
   keyObservation?: string;
-  /** 1-sentence business impact: the commercial risk (score below 70) shown as
-   * "Commercial Risk" or the competitive advantage (70+) shown as
-   * "Competitive Advantage". Single statement, relabeled by the UI at 70. */
+  /** 1-sentence business impact: the commercial risk (score below 80) shown as
+   * "Commercial Risk" or the competitive advantage (80+) shown as
+   * "Competitive Advantage". Single statement, relabeled by the UI at 80. */
   commercialRisk?: string;
   /** Short literal DOM quote backing this score (server-side carry only, never
    * rendered in the UI; logged to Airtable as DOM Evidence). */
@@ -387,16 +454,23 @@ function coerceDimensions(raw: unknown): DimResult[] {
           frictionLabel ||
           (insufficientData ? "Not Enough Signal" : "Gap in the assessment"),
         anchor_label: anchorLabel || (strong ? "Clear Strength" : undefined),
-        keyObservation:
-          keyObservation ||
-          (strong
-            ? "This parameter's current framing is a clear strength on the public site."
-            : "This parameter is not well represented on the public site."),
+        // Owner rubric calibration Part 4: the keyObservation is the MODEL's
+        // site-specific sentence and nothing else. The code-generated
+        // boilerplate ("This parameter is not well represented on the public
+        // site.") is GONE: when the model returns nothing usable the field is
+        // simply absent and the card shows only the "Not enough signal to
+        // score" label, with no explanatory sentence.
+        keyObservation: keyObservation || undefined,
+        // Part 4, second half: an abstained parameter carries the MODEL's own
+        // text only. The code-generated impact sentence is suppressed for it
+        // too, so an abstain can never be filled in with vendor prose.
         commercialRisk:
           commercialRisk ||
-          (strong
-            ? "Visitors get a clear reason to choose this product, which shortens evaluation and protects the price."
-            : "Visitors get no clear reason to choose this product, which slows evaluation and leaks demand."),
+          (insufficientData
+            ? undefined
+            : strong
+              ? "Visitors get a clear reason to choose this product, which shortens evaluation and protects the price."
+              : "Visitors get no clear reason to choose this product, which slows evaluation and leaks demand."),
         evidence_snippet: evidence || undefined,
         insufficientData,
       };
@@ -408,13 +482,13 @@ function coerceDimensions(raw: unknown): DimResult[] {
     if (LOCKED_PARAMETER_IDS.has(id)) {
       return { id, name: ID_TO_NAME[id], pillar: PILLAR_OF[id], locked: true };
     }
-    // The model returned nothing for a scored dimension: abstain, never invent.
+    // The model returned nothing for a scored dimension: abstain, never invent
+    // a score, and never invent an explanation either (Part 4).
     return {
       id,
       name: ID_TO_NAME[id],
       pillar: PILLAR_OF[id],
       friction_label: "Not Enough Signal",
-      keyObservation: "Not enough signal in the public crawl to score this parameter.",
       insufficientData: true,
     };
   });
