@@ -474,7 +474,7 @@ function BriefingOffer({ onBookBriefing }: { onBookBriefing: () => void }) {
      <button type="button" onClick={onBookBriefing} className="btn-electric shrink-0">
       Book a 15-Min Diagnostic Briefing →
      </button>
-     <a href="/services/audit" className="nav-link text-left text-fog">
+     <a href="/services" className="nav-link text-left text-fog">
       Looking for a full human-led evaluation? We can discuss our 9-parameter Audit during
       your call.
      </a>

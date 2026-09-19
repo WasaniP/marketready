@@ -22,6 +22,7 @@ export const Route = createFileRoute("/services/sprint")({
  head: () => ({
   meta: [
    { title: "GTM Sprint: MarketReady" },
+   { name: "robots", content: "noindex, nofollow" },
    {
     name: "description",
     content:

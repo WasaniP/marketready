@@ -368,7 +368,7 @@ export function DiagnosticEngine() {
               The MarketReady Diagnostic Engine
             </h2>
             <p className="engine-intro">
-              Six dimensions scored in seconds from your public site, plus two reserved for a human review. All eight grouped into three pillars: how you position, how you message, and how fast you launch.
+              Nine parameters scored in seconds from your public site, in three pillars of three: how you position, how you message, and how fast you launch. Two internal parameters stay locked for a human review.
             </p>
             <p className="engine-callout">
               A low score isn&apos;t an abstraction. It&apos;s the demo where

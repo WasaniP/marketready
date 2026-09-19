@@ -321,9 +321,9 @@ function ScoreCondensed() {
             <p className="sc-eyebrow">MY SCORING SYSTEM</p>
             <h2 className="sc-headline">The MarketReady Diagnostic Engine</h2>
             <p className="sc-intro">
-              Six dimensions scored in seconds from your public site, plus two
-              reserved for a human review. All eight grouped into three pillars:
-              how you position, how you message, and how fast you launch.
+              Nine parameters scored in seconds from your public site, in three
+              pillars of three: how you position, how you message, and how fast
+              you launch.
             </p>
             <p className="sc-callout">
               A low score isn&apos;t an abstraction. It&apos;s the demo where
@@ -565,7 +565,7 @@ const WORK_CARDS = [
     forBody:
       "growing companies ready to scale who need to stress-test their GTM system and pinpoint friction before accelerating spend.",
     points: [
-      "Scored 9-point GTM diagnostic",
+      "Scored nine-parameter GTM diagnostic",
       "Positioning leak identification",
       "Conversion friction roadmap",
       "Sales narrative audit",

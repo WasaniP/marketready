@@ -2500,3 +2500,569 @@
     margin-top: 64px;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* /services ladder page (owner spec 2026-09-19).                      */
+/*                                                                     */
+/* Token map (all values are the SHIPPED warm-dark palette, read off   */
+/* src/styles/app.css @theme — no new colour, no new type):            */
+/*   page background .......... --color-cream    #16120F               */
+/*   band / card surface ...... --color-sand     #1F1A16               */
+/*   panel fill ............... --color-linen    #2A2320               */
+/*   hairline rules/borders ... --color-hairline #3A312B               */
+/*   headline + body text ..... --color-ink      #F5F0E8               */
+/*   secondary text ........... --color-mist     #B8AEA3               */
+/*   captions / duration ...... --color-fog      #7D736A               */
+/*   eyebrow + price accents .. --color-pinetint #E8C9A0               */
+/*   accent / links / CTAs .... --color-ember    #C96A42 (hover #A8502F)*/
+/* Type: Fraunces (--font-display) for names/prices, JetBrains Mono    */
+/* (--font-mono) for durations + table heads, sans for body. Buttons    */
+/* reuse the shipped .btn-electric / .btn-ghost treatments.            */
+/*                                                                     */
+/* Layout: ONE continuous rail (1px hairline on the ladder's left      */
+/* edge). Group labels carry the section background and straddle the   */
+/* rail so they are the only interruptions in it. Rows are FLAT BANDS: */
+/* no per-row border, radius or shadow — hairline rules between rows   */
+/* only, plus a 14px tick from the rail into each row. Rows expand via */
+/* the FAQ's grid-template-rows 0fr -> 1fr reveal, which is the only   */
+/* motion on the page (reduced motion: instant, see the media query).  */
+/* ------------------------------------------------------------------ */
+
+#services-page {
+  background-color: #16120f;
+}
+
+#services-page .sv-wrap {
+  width: 100%;
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+@media (min-width: 640px) {
+  #services-page .sv-wrap {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+
+/* ---- Hero ---- */
+#services-page .sv-hero {
+  padding-top: 104px;
+  padding-bottom: 48px;
+}
+@media (min-width: 640px) {
+  #services-page .sv-hero {
+    padding-top: 136px;
+    padding-bottom: 56px;
+  }
+}
+#services-page .sv-h1 {
+  margin-top: 14px;
+  max-width: 22ch;
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.14;
+  letter-spacing: -0.01em;
+  color: #f5f0e8;
+  text-wrap: balance;
+}
+@media (min-width: 640px) {
+  #services-page .sv-h1 {
+    font-size: 44px;
+    max-width: 26ch;
+  }
+}
+#services-page .sv-lede {
+  margin-top: 20px;
+  max-width: 62ch;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #b8aea3;
+}
+@media (min-width: 640px) {
+  #services-page .sv-lede {
+    font-size: 15px;
+  }
+}
+#services-page .sv-lede p + p {
+  margin-top: 12px;
+}
+#services-page .sv-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 30px;
+}
+#services-page .sv-cta-row-center {
+  justify-content: center;
+}
+
+/* ---- Ladder rail ---- */
+#services-page .sv-ladder-section {
+  padding-bottom: 72px;
+}
+@media (min-width: 640px) {
+  #services-page .sv-ladder-section {
+    padding-bottom: 96px;
+  }
+}
+#services-page .sv-ladder {
+  padding-left: 0;
+}
+@media (min-width: 640px) {
+  #services-page .sv-ladder {
+    padding-left: 28px;
+    border-left: 1px solid #3a312b;
+  }
+}
+
+/* Group label: the only interruption in the rail. Straddles the rail via
+   a negative margin equal to the ladder's left padding, and paints the
+   section background so the rail appears to break behind it. */
+#services-page .sv-group {
+  position: relative;
+}
+#services-page .sv-group + .sv-group {
+  margin-top: 52px;
+}
+@media (min-width: 640px) {
+  #services-page .sv-group + .sv-group {
+    margin-top: 64px;
+  }
+}
+#services-page .sv-group-label-wrap {
+  position: relative;
+  padding: 6px 0 12px;
+}
+@media (min-width: 640px) {
+  #services-page .sv-group-label-wrap {
+    margin-left: -28px;
+    padding-left: 28px;
+    background-color: #16120f;
+  }
+  /* rust marker centred on the rail */
+  #services-page .sv-group-label-wrap::before {
+    content: "";
+    position: absolute;
+    left: -4px;
+    top: 12px;
+    width: 8px;
+    height: 8px;
+    background-color: #c96a42;
+  }
+}
+#services-page .sv-group-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #e8c9a0;
+}
+#services-page .sv-group-line {
+  margin-top: 8px;
+  max-width: 52ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #b8aea3;
+}
+
+/* ---- Rows: flat bands, hairline rules only ---- */
+#services-page .sv-rows .sv-row-wrap + .sv-row-wrap {
+  border-top: 1px solid #3a312b;
+}
+#services-page .sv-row {
+  position: relative;
+}
+@media (min-width: 640px) {
+  /* 14px tick from the rail into the row */
+  #services-page .sv-row::before {
+    content: "";
+    position: absolute;
+    left: -28px;
+    top: 27px;
+    width: 14px;
+    height: 1px;
+    background-color: #3a312b;
+    pointer-events: none;
+  }
+}
+#services-page .sv-row-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 20px;
+}
+#services-page .sv-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  column-gap: 20px;
+  width: 100%;
+  padding: 18px 0;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+#services-page .sv-main {
+  display: block;
+  min-width: 0;
+}
+#services-page .sv-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #f5f0e8;
+}
+@media (min-width: 768px) {
+  #services-page .sv-name {
+    font-size: 21px;
+  }
+}
+#services-page .sv-line {
+  display: block;
+  margin-top: 6px;
+  max-width: 58ch;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #b8aea3;
+}
+/* Price is the largest type in the row after the offer name. */
+#services-page .sv-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  justify-self: end;
+  white-space: nowrap;
+}
+#services-page .sv-price {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #f5f0e8;
+}
+#services-page .sv-duration {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7d736a;
+}
+#services-page .sv-chevron {
+  width: 12px;
+  height: 12px;
+  align-self: center;
+  color: #7d736a;
+}
+#services-page .sv-chevron-open {
+  color: #c96a42;
+  transform: rotate(180deg);
+}
+#services-page .sv-cta-cell {
+  display: flex;
+  align-items: center;
+}
+#services-page .sv-cta {
+  white-space: nowrap;
+}
+@media (max-width: 767px) {
+  /* Mobile stacks: name, description, price + duration on one line, CTA. */
+  #services-page .sv-row-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #services-page .sv-toggle {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 18px 0 12px;
+  }
+  #services-page .sv-meta {
+    justify-self: start;
+    margin-top: 10px;
+  }
+  #services-page .sv-chevron {
+    position: absolute;
+    top: 22px;
+    right: 0;
+  }
+  #services-page .sv-cta-cell {
+    padding-bottom: 18px;
+  }
+}
+
+/* ---- Expand: the only motion on the page ---- */
+#services-page .sv-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+#services-page .sv-panel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+#services-page .sv-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+#services-page .sv-body {
+  padding: 0 0 24px;
+}
+#services-page .sv-bullets {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#services-page .sv-bullets li {
+  position: relative;
+  padding-left: 16px;
+  max-width: 72ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #b8aea3;
+}
+#services-page .sv-bullets li + li {
+  margin-top: 8px;
+}
+#services-page .sv-bullets li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 6px;
+  height: 1px;
+  background-color: #c96a42;
+}
+#services-page .sv-note {
+  margin-top: 16px;
+  max-width: 72ch;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #7d736a;
+}
+#services-page .sv-prose {
+  max-width: 72ch;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #b8aea3;
+}
+#services-page .sv-prose + .sv-prose {
+  margin-top: 12px;
+}
+/* Nested sub-offers: lighter in weight than the parent row. */
+#services-page .sv-sub {
+  margin-top: 16px;
+  padding-left: 18px;
+  border-left: 1px solid #3a312b;
+}
+#services-page .sv-sub-item + .sv-sub-item {
+  margin-top: 14px;
+}
+#services-page .sv-sub-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+#services-page .sv-sub-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #b8aea3;
+}
+#services-page .sv-sub-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #7d736a;
+}
+#services-page .sv-sub-body {
+  margin-top: 4px;
+  max-width: 70ch;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #7d736a;
+}
+/* Add-on table: scrolls inside its own container on mobile. */
+#services-page .sv-table-wrap {
+  margin-top: 20px;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#services-page .sv-table {
+  width: 100%;
+  min-width: 320px;
+  border-collapse: collapse;
+}
+#services-page .sv-table th,
+#services-page .sv-table td {
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid #3a312b;
+}
+#services-page .sv-table th {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7d736a;
+}
+#services-page .sv-table td {
+  font-size: 13px;
+  color: #b8aea3;
+}
+#services-page .sv-table th:last-child,
+#services-page .sv-table td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+/* Reserved, intentionally empty container for the future before-and-after
+   voice transformation block under the Ghostwriting row. */
+#services-page .sv-voice-proof {
+  min-height: 0;
+}
+
+/* ---- Framework / fit / close bands ---- */
+#services-page .sv-framework {
+  padding-top: 48px;
+  padding-bottom: 56px;
+  border-top: 1px solid #3a312b;
+}
+#services-page .sv-h2 {
+  margin-top: 12px;
+  max-width: 26ch;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #f5f0e8;
+  text-wrap: balance;
+}
+@media (min-width: 640px) {
+  #services-page .sv-h2 {
+    font-size: 32px;
+  }
+}
+#services-page .sv-section-lede {
+  margin-top: 14px;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #b8aea3;
+}
+#services-page .sv-pillars {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+}
+@media (min-width: 900px) {
+  #services-page .sv-pillars {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+/* Shipped card language: #1F1A16 fill, 1px hairline border, 2px rust top
+   accent, 6px radius, NO shadow. */
+#services-page .sv-pillar {
+  background-color: #1f1a16;
+  border: 1px solid #3a312b;
+  border-top: 2px solid #c96a42;
+  border-radius: 6px;
+  padding: 18px 20px 20px;
+}
+#services-page .sv-pillar-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7d736a;
+}
+#services-page .sv-pillar-title {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #f5f0e8;
+}
+#services-page .sv-pillar-params {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #b8aea3;
+}
+#services-page .sv-framework-close {
+  margin-top: 28px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-style: italic;
+  line-height: 1.5;
+  color: #e8c9a0;
+}
+
+#services-page .sv-fit {
+  background-color: #1f1a16;
+  border-top: 1px solid #3a312b;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+#services-page .sv-fit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+}
+@media (min-width: 900px) {
+  #services-page .sv-fit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px;
+  }
+}
+#services-page .sv-fit-body {
+  margin-top: 10px;
+  max-width: 52ch;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #b8aea3;
+}
+
+#services-page .sv-close {
+  padding-top: 56px;
+  padding-bottom: 72px;
+  border-top: 1px solid #3a312b;
+  text-align: center;
+}
+#services-page .sv-close .sv-h2 {
+  margin-left: auto;
+  margin-right: auto;
+}
+#services-page .sv-close-body {
+  margin: 14px auto 0 auto;
+  max-width: 56ch;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #b8aea3;
+}
+
+/* Focus rings: every expandable row and every CTA. */
+#services-page .sv-toggle:focus-visible,
+#services-page .sv-cta:focus-visible,
+#services-page a:focus-visible,
+#services-page button:focus-visible {
+  outline: 2px solid #c96a42;
+  outline-offset: 2px;
+}
+
+/* Reduced motion: the expand lands instantly, no animation. */
+@media (prefers-reduced-motion: reduce) {
+  #services-page .sv-panel {
+    transition: none;
+  }
+}
