@@ -24,6 +24,7 @@ export const Route = createFileRoute("/services/audit")({
  head: () => ({
   meta: [
    { title: "MarketReady Audit: MarketReady" },
+   { name: "robots", content: "noindex, nofollow" },
    {
     name: "description",
     content:
@@ -448,7 +449,7 @@ function AuditPage() {
         </p>
         <p className="mt-5 text-sm font-semibold text-mist">14 days · $7,500</p>
         <div className="mt-auto pt-6">
-         <a href="/services/sprint" className="btn-ghost w-full px-6 py-3 text-center text-sm">
+         <a href="/services" className="btn-ghost w-full px-6 py-3 text-center text-sm">
           Explore GTM Sprint - $7,500
          </a>
         </div>

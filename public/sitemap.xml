@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MarketReady public sitemap (owner spec 2026-09-19).
+  Excluded on purpose:
+    - /services/audit, /services/sprint, /services/fractional (hidden drafts:
+      noindex + robots.txt disallow + zero inbound internal links)
+    - /services/advisory (308 redirects to /services/fractional; a redirect
+      target has no place in a sitemap)
+    - /blog (308 redirects to /resources)
+    - /onboarding/success (post-booking intake, not a public entry point)
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/services</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/services/diagnostic</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/about</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/assessment</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/contact</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/resources</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/work/publisher-marketplace</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/work/consumer-sports</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/work/b2b-saas-platform</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/work/collectibles-marketplace</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/terms</loc>
+  </url>
+  <url>
+    <loc>https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/privacy</loc>
+  </url>
+</urlset>

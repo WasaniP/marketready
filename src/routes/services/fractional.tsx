@@ -25,6 +25,7 @@ export const Route = createFileRoute("/services/fractional")({
  head: () => ({
   meta: [
    { title: "Fractional GTM Partner: MarketReady" },
+   { name: "robots", content: "noindex, nofollow" },
    {
     name: "description",
     content:

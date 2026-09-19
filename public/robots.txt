@@ -1,0 +1,11 @@
+# MarketReady robots.txt
+# Draft offer pages are intentionally hidden (owner spec 2026-09-19): noindex,
+# disallowed here, absent from sitemap.xml, and unlinked internally. The /services
+# ladder page is the public hub; /services/diagnostic is the live free assessment.
+User-agent: *
+Allow: /
+Disallow: /services/audit
+Disallow: /services/sprint
+Disallow: /services/fractional
+
+Sitemap: https://59e104a5a8878f58fb5893d4b7ec1597.ctonew.app/sitemap.xml

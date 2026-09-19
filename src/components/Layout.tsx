@@ -20,30 +20,17 @@ import { useEffect, useRef, useState } from "react";
 /* Constants                                                           */
 /* ------------------------------------------------------------------ */
 
-/** Services dropdown links (route to the /services subpages : the brochure
- * content that lives there since build #27. Full owner-specified names +
- * subtexts : the exact copy the dropdown shows.) */
+/** Services dropdown links. Owner spec 2026-09-19: the three draft offer pages
+ * (/services/audit, /services/sprint, /services/fractional) are hidden — noindex,
+ * disallowed in robots.txt, absent from the sitemap — so EVERY internal link to
+ * them was removed, including the ones that used to sit in this dropdown. The
+ * dropdown now offers the live free assessment and the /services hub, which is
+ * the public ladder of all eight offers. */
 export const SERVICES_LINKS = [
   {
     name: "MarketReady Diagnostic (Free AI Audit & Scorecard)",
     subtext: "Real-time URL crawl & 9-parameter GTM assessment.",
     href: "/services/diagnostic",
-  },
-  {
-    name: "MarketReady Audit (Human-Led Positioning & GTM Review)",
-    subtext: "A human-led positioning & GTM audit with prioritized recommendations.",
-    href: "/services/audit",
-  },
-  {
-    name: "GTM Sprint (14-Day Strategy & Launch Deck)",
-    subtext:
-      "Positioning architecture, homepage rewrites, core launch deck, and custom AI prompt workflows.",
-    href: "/services/sprint",
-  },
-  {
-    name: "Fractional GTM Partner (Ongoing Growth Retainer)",
-    subtext: "Embedded PMM leadership, messaging iteration, and launch execution.",
-    href: "/services/fractional",
   },
 ] as const;
 
@@ -311,6 +298,12 @@ export function Header() {
           >
             How It Works
           </a>
+          {/* Owner spec 2026-09-19: /services must be linked from the nav. The
+              dropdown/hidden group below stays as-is; this is the one visible
+              Services link (page link, not a scroll anchor). */}
+          <a href="/services" className="nav-link">
+            Services
+          </a>
           {/* Owner spec 2026-09-14: Services/Resources/About hidden (one
               `hidden` class restores them — same pattern as the footer's
               hidden nav links; markup + hrefs intact). */}
@@ -431,6 +424,16 @@ export function Header() {
                 How It Works <span className="text-xs text-fog">(on this page ↓)</span>
               </a>
             </li>
+            {/* Owner spec 2026-09-19: /services linked from the mobile nav too. */}
+            <li>
+              <a
+                href="/services"
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-ink hover:bg-sand hover:text-ember"
+              >
+                Services
+              </a>
+            </li>
             <li className="hidden">
               <a
                 href="/resources"
@@ -507,12 +510,15 @@ export function Footer({ onBook: _onBook }: { onBook: () => void }) {
           <a href="/services/diagnostic" className={FOOTER_CTA_OUTLINE}>
             Check my score
           </a>
+          {/* Owner spec 2026-09-19: /services linked from the footer. The rest of
+              the nav row stays hidden (one-class restore); Services is the only
+              link unhidden here. */}
+          <a href="/services" className={FOOTER_LINK}>
+            Services
+          </a>
           <div className="hidden">
             <a href="/#how-it-works" className={FOOTER_LINK}>
               How It Works
-            </a>
-            <a href="/services" className={FOOTER_LINK}>
-              Services
             </a>
             <a href="/resources" className={FOOTER_LINK}>
               Resources
