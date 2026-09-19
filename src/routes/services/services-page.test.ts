@@ -157,3 +157,15 @@ describe("homepage: nine parameters, three pillars of three", () => {
     expect(HOME).not.toContain("Six dimensions scored in seconds");
   });
 });
+
+describe("diagnostic engine copy: nine parameters, not six/eight", () => {
+  const ENGINE = read("src/components/DiagnosticEngine.tsx");
+  it("describes the engine as nine parameters in three pillars of three", () => {
+    expect(ENGINE).toContain("Nine parameters scored in seconds from your public site");
+    expect(ENGINE).toContain("pillars of three");
+  });
+  it("has no eight-dimension claim left in the engine", () => {
+    expect(ENGINE).not.toContain("All eight grouped into three pillars");
+    expect(ENGINE).not.toContain("Six dimensions scored in seconds");
+  });
+});
