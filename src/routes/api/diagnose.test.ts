@@ -9,6 +9,16 @@
  *   Part 5: every returned number is snapped to a permitted band
  *   Part 6: abstain instead of guessing; 3+ abstains = no overall score at all
  *
+ * Owner rubric calibration 2026-09-18 (Parts 1 to 5) adds:
+ *   Part 1: the scale is the FIVE values [20, 40, 60, 80, 95] and the 80 / 40
+ *           status + band + UI-label cutoffs are one constant set
+ *   Part 2: the prompt re-points Value Proposition Density onto body text,
+ *           H2-and-below headings and CTA labels, and whitelists static
+ *           metadata for it
+ *   Part 3: all five band anchors are in the system prompt, verbatim
+ *   Part 4: no code-generated abstain boilerplate anywhere in the payload
+ *   Part 5: DIAGNOSE_PROMPT_VERSION is 2, so every cached v1 entry is retired
+ *
  * Runs with `bun test`. No network: globalThis.fetch is mocked for both the
  * crawl and the OpenAI call.
  */
@@ -22,6 +32,7 @@ import {
   DIAGNOSE_PROMPT_VERSION,
 } from "./diagnose";
 import { clearCrawlCache } from "~/lib/audit/crawl";
+import { REFINEMENT_MIN, STRONG_MIN } from "~/lib/audit/thresholds";
 import {
   DIAGNOSE_CACHE_TTL_MS,
   diagnoseResponseCacheSize,
@@ -97,14 +108,14 @@ function fullPayload() {
     primaryFriction: "The pricing page never states who the product is for.",
     recommendedFix: "Add a named-buyer line above the fold on pricing.",
     dimensions: [
-      modelDim("positioning", "Category Positioning", "Core Positioning", 75),
-      modelDim("icp", "ICP & Audience Alignment", "Core Positioning", 65),
-      modelDim("differentiation", "Differentiation Anchor", "Core Positioning", 55),
-      modelDim("messaging", "Hero Messaging & Speed", "Messaging & Value Prop", 85),
-      modelDim("value-prop", "Value Proposition Density", "Messaging & Value Prop", 45),
+      modelDim("positioning", "Category Positioning", "Core Positioning", 80),
+      modelDim("icp", "ICP & Audience Alignment", "Core Positioning", 60),
+      modelDim("differentiation", "Differentiation Anchor", "Core Positioning", 60),
+      modelDim("messaging", "Hero Messaging & Speed", "Messaging & Value Prop", 95),
+      modelDim("value-prop", "Value Proposition Density", "Messaging & Value Prop", 40),
       { id: "gtm", name: "GTM Readiness", pillar: "GTM & Launch Velocity", locked: true },
       { id: "launch", name: "Launch Readiness", pillar: "GTM & Launch Velocity", locked: true },
-      modelDim("conversion", "Conversion & Friction Mechanics", "GTM & Launch Velocity", 75),
+      modelDim("conversion", "Conversion & Friction Mechanics", "GTM & Launch Velocity", 80),
     ],
   };
 }
@@ -180,10 +191,11 @@ describe("determinism knobs (Part 2)", () => {
     expect(user).toContain("[/pricing] -> FOUND");
     expect(user).toContain("[/about] -> FOUND");
     expect(user).toContain("[Homepage ] -> FOUND");
-    // The rubric states the unified vocabulary.
-    expect(system).toContain('70 -> "Strong"');
-    expect(system).toContain('45 to 69 -> "Needs Refinement"');
-    expect(system).toContain("15, 25, 35, 45, 55, 65, 75, 85, 95");
+    // The rubric states the unified vocabulary and the calibrated five-value scale.
+    expect(system).toContain('80 -> "Strong"');
+    expect(system).toContain('40 to 79 -> "Needs Refinement"');
+    expect(system).toContain("20, 40, 60, 80, 95");
+    expect(system).not.toContain("15, 25, 35, 45, 55, 65, 75, 85, 95");
   });
 
   test("the same URL + the same model output score identically on a repeat call", async () => {
@@ -204,8 +216,8 @@ describe("overall score computed in code (Part 3)", () => {
       estimatedLeakage: "$500,000 to $900,000/yr",
     });
     const { body } = await post();
-    // 97.5 + 78 + 66 + 85 + 40.5 + 67.5 = 434.5 over weights 6.5 -> 66.8 -> 67
-    expect(body.score).toBe(67);
+    // 104 + 72 + 72 + 95 + 36 + 72 = 451 over weights 6.5 -> 69.4 -> 69
+    expect(body.score).toBe(69);
     expect(body.overallBand).toBe("Needs Attention");
     expect("estimatedLeakage" in body).toBe(false);
     expect(JSON.stringify(body)).not.toContain("eakage");
@@ -233,35 +245,90 @@ describe("overall score computed in code (Part 3)", () => {
   });
 });
 
-describe("banded coercion (Part 5)", () => {
+describe("five-value banded coercion (Part 1)", () => {
   test("any number is snapped to the nearest permitted value", async () => {
     mock({
       ...fullPayload(),
       dimensions: fullPayload().dimensions.map((d) =>
-        d.id === "positioning" ? { ...d, score: 88 } : d.id === "icp" ? { ...d, score: 20 } : d,
+        d.id === "positioning" ? { ...d, score: 88 } : d.id === "icp" ? { ...d, score: 25 } : d,
       ),
     });
     const { body } = await post();
     const dims = body.dimensions as Record<string, unknown>[];
     const byId = Object.fromEntries(dims.map((d) => [d.id, d]));
-    expect(byId.positioning.score).toBe(85);
-    expect(byId.icp.score).toBe(15);
+    expect(byId.positioning.score).toBe(95); // 88 is past the 87.5 midpoint
+    expect(byId.icp.score).toBe(20); // 25 is nearer 20 than 40
     expect(byId.positioning.status).toBe("Strong");
     expect(byId.icp.status).toBe("Critical Gap");
+  });
+
+  test("a raw 82 -> 80 Strong, 39 -> 40 Needs Refinement, 95 stays 95", async () => {
+    mock({
+      ...fullPayload(),
+      dimensions: fullPayload().dimensions.map((d) =>
+        d.id === "positioning"
+          ? { ...d, score: 82 }
+          : d.id === "icp"
+            ? { ...d, score: 39 }
+            : d.id === "messaging"
+              ? { ...d, score: 95 }
+              : d,
+      ),
+    });
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    const byId = Object.fromEntries(dims.map((d) => [d.id, d]));
+    expect(byId.positioning.score).toBe(80);
+    expect(byId.positioning.status).toBe("Strong");
+    expect(byId.icp.score).toBe(40);
+    expect(byId.icp.status).toBe("Needs Refinement");
+    expect(byId.messaging.score).toBe(95);
+    expect(byId.messaging.status).toBe("Strong");
+  });
+
+  test("every score in the payload is one of the five permitted values", async () => {
+    mock({
+      ...fullPayload(),
+      dimensions: fullPayload().dimensions.map((d) =>
+        typeof d.score === "number" ? { ...d, score: 71 } : d,
+      ),
+    });
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    for (const d of dims) {
+      if (typeof d.score === "number") expect([20, 40, 60, 80, 95]).toContain(d.score);
+    }
   });
 
   test("status labels always come from the unified thresholds", async () => {
     mock({
       ...fullPayload(),
       dimensions: fullPayload().dimensions.map((d) =>
-        d.id === "messaging" ? { ...d, score: 65, status: "Strong" } : d,
+        d.id === "messaging" ? { ...d, score: 79, status: "Strong" } : d,
       ),
     });
     const { body } = await post();
     const dims = body.dimensions as Record<string, unknown>[];
     const messaging = dims.find((d) => d.id === "messaging") as Record<string, unknown>;
-    expect(messaging.score).toBe(65);
-    expect(messaging.status).toBe("Needs Refinement");
+    // 79 snaps to 80, so the model's own "Strong" label happens to be right here.
+    expect(messaging.score).toBe(80);
+    expect(messaging.status).toBe("Strong");
+
+    // A label the code disagrees with is overruled: icp is 60 in the fixture and
+    // the model calls it "Strong", so the derived label must win.
+    clearDiagnoseResponseCache();
+    clearCrawlCache();
+    mock({
+      ...fullPayload(),
+      dimensions: fullPayload().dimensions.map((d) =>
+        d.id === "icp" ? { ...d, score: 60, status: "Strong" } : d,
+      ),
+    });
+    const lower = await post();
+    const lowerDims = lower.body.dimensions as Record<string, unknown>[];
+    const icp = lowerDims.find((d) => d.id === "icp") as Record<string, unknown>;
+    expect(icp.score).toBe(60);
+    expect(icp.status).toBe("Needs Refinement");
   });
 });
 
@@ -278,8 +345,8 @@ describe("abstain rather than guess (Part 6)", () => {
     const valueProp = dims.find((d) => d.id === "value-prop") as Record<string, unknown>;
     expect(valueProp.insufficientData).toBe(true);
     expect(valueProp.score).toBeUndefined();
-    // 97.5 + 78 + 66 + 85 = 326.5 over 4.7 -> 69.47 -> 69 (weights redistributed)
-    expect(body.score).toBe(69);
+    // 104 + 72 + 72 + 95 = 343 over 4.7 -> 72.98 -> 73 (weights redistributed)
+    expect(body.score).toBe(73);
     expect(body.overallBand).toBe("Needs Attention");
   });
 
@@ -297,7 +364,7 @@ describe("abstain rather than guess (Part 6)", () => {
     expect(body.overallBand).toBeNull();
   });
 
-  test("a dimension the model omits entirely abstains (never a default 20)", async () => {
+  test("a dimension the model omits entirely abstains (never a default band)", async () => {
     const payload = fullPayload();
     mock({
       ...payload,
@@ -308,6 +375,55 @@ describe("abstain rather than guess (Part 6)", () => {
     const differentiation = dims.find((d) => d.id === "differentiation") as Record<string, unknown>;
     expect(differentiation.insufficientData).toBe(true);
     expect(differentiation.score).toBeUndefined();
+    // Part 4: no invented explanation either.
+    expect(differentiation.keyObservation).toBeUndefined();
+  });
+
+  test("an abstained dimension keeps the MODEL's site-specific keyObservation (Part 4)", async () => {
+    const payload = fullPayload();
+    const OBS =
+      "Looked for outcome claims across the body text, the H2s and the CTA labels; the copy names capabilities only.";
+    mock({
+      ...payload,
+      dimensions: payload.dimensions.map((d) =>
+        d.id === "value-prop"
+          ? { id: "value-prop", name: d.name, pillar: d.pillar, insufficientData: true, keyObservation: OBS }
+          : d,
+      ),
+    });
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    const valueProp = dims.find((d) => d.id === "value-prop") as Record<string, unknown>;
+    expect(valueProp.insufficientData).toBe(true);
+    expect(valueProp.score).toBeUndefined();
+    expect(valueProp.keyObservation).toBe(OBS);
+  });
+
+  test("no abstain boilerplate anywhere in the payload (Part 4)", async () => {
+    const payload = fullPayload();
+    mock({
+      ...payload,
+      dimensions: payload.dimensions.map((d) =>
+        d.id === "value-prop" || d.id === "conversion"
+          ? { id: d.id, name: d.name, pillar: d.pillar, insufficientData: true, keyObservation: "" }
+          : d,
+      ),
+    });
+    const { body } = await post();
+    const dims = body.dimensions as Record<string, unknown>[];
+    for (const id of ["value-prop", "conversion"]) {
+      const d = dims.find((x) => x.id === id) as Record<string, unknown>;
+      expect(d.insufficientData).toBe(true);
+      expect(d.keyObservation).toBeUndefined();
+      // The card label is the ONLY text an abstain renders: no code-generated
+      // impact sentence either.
+      expect(d.friction_label).toBe("Not Enough Signal");
+      expect(d.commercialRisk).toBeUndefined();
+    }
+    const serialized = JSON.stringify(body);
+    expect(serialized).not.toContain("not well represented");
+    expect(serialized).not.toContain("Not enough signal in the public crawl");
+    expect(serialized).not.toContain("clear strength on the public site");
   });
 
   test("a stray pricing dimension is still dropped", async () => {
@@ -366,7 +482,9 @@ describe("Part C: static metadata reaches the model", () => {
     expect(user).toContain('META DESCRIPTION: "Acme is the widget platform for logistics teams."');
     // The system prompt states the evidence rule for the static fields.
     expect(system).toContain("STATIC METADATA (WEAKER EVIDENCE, STILL VALID)");
-    expect(system).toContain("Category Positioning, ICP & Audience Alignment, and Differentiation Anchor");
+    expect(system).toContain(
+      "Category Positioning, ICP & Audience Alignment, Differentiation Anchor, and Value Proposition Density",
+    );
     expect(system).toContain("WEAKER evidence than rendered page copy");
   });
 
@@ -505,7 +623,7 @@ describe("Part 2.2: response cache", () => {
       ...fullPayload(),
       primaryFriction: "A divergent second completion.",
       dimensions: fullPayload().dimensions.map((d) =>
-        d.id === "positioning" ? { ...d, score: 15 } : d,
+        d.id === "positioning" ? { ...d, score: 20 } : d,
       ),
     });
     const second = await post();
@@ -547,7 +665,7 @@ describe("Part 2.2: response cache", () => {
     const fresh = await post();
     expect(openaiCalls).toBe(1);
     expect(fresh.body.primaryFriction).not.toBe("STALE_VERSION");
-    expect(fresh.body.score).toBe(67);
+    expect(fresh.body.score).toBe(69);
   });
 
   test("a different site is a different key and is scored on its own", async () => {
@@ -642,5 +760,195 @@ describe("Part 2.1(a) + 1.3: canonical origin and per-call attribution", () => {
     expect(calls[0].split("\n")).toHaveLength(1);
     // The second submission is logged as a cache hit instead.
     expect(lines.filter((l) => l.includes("response cache HIT"))).toHaveLength(1);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Owner rubric calibration 2026-09-18, Parts 1 to 5: the prompt and    */
+/* the cache version are the contract, so they are asserted directly.   */
+/* ------------------------------------------------------------------ */
+
+/** The system + user prompt the route actually sent to the model. */
+async function sentPrompts() {
+  mock(fullPayload());
+  await post();
+  const messages = (openaiBody?.messages ?? []) as { role: string; content: string }[];
+  return {
+    system: messages.find((m) => m.role === "system")?.content ?? "",
+    user: messages.find((m) => m.role === "user")?.content ?? "",
+  };
+}
+
+describe("Part 5: cache invalidation (prompt version 2)", () => {
+  test("DIAGNOSE_PROMPT_VERSION is 2 and the key is prefixed v2:", () => {
+    expect(DIAGNOSE_PROMPT_VERSION).toBe(2);
+    expect(diagnoseCacheKey("abc")).toBe("v2:abc");
+  });
+
+  test("a v1 entry is never served: the version prefix is part of the key", async () => {
+    mock(fullPayload());
+    await post();
+    const hash = await sha256Hex(JSON.stringify(openaiBody));
+    expect(diagnoseCacheKey(hash)).toBe(`v2:${hash}`);
+    expect(diagnoseCacheKey(hash)).not.toBe(`v1:${hash}`);
+  });
+});
+
+describe("Part 1: the five-value scale in the prompt", () => {
+  test("the permitted list is exactly 20, 40, 60, 80, 95 and no nine-value list survives", async () => {
+    const { system, user } = await sentPrompts();
+    for (const text of [system, user]) {
+      expect(text).toContain("20, 40, 60, 80, 95");
+      for (const dead of ["15, 25, 35", "45, 55, 65", "55, 65, 75", "85, 95"]) {
+        expect(text).not.toContain(dead);
+      }
+    }
+  });
+
+  test("the status and band cutoffs are the shared 80 / 40 constants", async () => {
+    const { system } = await sentPrompts();
+    expect(system).toContain(`score >= ${STRONG_MIN} -> "Strong"`);
+    expect(system).toContain(`${REFINEMENT_MIN} to ${STRONG_MIN - 1} -> "Needs Refinement"`);
+    expect(system).toContain(`below ${REFINEMENT_MIN} -> "Critical Gap"`);
+    expect(system).toContain(`overall >= ${STRONG_MIN} -> "Market Ready"`);
+    expect(system).toContain(`below ${REFINEMENT_MIN} -> "High Launch Risk"`);
+    // The UI label flip is stated with the same threshold the UI uses.
+    expect(system).toContain(`below ${STRONG_MIN} and "Competitive Advantage" at ${STRONG_MIN}`);
+  });
+
+  test("no stale 'full score' language survives from the nine-value rubric", async () => {
+    const { system } = await sentPrompts();
+    expect(system).not.toContain("full score");
+  });
+});
+
+describe("Part 3: band anchors for all six parameters", () => {
+  test("every parameter carries all five bands, verbatim", async () => {
+    const { system } = await sentPrompts();
+    const anchors: Array<[string, string[]]> = [
+      [
+        "Category Positioning",
+        [
+          "No product noun anywhere above the fold. The headline is a slogan or a mission statement.",
+          "You can tell it's software, but not what kind.",
+          "The category is on the page but you have to scroll or infer it.",
+          "The H1 names the category plainly. A first-time visitor knows what this is in one read.",
+          "Names the category and stakes a position inside it. Not just what it is, but which kind.",
+        ],
+      ],
+      [
+        "ICP & Audience Alignment",
+        [
+          "Written for everyone. No buyer, role, company type, or industry named anywhere.",
+          'A vague audience gesture. "Modern teams," "growing companies," "businesses like yours."',
+          "An audience is named but broadly. A segment rather than a buyer.",
+          "A specific buyer type or role is named and the copy speaks to their situation.",
+          "Names the buyer and shows it understands their day. The language is theirs, not the vendor's.",
+        ],
+      ],
+      [
+        "Differentiation Anchor",
+        [
+          "Nothing distinguishing. Swap the logo for a competitor's and nothing reads wrong.",
+          "Generic adjectives only. Fast, easy, powerful, intuitive, with no mechanism behind them.",
+          "A difference is claimed but not proven. The claim is there, the evidence isn't.",
+          "A specific mechanism, spec, or proof point that a competitor can't say.",
+          "The difference is named, proven, and structural. Hard to copy, not just hard to match.",
+        ],
+      ],
+      [
+        "Hero Messaging & Speed",
+        [
+          "No problem and no outcome. Abstract concepts or brand language only.",
+          "States what the product is, never why it matters. Category without consequence.",
+          "A problem or an outcome is present, but not both, and not quickly.",
+          "Problem and outcome are both above the fold and land in one read.",
+          "Problem and outcome in a single sentence a visitor could repeat to a colleague.",
+        ],
+      ],
+      [
+        "Value Proposition Density",
+        [
+          "Feature list only. Nothing connects any capability to a result.",
+          "Mostly features, with occasional benefit language bolted onto specs.",
+          "Benefits are present but soft. Better, faster, improved, with no direction or measure.",
+          "Most claims tie to a concrete outcome. Time saved, money made, risk avoided.",
+          "Outcomes lead and features support them, with specifics rather than adjectives.",
+        ],
+      ],
+      [
+        "Conversion & Friction Mechanics",
+        [
+          "No clear primary action, or the only path is a contact form with no context.",
+          "A CTA exists but it's vague, buried, or competing with several others of equal weight.",
+          "A clear primary CTA, but high commitment and no proof nearby to justify it.",
+          "Clear primary CTA, appropriate commitment level, and trust signals near the conversion point.",
+          "A low-friction path to value with proof adjacent, and the CTA matches where the buyer actually is.",
+        ],
+      ],
+    ];
+    for (const [name, lines] of anchors) {
+      expect(system).toContain(name);
+      const values = [20, 40, 60, 80, 95];
+      lines.forEach((line, i) => {
+        expect(system).toContain(`- ${values[i]}: ${line}`);
+      });
+    }
+  });
+
+  test("the model is told to pick the closest band and return its exact value", async () => {
+    const { system } = await sentPrompts();
+    expect(system).toContain("BAND ANCHORS");
+    expect(system).toContain("MOST CLOSELY matches the evidence");
+    expect(system).toContain("return that band's exact value");
+  });
+});
+
+describe("Part 2: the Value Proposition Density re-point", () => {
+  test("its DOM targets are body text, H2-and-below headings and CTA labels", async () => {
+    const { system } = await sentPrompts();
+    expect(system).toContain(
+      "DOM targets: body text, heading hierarchy (H2 and below), and CTA labels.",
+    );
+    expect(system).not.toContain("feature/benefit sections");
+  });
+
+  test("static metadata is valid evidence for it, alongside the other three", async () => {
+    const { system, user } = await sentPrompts();
+    expect(system).toContain(
+      "These fields ARE valid evidence for Category Positioning, ICP & Audience Alignment, Differentiation Anchor, and Value Proposition Density",
+    );
+    expect(user).toContain(
+      "still valid evidence for Category Positioning, ICP & Audience Alignment, Differentiation Anchor, and Value Proposition Density",
+    );
+  });
+
+  test("it abstains only when the site genuinely has almost no body copy", async () => {
+    const { system, user } = await sentPrompts();
+    expect(system).toContain("so it must be SCORED on that evidence rather than abstained by default");
+    expect(user).toContain("it abstains only when the site genuinely has almost no body copy");
+  });
+
+  test("weak evidence on a readable page is a LOW BAND, never an abstain", async () => {
+    const { system, user } = await sentPrompts();
+    // The rule that keeps the re-point honest: capability-only copy is 20 or 40.
+    expect(system).toContain("WEAK IS NOT ABSENT");
+    expect(system).toContain("is a LOW BAND, not an abstain");
+    expect(system).toContain("is Value Proposition Density 20 (feature list only) or 40 (mostly features)");
+    expect(system).toContain(
+      '"insufficientData": true for Value Proposition Density is permitted only when the crawl block carries no body copy, no H2s and no CTA labels at all',
+    );
+    expect(user).toContain("never abstain");
+  });
+});
+
+describe("Part 4: the abstain rule asks the model for its own observation", () => {
+  test("the prompt requires a site-specific keyObservation on an abstained parameter", async () => {
+    const { system, user } = await sentPrompts();
+    expect(system).toContain("must STILL carry a site-specific \"keyObservation\"");
+    expect(user).toContain("you MUST still return its \"keyObservation\"");
+    // The old boilerplate sentence must not be quoted back to the model either.
+    expect(system).not.toContain("This parameter is not well represented");
+    expect(user).not.toContain("This parameter is not well represented");
   });
 });

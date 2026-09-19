@@ -15,6 +15,14 @@
  *   - a dimension with no evidence is insufficientData: true with NO score; it
  *     is never defaulted to an invented number
  *   - status labels + bands come from the one shared threshold set
+ *
+ * Owner rubric calibration 2026-09-18 (Parts 1 + 4):
+ *   - the scale is FIVE values [20, 40, 60, 80, 95] and any other number snaps
+ *     to the nearest permitted one (ties up)
+ *   - the 80 / 40 cutoffs, now shared by the API, the coercion and this client
+ *   - an abstained dimension carries ONLY the model's own keyObservation: the
+ *     client-side boilerplate sentence is gone, so a card with no usable model
+ *     text shows the "Not enough signal to score" label alone
  */
 import { PARAMETER_IDS, PARAMETER_NAMES, LOCKED_PARAMETER_IDS, PILLAR_OF } from "./engine";
 import { paramStatus, overallBandFor, STRONG_MIN } from "./thresholds";
@@ -40,18 +48,18 @@ export interface AIDimension {
   friction?: string;
   /** Short (2 to 4 word) dynamic diagnostic label from the model, e.g.
    * "Vague Category Naming". Distinct from the longer `friction`. Shown as the
-   * FRICTION label for scores below 70. */
+   * FRICTION label for scores below 80. */
   frictionLabel?: string;
   /** Short (2 to 4 word) positive anchor label from the model, e.g.
-   * "Clear Category Stake". Shown as the STRENGTH label for 70+. */
+   * "Clear Category Stake". Shown as the STRENGTH label for 80+. */
   anchorLabel?: string;
   /** Direct 1-sentence diagnostic observation of what was FOUND or MISSING on
    * the page, grounded in the messaging/patterning detected on the site. NOT a
    * generic textbook definition. This is what the UI renders in the card body. */
   keyObservation?: string;
-  /** 1-sentence business impact (the commercial risk for scores below 70, or
-   * the competitive advantage for 70+). Single statement; the UI picks the label
-   * at the 70 threshold (impactLabel). */
+  /** 1-sentence business impact (the commercial risk for scores below 80, or
+   * the competitive advantage for 80+). Single statement; the UI picks the label
+   * at the 80 threshold (impactLabel). */
   commercialRisk?: string;
   /** Short raw DOM quote from the crawl backing this score, as emitted by the
    * model. Server-side carry only: NEVER rendered in the UI. Used by the
@@ -151,16 +159,19 @@ function coerceDimensions(raw: unknown): AIDimension[] {
         friction: friction || (insufficientData ? "Not enough signal to score" : "Gap in the assessment"),
         frictionLabel: frictionLabel || undefined,
         anchorLabel: anchorLabel || (strong ? "Clear Strength" : undefined),
-        keyObservation:
-          keyObservation ||
-          (strong
-            ? "This parameter's current framing is a clear strength on the public site."
-            : "This parameter is not well represented on the public site."),
+        // Owner rubric calibration Part 4: the model's own site-specific
+        // sentence, or nothing. The client never manufactures an explanation
+        // for an abstained parameter.
+        keyObservation: keyObservation || undefined,
+        // Part 4 (same rule client-side): an abstained dimension is filled in
+        // with the model's own text only, never with a code-generated sentence.
         commercialRisk:
           commercialRisk ||
-          (strong
-            ? "Visitors get a clear reason to choose this product, which shortens evaluation and protects the price."
-            : "Visitors get no clear reason to choose this product, which slows evaluation and leaks demand."),
+          (insufficientData
+            ? undefined
+            : strong
+              ? "Visitors get a clear reason to choose this product, which shortens evaluation and protects the price."
+              : "Visitors get no clear reason to choose this product, which slows evaluation and leaks demand."),
         evidence_snippet: evidence || undefined,
         insufficientData,
       };
@@ -172,14 +183,14 @@ function coerceDimensions(raw: unknown): AIDimension[] {
     if (LOCKED_PARAMETER_IDS.has(id)) {
       return { id, name: ID_TO_NAME[id], pillar: PILLAR_OF[id], locked: true };
     }
-    // Nothing from the model for a scored dimension: abstain, never invent.
+    // Nothing from the model for a scored dimension: abstain, never invent a
+    // score, and never invent an explanation either (Part 4).
     return {
       id,
       name: ID_TO_NAME[id],
       pillar: PILLAR_OF[id],
       status: undefined,
       friction: "Not enough signal to score",
-      keyObservation: "Not enough signal in the public crawl to score this parameter.",
       insufficientData: true,
     };
   });

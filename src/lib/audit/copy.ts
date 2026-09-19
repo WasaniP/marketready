@@ -11,14 +11,17 @@
  */
 
 import type { AssessmentInput } from "./types";
+import { REFINEMENT_MIN, STRONG_MIN } from "./thresholds";
 
 /** Internal prose band keys (not user-facing status labels; the display status
- * comes from engine.statusFor with its own vocabulary). */
+ * comes from engine.statusFor with its own vocabulary). The cutoffs are the
+ * shared ones (owner rubric calibration 2026-09-18: 80 / 40) so the fallback
+ * prose a card falls back to agrees with its badge. */
 type Band = "strong" | "NEEDS WORK" | "CRITICAL GAP";
 
 function band(score: number): Band {
-  if (score >= 75) return "strong";
-  if (score >= 40) return "NEEDS WORK";
+  if (score >= STRONG_MIN) return "strong";
+  if (score >= REFINEMENT_MIN) return "NEEDS WORK";
   return "CRITICAL GAP";
 }
 
@@ -65,9 +68,9 @@ export interface ParamCopy {
    * Deterministic per score band so the local fallback matches the live
    * /api/diagnose keyObservation shape. NOT a textbook definition. */
   keyObservation: string;
-  /** 1-sentence business impact: the commercial risk (score below 70) or the
-   * competitive advantage (score >= 70) the current site framing creates. The
-   * UI relabels this single statement at the 70 threshold. */
+  /** 1-sentence business impact: the commercial risk (score below 80) or the
+   * competitive advantage (score >= 80) the current site framing creates. The
+   * UI relabels this single statement at the 80 threshold. */
   commercialRisk: string;
   before: string;
   after: string;

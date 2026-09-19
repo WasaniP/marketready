@@ -169,7 +169,7 @@ function frictionLabelFor(id: string, score: number): string {
 }
 
 /** Pick the deterministic 2 to 4 word positive anchor label used when a score is
- * high (>= 70). This is the parameter's best-case phrase, always the strength
+ * high (>= 80). This is the parameter's best-case phrase, always the strength
  * framing regardless of the band. */
 function anchorLabelFor(id: string): string {
   const band = FRICTION_LABELS[id];

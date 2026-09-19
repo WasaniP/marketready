@@ -6,21 +6,25 @@
  * engine (scoreColor / statusFor / riskLabel) and the results UI. Nothing
  * anywhere else in the codebase may hard-code a score cutoff.
  *
- * Per-parameter status:  >= 70 "Strong" | 45 to 69 "Needs Refinement" | < 45 "Critical Gap"
- * Overall band:          >= 70 "Market Ready" | 45 to 69 "Needs Attention" | < 45 "High Launch Risk"
- * UI label flip:         >= 70 "Competitive Advantage" | < 70 "Commercial Risk"
+ * Owner rubric calibration 2026-09-18 (Part 1): with the five-value scale
+ * [20, 40, 60, 80, 95] the cutoffs moved to 80 / 40, so a five-band 80 now
+ * reads Strong exactly where the top of the scale begins.
  *
- * SCORE_COLORS uses the same 70 / 45 cutoffs so a card's color always matches
+ * Per-parameter status:  >= 80 "Strong" | 40 to 79 "Needs Refinement" | < 40 "Critical Gap"
+ * Overall band:          >= 80 "Market Ready" | 40 to 79 "Needs Attention" | < 40 "High Launch Risk"
+ * UI label flip:         >= 80 "Competitive Advantage" | < 80 "Commercial Risk"
+ *
+ * SCORE_COLORS uses the same 80 / 40 cutoffs so a card's color always matches
  * its label.
  */
 import type { Status } from "./types";
 
 /** Score at or above which a parameter is Strong / Competitive Advantage and
  * an overall result is Market Ready. */
-export const STRONG_MIN = 70;
+export const STRONG_MIN = 80;
 /** Score at or above which a parameter Needs Refinement (and below which it is
  * a Critical Gap) and an overall result Needs Attention. */
-export const REFINEMENT_MIN = 45;
+export const REFINEMENT_MIN = 40;
 
 /** Exact per-parameter status vocabulary (matches the API status field). */
 export type ParamStatusLabel = "Strong" | "Needs Refinement" | "Critical Gap";
@@ -50,16 +54,16 @@ export function overallBandFor(score: number): OverallBand {
 }
 
 /** Score -> the UI label flip for the business-impact sentence carried on each
- * dimension (the same field reads as a risk below 70 and an advantage at 70+). */
+ * dimension (the same field reads as a risk below 80 and an advantage at 80+). */
 export function impactLabel(score: number): "Competitive Advantage" | "Commercial Risk" {
   return score >= STRONG_MIN ? "Competitive Advantage" : "Commercial Risk";
 }
 
-/** Score -> hex color. Same 70 / 45 cutoffs as the labels above. */
+/** Score -> hex color. Same 80 / 40 cutoffs as the labels above. */
 export const SCORE_COLORS = {
   high: "#1F4A42", // STRONG_MIN to 100, strong / passing (deep pine)
-  mid: "#8A6A1F", //  REFINEMENT_MIN to 69, needs refinement (bronze olive)
-  low: "#A15C2B", //   0 to 44, needs work (warm sienna)
+  mid: "#8A6A1F", //  REFINEMENT_MIN to STRONG_MIN - 1, needs refinement (bronze olive)
+  low: "#A15C2B", //   0 to REFINEMENT_MIN - 1, needs work (warm sienna)
 } as const;
 
 /** Score -> hex color, exact thresholds from the rubric status labels. */
